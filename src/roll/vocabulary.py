@@ -1,27 +1,6 @@
-FILMS = [
-    "Kodak Gold 200",
-    "Kodak ColorPlus 200",
-    "Kodak Portra 400",
-    "Ilford HP5 Plus",
-    "Fujifilm 400",
-]
+from roll.dictionaries import Dictionary, DICTIONARIES_DIR
 
-CAMERAS = [
-    "Pentax Espio 150SL",
-]
-
-FEATURES = [
-    "redscale",
-    "push +1",
-    "push +2",
-    "expired",
-]
-
-KEYWORDS = [
-    "kir",
-    "balcony",
-    "bar",
-    "evening",
-    "belgrade",
-    "sunset",
-]
+FILMS = Dictionary("films", DICTIONARIES_DIR / "films.txt")
+CAMERAS = Dictionary("cameras", DICTIONARIES_DIR / "cameras.txt")
+FEATURES = Dictionary("features", DICTIONARIES_DIR / "features.txt")
+KEYWORDS = Dictionary("keywords", DICTIONARIES_DIR / "keywords.txt")

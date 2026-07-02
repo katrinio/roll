@@ -3,10 +3,10 @@ from pathlib import Path
 import typer
 
 from roll.archive import find_roll_folders, find_unindexed_folders
-from roll.config import CONFIG_DIR, CONFIG_FILE, Config, save_config
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_config, require_directory
 from roll.helpers.parsing import parse_csv
+from roll.config import CONFIG_DIR, CONFIG_FILE, Config, save_config
 from roll.index import save_roll_index
 from roll.messages import (
     ARCHIVE_HEADER,
