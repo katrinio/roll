@@ -4,9 +4,17 @@ import typer
 import yaml
 
 from roll.config import CONFIG_DIR, CONFIG_FILE, load_config, save_config, Config
-from roll.formatting import highlight_command_names
+from roll.formatting import highlight_cli_names
+from roll.messages import (
+    ARCHIVE_HEADER,
+    ARCHIVE_MISSING,
+    CLI_INITIALIZED,
+    CONFIG_HEADER,
+    UNINITIALIZED_NOTICE,
+)
 
 app = typer.Typer(help="Личный индекс пленок.")
+
 
 @app.command("init")
 def init(
@@ -30,7 +38,7 @@ def init(
 
     save_config(Config(archive=archive))
 
-    typer.echo("roll initialized")
+    typer.echo(highlight_cli_names(CLI_INITIALIZED))
     typer.echo(f"Archive: {archive}")
     typer.echo(f"Config:  {CONFIG_FILE}")
 
@@ -45,12 +53,44 @@ def config() -> None:
     try:
         config = load_config()
     except FileNotFoundError:
-        typer.echo(highlight_command_names("roll не инициализирован."))
-        typer.echo("")
-        typer.echo("Запусти:")
-        typer.echo(highlight_command_names("  rl init ~/Pictures/plenka"))
+        typer.echo(highlight_cli_names(UNINITIALIZED_NOTICE))
         raise typer.Exit(code=1)
 
-    typer.echo("Configuration")
+    typer.echo(CONFIG_HEADER)
     typer.echo("")
-    typer.echo(f"Archive: {config.archive}")
+    typer.echo(f"{ARCHIVE_HEADER} {config.archive}")
+
+@app.command("scan")
+def scan() -> None:
+    """Показать папки в архиве."""
+    try:
+        config = load_config()
+    except FileNotFoundError:
+        typer.echo(highlight_cli_names(UNINITIALIZED_NOTICE))
+        raise typer.Exit(code=1)
+
+    archive = config.archive
+
+    if not archive.exists():
+        typer.echo(f"{ARCHIVE_MISSING} {archive}")
+        raise typer.Exit(code=1)
+
+    typer.echo(ARCHIVE_HEADER)
+    typer.echo(str(archive))
+    typer.echo("")
+
+    year_dirs = sorted(path for path in archive.iterdir() if path.is_dir())
+
+    typer.echo("Found years:")
+    for year_dir in year_dirs:
+        typer.echo(f"- {year_dir.name}")
+
+    typer.echo("")
+    typer.echo("Found roll folders:")
+
+    for year_dir in year_dirs:
+        roll_dirs = sorted(path for path in year_dir.iterdir() if path.is_dir())
+
+        for roll_dir in roll_dirs:
+            relative_path = roll_dir.relative_to(archive)
+            typer.echo(f"- {relative_path}")

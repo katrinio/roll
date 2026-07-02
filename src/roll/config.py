@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import yaml
+
+from roll.messages import UNINITIALIZED_MESSAGE
 
 CONFIG_DIR = Path.home() / ".config" / "roll"
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
 
-
-UNINITIALIZED_MESSAGE = "roll is not initialized.\nRun: rl init ~/your/archive/path"
 
 
 @dataclass(frozen=True)
@@ -17,16 +18,26 @@ class Config:
 
 def save_config(config: Config) -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    content = f'archive = "{config.archive}"\n'
-    CONFIG_FILE.write_text(content, encoding="utf-8")
+    with CONFIG_FILE.open("w", encoding="utf-8") as file:
+        yaml.safe_dump(
+            {"archive": str(config.archive)},
+            file,
+            allow_unicode=True,
+            sort_keys=False,
+        )
 
 
-def read_config_data() -> dict:
+def read_config_data() -> dict[str, Any]:
     if not CONFIG_FILE.exists():
         raise FileNotFoundError(UNINITIALIZED_MESSAGE)
 
     with CONFIG_FILE.open("r", encoding="utf-8") as file:
-        return yaml.safe_load(file) or {}
+        data = yaml.safe_load(file) or {}
+
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid config format in {CONFIG_FILE}")
+
+    return data
 
 
 def load_config() -> Config:
