@@ -6,6 +6,7 @@ import yaml
 from roll.config import CONFIG_DIR, CONFIG_FILE, load_config, save_config, Config
 from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.formatting import highlight_cli_names
+from roll.index import save_roll_index
 from roll.messages import (
     ARCHIVE_HEADER,
     ARCHIVE_MISSING,
@@ -108,3 +109,42 @@ def status() -> None:
         typer.echo("Unindexed folders:")
         for folder in unindexed_folders:
             typer.echo(f"- {folder.relative_to(archive)}")
+
+
+@app.command("index")
+def index(
+    folder: Path,
+    film: str = typer.Option(..., prompt=True),
+    features: str = typer.Option("", prompt=True),
+    camera: str = typer.Option(..., prompt=True),
+    loaded_at: str = typer.Option(..., prompt=True),
+    keywords: str = typer.Option("", prompt=True),
+) -> None:
+    """Проиндексировать папку пленки."""
+    folder = folder.expanduser().resolve()
+
+    if not folder.exists() or not folder.is_dir():
+        typer.echo(f"Папка не найдена: {folder}")
+        raise typer.Exit(code=1)
+
+    feature_list = [
+        feature.strip().lower()
+        for feature in features.split(",")
+        if feature.strip()
+    ]
+    keyword_list = [
+        keyword.strip().lower()
+        for keyword in keywords.split(",")
+        if keyword.strip()
+    ]
+
+    save_roll_index(
+        folder=folder,
+        film=film,
+        features=feature_list,
+        camera=camera,
+        loaded_at=loaded_at,
+        keywords=keyword_list,
+    )
+
+    typer.echo("Пленка проиндексирована.")
