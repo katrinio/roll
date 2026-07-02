@@ -4,6 +4,7 @@ import typer
 import yaml
 
 from roll.config import CONFIG_DIR, CONFIG_FILE, load_config, save_config, Config
+from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.formatting import highlight_cli_names
 from roll.messages import (
     ARCHIVE_HEADER,
@@ -79,18 +80,31 @@ def scan() -> None:
     typer.echo(str(archive))
     typer.echo("")
 
-    year_dirs = sorted(path for path in archive.iterdir() if path.is_dir())
+    roll_folders = find_roll_folders(archive)
 
-    typer.echo("Found years:")
-    for year_dir in year_dirs:
-        typer.echo(f"- {year_dir.name}")
-
-    typer.echo("")
     typer.echo("Found roll folders:")
 
-    for year_dir in year_dirs:
-        roll_dirs = sorted(path for path in year_dir.iterdir() if path.is_dir())
+    for roll_dir in roll_folders:
+        relative_path = roll_dir.relative_to(archive)
+        typer.echo(f"- {relative_path}")
 
-        for roll_dir in roll_dirs:
-            relative_path = roll_dir.relative_to(archive)
-            typer.echo(f"- {relative_path}")
+@app.command("status")
+def status() -> None:
+    """Показать состояние индекса."""
+    config = load_config()
+    archive = config.archive
+
+    roll_folders = find_roll_folders(archive)
+    unindexed_folders = find_unindexed_folders(archive)
+
+    typer.echo("Index status")
+    typer.echo("")
+    typer.echo(f"Archive folders: {len(roll_folders)}")
+    typer.echo(f"Indexed:         {len(roll_folders) - len(unindexed_folders)}")
+    typer.echo(f"Unindexed:       {len(unindexed_folders)}")
+
+    if unindexed_folders:
+        typer.echo("")
+        typer.echo("Unindexed folders:")
+        for folder in unindexed_folders:
+            typer.echo(f"- {folder.relative_to(archive)}")
