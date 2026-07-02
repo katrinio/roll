@@ -57,12 +57,12 @@ def choose_many(dictionary: Dictionary, label: str, prompt: str) -> list[str]:
             if index < 1 or index > len(options):
                 typer.echo("Такого номера нет.")
                 raise typer.Exit(code=1)
-            value = options[index - 1]
+            selected_value = options[index - 1]
         else:
-            value = dictionary.add(token)
+            selected_value = dictionary.add(token)
 
-        if value not in selected:
-            selected.append(value)
+        if selected_value not in selected:
+            selected.append(selected_value)
 
     return selected
 
