@@ -4,6 +4,7 @@ import typer
 
 from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.diagnostics import run_doctor
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
 from roll.helpers.parsing import parse_csv
@@ -159,3 +160,25 @@ def search(query: str) -> None:
 
         typer.echo(f"Папка: {roll.folder}")
         typer.echo("")
+
+
+@app.command("doctor")
+def doctor() -> None:
+    """Проверить целостность архива и конфигурации."""
+    try:
+        config = load_config()
+    except FileNotFoundError:
+        report = run_doctor(Config(archives=[]))
+    else:
+        report = run_doctor(config)
+
+    if not report.issues:
+        typer.echo(Msg.DOCTOR_OK)
+        return
+
+    for issue in report.issues:
+        prefix = Msg.DOCTOR_ERROR_PREFIX if issue.level == "error" else Msg.DOCTOR_WARN_PREFIX
+        typer.echo(highlight_cli_names(f"{prefix} {issue.message}"))
+
+    if report.has_errors:
+        raise typer.Exit(code=1)
