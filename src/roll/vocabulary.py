@@ -1,6 +1,13 @@
-from roll.dictionaries import Dictionary, DICTIONARIES_DIR
+from pathlib import Path
 
-FILMS = Dictionary("films", DICTIONARIES_DIR / "films.txt")
-CAMERAS = Dictionary("cameras", DICTIONARIES_DIR / "cameras.txt")
-FEATURES = Dictionary("features", DICTIONARIES_DIR / "features.txt")
-KEYWORDS = Dictionary("keywords", DICTIONARIES_DIR / "keywords.txt")
+from roll.workspace import workspace_for
+
+
+def archive_vocabulary(archive: Path) -> dict[str, object]:
+    workspace = workspace_for(archive)
+    return {
+        "films": workspace.dictionary("films"),
+        "cameras": workspace.dictionary("cameras"),
+        "features": workspace.dictionary("features"),
+        "keywords": workspace.dictionary("keywords"),
+    }
