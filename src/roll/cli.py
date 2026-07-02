@@ -14,6 +14,7 @@ from roll.messages import (
     CONFIG_HEADER,
     UNINITIALIZED_NOTICE,
 )
+from roll.vocabulary import FILMS, CAMERAS, FEATURES, KEYWORDS
 
 app = typer.Typer(help="Личный индекс пленок.")
 
@@ -148,3 +149,22 @@ def index(
     )
 
     typer.echo("Пленка проиндексирована.")
+
+@app.command("vocab")
+def vocab() -> None:
+    """Показать справочники."""
+    typer.echo("Films:")
+    for film in FILMS:
+        typer.echo(f"- {film}")
+
+    typer.echo("\nCameras:")
+    for camera in CAMERAS:
+        typer.echo(f"- {camera}")
+
+    typer.echo("\nFeatures:")
+    for feature in FEATURES:
+        typer.echo(f"- {feature}")
+
+    typer.echo("\nKeywords:")
+    for keyword in KEYWORDS:
+        typer.echo(f"- {keyword}")
