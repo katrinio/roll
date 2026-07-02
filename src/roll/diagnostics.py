@@ -10,6 +10,8 @@ from roll.config import Config
 from roll.vocabulary import archive_vocabulary
 from roll.workspace import workspace_for
 
+from src.roll.messages import Doctor
+
 
 @dataclass(frozen=True)
 class DoctorIssue:
@@ -58,16 +60,16 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
     issues: list[DoctorIssue] = []
 
     if not workspace.root.exists():
-        issues.append(DoctorIssue("error", f"Missing workspace directory: {workspace.root}"))
+        issues.append(DoctorIssue("error", f"{Doctor.WORKSPACE_MISSING} {workspace.root}"))
         return issues
 
     if not workspace.vocabulary_dir.exists():
-        issues.append(DoctorIssue("error", f"Missing vocabulary directory: {workspace.vocabulary_dir}"))
+        issues.append(DoctorIssue("error", f"{Doctor.VOCAB_DIR_MISSING} {workspace.vocabulary_dir}"))
         return issues
 
     for name in ("films", "cameras", "features", "keywords"):
         if not workspace.vocabulary_file(name).exists():
-            issues.append(DoctorIssue("error", f"Missing vocabulary file: {workspace.vocabulary_file(name)}"))
+            issues.append(DoctorIssue("error", f"{Doctor.VOCAB_FILE_MISSING} {workspace.vocabulary_file(name)}"))
 
     return issues
 
@@ -82,18 +84,18 @@ def _check_rolls(archive: Path, workspace) -> list[DoctorIssue]:
     for folder in find_roll_folders(archive):
         index_file = get_index_file(folder)
         if not index_file.exists():
-            issues.append(DoctorIssue("error", f"Missing roll.toml: {index_file}. Not indexed?"))
+            issues.append(DoctorIssue("error", f"{Doctor.ROLL_MISSING} {index_file}. Not indexed?"))
             continue
 
         try:
             data = tomllib.loads(index_file.read_text(encoding="utf-8"))
         except Exception as exc:
-            issues.append(DoctorIssue("error", f"Unreadable roll.toml: {index_file} ({exc})"))
+            issues.append(DoctorIssue("error", f"{Doctor.ROLL_UNREADABLE} {index_file} ({exc})"))
             continue
 
         for key in mandatory:
             if not data.get(key):
-                issues.append(DoctorIssue("error", f"Missing required field '{key}' in {index_file}"))
+                issues.append(DoctorIssue("error", f"{Doctor.REQUIRED_FIELD_MISSING} '{key}' in {index_file}"))
 
         film = data.get("film", "")
         camera = data.get("camera", "")
@@ -101,18 +103,18 @@ def _check_rolls(archive: Path, workspace) -> list[DoctorIssue]:
         keywords = data.get("keywords", [])
 
         if film and film not in allowed["films"]:
-            issues.append(DoctorIssue("warning", f"Film is not in vocabulary: {film} ({index_file})"))
+            issues.append(DoctorIssue("warning", f"{Doctor.FILM_NOT_IN_VOCAB} {film} ({index_file})"))
 
         if camera and camera not in allowed["cameras"]:
-            issues.append(DoctorIssue("warning", f"Camera is not in vocabulary: {camera} ({index_file})"))
+            issues.append(DoctorIssue("warning", f"{Doctor.CAMERA_NOT_IN_VOCAB} {camera} ({index_file})"))
 
         for value in features or []:
             if value not in allowed["features"]:
-                issues.append(DoctorIssue("warning", f"Feature is not in vocabulary: {value} ({index_file})"))
+                issues.append(DoctorIssue("warning", f"{Doctor.FEATURE_NOT_IN_VOCAB} {value} ({index_file})"))
 
         for value in keywords or []:
             if value not in allowed["keywords"]:
-                issues.append(DoctorIssue("warning", f"Keyword is not in vocabulary: {value} ({index_file})"))
+                issues.append(DoctorIssue("warning", f"{Doctor.KEYWORD_NOT_IN_VOCAB} {value} ({index_file})"))
 
     return issues
 
@@ -121,7 +123,7 @@ def _check_unindexed(archive: Path) -> list[DoctorIssue]:
     unindexed = find_unindexed_folders(archive)
     if not unindexed:
         return []
-    return [DoctorIssue("warning", f"Unindexed folders: {len(unindexed)}")]
+    return [DoctorIssue("warning", f"{Doctor.UNINDEXED_FOLDERS} {len(unindexed)}")]
 
 
 def _check_naming(archive: Path) -> list[DoctorIssue]:
@@ -133,9 +135,9 @@ def _check_naming(archive: Path) -> list[DoctorIssue]:
         if not year_dir.is_dir():
             continue
         if not year_pattern.match(year_dir.name):
-            issues.append(DoctorIssue("warning", f"Suspicious year folder name: {year_dir.name}"))
+            issues.append(DoctorIssue("warning", f"{Doctor.SUSPICIOUS_YEAR} {year_dir.name}"))
         for roll_dir in year_dir.iterdir():
             if roll_dir.is_dir() and not roll_pattern.match(roll_dir.name):
-                issues.append(DoctorIssue("warning", f"Suspicious roll folder name: {roll_dir.name}"))
+                issues.append(DoctorIssue("warning", f"{Doctor.SUSPICIOUS_ROLL} {roll_dir.name}"))
 
     return issues
