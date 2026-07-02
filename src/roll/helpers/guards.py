@@ -4,14 +4,14 @@ import typer
 
 from roll.config import Config, load_config
 from roll.helpers.formatting import highlight_cli_names
-from roll.messages import UNINITIALIZED_NOTICE
+from roll.messages import Msg
 
 
 def require_config() -> Config:
     try:
         return load_config()
     except FileNotFoundError:
-        typer.echo(highlight_cli_names(UNINITIALIZED_NOTICE))
+        typer.echo(highlight_cli_names(Msg.UNINITIALIZED_NOTICE))
         raise typer.Exit(code=1)
 
 

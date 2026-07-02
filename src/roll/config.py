@@ -4,7 +4,7 @@ from typing import Any
 
 import yaml
 
-from roll.messages import UNINITIALIZED_MESSAGE
+from roll.messages import Msg
 
 CONFIG_DIR = Path.home() / ".config" / "roll"
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
@@ -29,7 +29,7 @@ def save_config(config: Config) -> None:
 
 def read_config_data() -> dict[str, Any]:
     if not CONFIG_FILE.exists():
-        raise FileNotFoundError(UNINITIALIZED_MESSAGE)
+        raise FileNotFoundError(Msg.UNINITIALIZED_MESSAGE)
 
     with CONFIG_FILE.open("r", encoding="utf-8") as file:
         data = yaml.safe_load(file) or {}
@@ -45,6 +45,6 @@ def load_config() -> Config:
 
     archive = data.get("archive")
     if not archive:
-        raise FileNotFoundError(UNINITIALIZED_MESSAGE)
+        raise FileNotFoundError(Msg.UNINITIALIZED_MESSAGE)
 
     return Config(archive=Path(archive))

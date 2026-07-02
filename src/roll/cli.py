@@ -8,23 +8,7 @@ from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_config, require_directory
 from roll.helpers.parsing import parse_csv
 from roll.index import save_roll_index
-from roll.messages import (
-    ARCHIVE_HEADER,
-    ARCHIVE_MISSING,
-    CLI_INITIALIZED,
-    CONFIG_HEADER,
-    INDEX_DONE,
-    SEARCH_NOT_IMPLEMENTED,
-    STATUS_ARCHIVE_FOLDERS,
-    STATUS_HEADER,
-    STATUS_INDEXED,
-    STATUS_UNINDEXED,
-    STATUS_UNINDEXED_FOLDERS,
-    VOCAB_CAMERAS,
-    VOCAB_FEATURES,
-    VOCAB_FILMS,
-    VOCAB_KEYWORDS,
-)
+from roll.messages import Msg
 from roll.vocabulary import CAMERAS, FEATURES, FILMS, KEYWORDS
 
 app = typer.Typer(help="Личный индекс пленок.")
@@ -38,7 +22,7 @@ def init(archive: Path = typer.Argument(..., help="Путь к архиву пл
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     save_config(Config(archive=archive))
 
-    typer.echo(highlight_cli_names(CLI_INITIALIZED))
+    typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
     typer.echo(f"Archive: {archive}")
     typer.echo(f"Config:  {CONFIG_FILE}")
 
@@ -46,16 +30,16 @@ def init(archive: Path = typer.Argument(..., help="Путь к архиву пл
 @app.command("search")
 def search(query: str) -> None:
     """Искать пленку по ключевым словам."""
-    typer.echo(f"{SEARCH_NOT_IMPLEMENTED} {query}")
+    typer.echo(f"{Msg.SEARCH_NOT_IMPLEMENTED} {query}")
 
 
 @app.command("config")
 def config() -> None:
     """Показать текущую конфигурацию."""
     config = require_config()
-    typer.echo(CONFIG_HEADER)
+    typer.echo(Msg.CONFIG_HEADER)
     typer.echo("")
-    typer.echo(f"{ARCHIVE_HEADER} {config.archive}")
+    typer.echo(f"{Msg.ARCHIVE_HEADER} {config.archive}")
 
 
 @app.command("scan")
@@ -65,10 +49,10 @@ def scan() -> None:
     archive = config.archive
 
     if not archive.exists():
-        typer.echo(f"{ARCHIVE_MISSING} {archive}")
+        typer.echo(f"{Msg.ARCHIVE_MISSING} {archive}")
         raise typer.Exit(code=1)
 
-    typer.echo(ARCHIVE_HEADER)
+    typer.echo(Msg.ARCHIVE_HEADER)
     typer.echo(str(archive))
     typer.echo("")
 
@@ -87,15 +71,15 @@ def status() -> None:
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
 
-    typer.echo(STATUS_HEADER)
+    typer.echo(Msg.STATUS_HEADER)
     typer.echo("")
-    typer.echo(f"{STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}")
-    typer.echo(f"{STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}")
-    typer.echo(f"{STATUS_UNINDEXED} {len(unindexed_folders)}")
+    typer.echo(f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}")
+    typer.echo(f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}")
+    typer.echo(f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}")
 
     if unindexed_folders:
         typer.echo("")
-        typer.echo(STATUS_UNINDEXED_FOLDERS)
+        typer.echo(Msg.STATUS_UNINDEXED_FOLDERS)
         for folder in unindexed_folders:
             typer.echo(f"- {folder.relative_to(archive)}")
 
@@ -120,24 +104,24 @@ def index(
         keywords=parse_csv(keywords),
     )
 
-    typer.echo(INDEX_DONE)
+    typer.echo(Msg.INDEX_DONE)
 
 
 @app.command("vocab")
 def vocab() -> None:
     """Показать справочники."""
-    typer.echo(VOCAB_FILMS)
+    typer.echo(Msg.VOCAB_FILMS)
     for film in FILMS.read():
         typer.echo(f"- {film}")
 
-    typer.echo(f"\n{VOCAB_CAMERAS}")
+    typer.echo(f"\n{Msg.VOCAB_CAMERAS}")
     for camera in CAMERAS.read():
         typer.echo(f"- {camera}")
 
-    typer.echo(f"\n{VOCAB_FEATURES}")
+    typer.echo(f"\n{Msg.VOCAB_FEATURES}")
     for feature in FEATURES.read():
         typer.echo(f"- {feature}")
 
-    typer.echo(f"\n{VOCAB_KEYWORDS}")
+    typer.echo(f"\n{Msg.VOCAB_KEYWORDS}")
     for keyword in KEYWORDS.read():
         typer.echo(f"- {keyword}")
