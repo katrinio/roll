@@ -3,12 +3,10 @@ from pathlib import Path
 import typer
 import yaml
 
+from roll.config import CONFIG_DIR, CONFIG_FILE, load_config
+from roll.formatting import highlight_command_names
+
 app = typer.Typer(help="Личный индекс пленок.")
-
-
-CONFIG_DIR = Path.home() / ".config" / "roll"
-CONFIG_FILE = CONFIG_DIR / "config.yaml"
-
 
 @app.command("init")
 def init(
@@ -45,3 +43,16 @@ def init(
 def search(query: str) -> None:
     """Искать пленку по ключевым словам."""
     typer.echo(f"Search is not implemented yet: {query}")
+
+@app.command("config")
+def config() -> None:
+    """Показать содержимое конфига."""
+    try:
+        config = load_config()
+    except FileNotFoundError as exc:
+        typer.echo(highlight_command_names(str(exc)))
+        raise typer.Exit(code=1)
+
+    typer.echo(
+        yaml.safe_dump({"archive": str(config.archive)}, allow_unicode=True, sort_keys=False).strip()
+    )
