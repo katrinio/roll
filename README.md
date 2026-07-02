@@ -1,5 +1,10 @@
-## roll 
-### 🎬в процессе🎬
+## roll <img src="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmJ5Z29ndzB3aHZwOWk0NTExNjRtOTEyeXFhdjgxcGF4bDRrYXBhOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bu3XilJ5BOiSGic/giphy.gif" width="20"/>
+
+
+<div align="center">
+  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExc28xMWR1cGRzbXA5cHJsbzlrcTVmMnUzOW41cnE4YzR1YW1qbHBraCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/IEvdyfP5x7w08/giphy.gif" width="400"/>
+</div>
+
 
 Мой небольшой проект для учета пленочной фотографии.
 
