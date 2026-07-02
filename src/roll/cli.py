@@ -9,6 +9,7 @@ from roll.helpers.guards import require_config, require_directory
 from roll.helpers.parsing import parse_csv
 from roll.index import save_roll_index
 from roll.messages import Msg
+from roll.search import search_rolls
 from roll.vocabulary import CAMERAS, FEATURES, FILMS, KEYWORDS
 
 app = typer.Typer(help="Личный индекс пленок.")
@@ -25,12 +26,6 @@ def init(archive: Path = typer.Argument(..., help="Путь к архиву пл
     typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
     typer.echo(f"Archive: {archive}")
     typer.echo(f"Config:  {CONFIG_FILE}")
-
-
-@app.command("search")
-def search(query: str) -> None:
-    """Искать пленку по ключевым словам."""
-    typer.echo(f"{Msg.SEARCH_NOT_IMPLEMENTED} {query}")
 
 
 @app.command("config")
@@ -125,3 +120,30 @@ def vocab() -> None:
     typer.echo(f"\n{Msg.VOCAB_KEYWORDS}")
     for keyword in KEYWORDS.read():
         typer.echo(f"- {keyword}")
+
+
+@app.command("search")
+def search(query: str) -> None:
+    """Искать пленки по памяти."""
+    config = require_config()
+    results = search_rolls(config.archive, query)
+
+    if not results:
+        typer.echo("Ничего не найдено.")
+        return
+
+    typer.echo("Найдено:")
+    typer.echo("")
+
+    for roll in results:
+        typer.echo(f"{roll.loaded_at} — {roll.film}")
+        typer.echo(f"Камера: {roll.camera}")
+
+        if roll.features:
+            typer.echo(f"Особенности: {', '.join(roll.features)}")
+
+        if roll.keywords:
+            typer.echo(f"Ключевые слова: {', '.join(roll.keywords)}")
+
+        typer.echo(f"Папка: {roll.folder}")
+        typer.echo("")
