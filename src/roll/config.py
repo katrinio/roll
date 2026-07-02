@@ -10,9 +10,15 @@ CONFIG_FILE = CONFIG_DIR / "config.yaml"
 UNINITIALIZED_MESSAGE = "roll is not initialized.\nRun: rl init ~/your/archive/path"
 
 
-@dataclass
+@dataclass(frozen=True)
 class Config:
     archive: Path
+
+
+def save_config(config: Config) -> None:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    content = f'archive = "{config.archive}"\n'
+    CONFIG_FILE.write_text(content, encoding="utf-8")
 
 
 def read_config_data() -> dict:
