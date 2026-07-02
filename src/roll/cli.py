@@ -1,110 +1,127 @@
 from pathlib import Path
 
 import typer
-import yaml
 
-from roll.config import CONFIG_DIR, CONFIG_FILE, load_config, save_config, Config
 from roll.archive import find_roll_folders, find_unindexed_folders
-from roll.formatting import highlight_cli_names
-from roll.messages import (
-    ARCHIVE_HEADER,
-    ARCHIVE_MISSING,
-    CLI_INITIALIZED,
-    CONFIG_HEADER,
-    UNINITIALIZED_NOTICE,
-)
+from roll.config import CONFIG_DIR, CONFIG_FILE, Config, save_config
+from roll.helpers.formatting import highlight_cli_names
+from roll.helpers.guards import require_config, require_directory
+from roll.helpers.parsing import parse_csv
+from roll.index import save_roll_index
+from roll.messages import Msg
+from roll.vocabulary import CAMERAS, FEATURES, FILMS, KEYWORDS
 
 app = typer.Typer(help="Личный индекс пленок.")
 
 
 @app.command("init")
-def init(
-    archive: Path = typer.Argument(
-        ...,
-        help="Путь к архиву пленок.",
-    ),
-) -> None:
+def init(archive: Path = typer.Argument(..., help="Путь к архиву пленок.")) -> None:
     """Инициализировать roll."""
-    archive = archive.expanduser().resolve()
-
-    if not archive.exists():
-        typer.echo(f"Папка не найдена: {archive}")
-        raise typer.Exit(code=1)
-
-    if not archive.is_dir():
-        typer.echo(f"Это не папка: {archive}")
-        raise typer.Exit(code=1)
+    archive = require_directory(archive, "Папка не найдена:")
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-
     save_config(Config(archive=archive))
 
-    typer.echo(highlight_cli_names(CLI_INITIALIZED))
+    typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
     typer.echo(f"Archive: {archive}")
     typer.echo(f"Config:  {CONFIG_FILE}")
+
 
 @app.command("search")
 def search(query: str) -> None:
     """Искать пленку по ключевым словам."""
-    typer.echo(f"Search is not implemented yet: {query}")
+    typer.echo(f"{Msg.SEARCH_NOT_IMPLEMENTED} {query}")
+
 
 @app.command("config")
 def config() -> None:
     """Показать текущую конфигурацию."""
-    try:
-        config = load_config()
-    except FileNotFoundError:
-        typer.echo(highlight_cli_names(UNINITIALIZED_NOTICE))
-        raise typer.Exit(code=1)
-
-    typer.echo(CONFIG_HEADER)
+    config = require_config()
+    typer.echo(Msg.CONFIG_HEADER)
     typer.echo("")
-    typer.echo(f"{ARCHIVE_HEADER} {config.archive}")
+    typer.echo(f"{Msg.ARCHIVE_HEADER} {config.archive}")
+
 
 @app.command("scan")
 def scan() -> None:
     """Показать папки в архиве."""
-    try:
-        config = load_config()
-    except FileNotFoundError:
-        typer.echo(highlight_cli_names(UNINITIALIZED_NOTICE))
-        raise typer.Exit(code=1)
-
+    config = require_config()
     archive = config.archive
 
     if not archive.exists():
-        typer.echo(f"{ARCHIVE_MISSING} {archive}")
+        typer.echo(f"{Msg.ARCHIVE_MISSING} {archive}")
         raise typer.Exit(code=1)
 
-    typer.echo(ARCHIVE_HEADER)
+    typer.echo(Msg.ARCHIVE_HEADER)
     typer.echo(str(archive))
     typer.echo("")
 
     roll_folders = find_roll_folders(archive)
-
     typer.echo("Found roll folders:")
-
     for roll_dir in roll_folders:
-        relative_path = roll_dir.relative_to(archive)
-        typer.echo(f"- {relative_path}")
+        typer.echo(f"- {roll_dir.relative_to(archive)}")
+
 
 @app.command("status")
 def status() -> None:
     """Показать состояние индекса."""
-    config = load_config()
+    config = require_config()
     archive = config.archive
 
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
 
-    typer.echo("Index status")
+    typer.echo(Msg.STATUS_HEADER)
     typer.echo("")
-    typer.echo(f"Archive folders: {len(roll_folders)}")
-    typer.echo(f"Indexed:         {len(roll_folders) - len(unindexed_folders)}")
-    typer.echo(f"Unindexed:       {len(unindexed_folders)}")
+    typer.echo(f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}")
+    typer.echo(f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}")
+    typer.echo(f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}")
 
     if unindexed_folders:
         typer.echo("")
-        typer.echo("Unindexed folders:")
+        typer.echo(Msg.STATUS_UNINDEXED_FOLDERS)
         for folder in unindexed_folders:
             typer.echo(f"- {folder.relative_to(archive)}")
+
+
+@app.command("index")
+def index(
+    folder: Path,
+    film: str = typer.Option("", prompt=True),
+    features: str = typer.Option(""),
+    camera: str = typer.Option("", prompt=True),
+    loaded_at: str = typer.Option(..., prompt=True),
+    keywords: str = typer.Option(""),
+) -> None:
+    """Проиндексировать папку пленки."""
+    folder = require_directory(folder, "Папка не найдена:")
+    save_roll_index(
+        folder=folder,
+        film=film,
+        features=parse_csv(features),
+        camera=camera,
+        loaded_at=loaded_at,
+        keywords=parse_csv(keywords),
+    )
+
+    typer.echo(Msg.INDEX_DONE)
+
+
+@app.command("vocab")
+def vocab() -> None:
+    """Показать справочники."""
+    typer.echo(Msg.VOCAB_FILMS)
+    for film in FILMS.read():
+        typer.echo(f"- {film}")
+
+    typer.echo(f"\n{Msg.VOCAB_CAMERAS}")
+    for camera in CAMERAS.read():
+        typer.echo(f"- {camera}")
+
+    typer.echo(f"\n{Msg.VOCAB_FEATURES}")
+    for feature in FEATURES.read():
+        typer.echo(f"- {feature}")
+
+    typer.echo(f"\n{Msg.VOCAB_KEYWORDS}")
+    for keyword in KEYWORDS.read():
+        typer.echo(f"- {keyword}")

@@ -2,8 +2,10 @@ from pathlib import Path
 
 INDEX_FILE_NAME = "roll.toml"
 
-def is_indexed(folder: Path) -> bool:
+def get_index_file(folder: Path) -> Path:
+    return folder / INDEX_FILE_NAME
 
+def is_indexed(folder: Path) -> bool:
     return (folder / INDEX_FILE_NAME).exists()
 
 def find_unindexed_folders(archive: Path) -> list[Path]:
