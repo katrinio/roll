@@ -3,12 +3,10 @@ from pathlib import Path
 import typer
 import yaml
 
+from roll.config import CONFIG_DIR, CONFIG_FILE, load_config, save_config, Config
+from roll.formatting import highlight_command_names
+
 app = typer.Typer(help="Личный индекс пленок.")
-
-
-CONFIG_DIR = Path.home() / ".config" / "roll"
-CONFIG_FILE = CONFIG_DIR / "config.yaml"
-
 
 @app.command("init")
 def init(
@@ -30,12 +28,7 @@ def init(
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    config = {
-        "archive": str(archive),
-    }
-
-    with CONFIG_FILE.open("w", encoding="utf-8") as file:
-        yaml.safe_dump(config, file, allow_unicode=True, sort_keys=False)
+    save_config(Config(archive=archive))
 
     typer.echo("roll initialized")
     typer.echo(f"Archive: {archive}")
@@ -45,3 +38,19 @@ def init(
 def search(query: str) -> None:
     """Искать пленку по ключевым словам."""
     typer.echo(f"Search is not implemented yet: {query}")
+
+@app.command("config")
+def config() -> None:
+    """Показать текущую конфигурацию."""
+    try:
+        config = load_config()
+    except FileNotFoundError:
+        typer.echo(highlight_command_names("roll не инициализирован."))
+        typer.echo("")
+        typer.echo("Запусти:")
+        typer.echo(highlight_command_names("  rl init ~/Pictures/plenka"))
+        raise typer.Exit(code=1)
+
+    typer.echo("Configuration")
+    typer.echo("")
+    typer.echo(f"Archive: {config.archive}")
