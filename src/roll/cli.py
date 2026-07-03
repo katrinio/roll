@@ -10,6 +10,7 @@ from roll.helpers.guards import require_archive, require_config, require_directo
 from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.helpers.parsing import parse_csv
 from roll.app.index import save_roll_index
+from roll.app.stock import app as stock_app
 from roll.messages import Msg
 from roll.app.normalization import (
     apply_normalization_plans,
@@ -21,6 +22,7 @@ from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
 
 app = typer.Typer(help="Личный индекс пленок.")
+app.add_typer(stock_app, name="stock")
 
 
 @app.command("init")

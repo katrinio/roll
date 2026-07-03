@@ -1,0 +1,38 @@
+
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
+
+from roll.dictionaries import Dictionary
+
+
+def autocomplete_prompt(title: str, dictionary: Dictionary) -> str:
+    while True:
+        value = prompt(f"{title}: ", completer=_completer(dictionary), complete_while_typing=True).strip()
+
+        if not value:
+            continue
+
+        existing = _existing_value(dictionary, value)
+        if existing is not None:
+            return existing
+
+        if _confirm_missing(value):
+            return dictionary.add(value)
+
+
+def _completer(dictionary: Dictionary) -> FuzzyCompleter:
+    return FuzzyCompleter(
+        WordCompleter(dictionary.read(), ignore_case=True, sentence=True, match_middle=True)
+    )
+
+
+def _existing_value(dictionary: Dictionary, candidate: str) -> str | None:
+    for value in dictionary.read():
+        if value.casefold() == candidate.casefold():
+            return value
+    return None
+
+
+def _confirm_missing(value: str) -> bool:
+    answer = prompt(f"'{value}' отсутствует в словаре.\n\nДобавить? [Y/n] ").strip().casefold()
+    return answer in ("", "y", "yes", "д", "да")
