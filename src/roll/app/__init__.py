@@ -1,3 +1,7 @@
+"""Re-export core application modules."""
+
+# ruff: noqa: F401
+
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, read_config_data, save_config
 from roll.app.diagnostics import DoctorIssue, DoctorReport, run_doctor
 from roll.app.normalization import (
