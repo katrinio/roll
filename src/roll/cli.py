@@ -7,11 +7,12 @@ from roll.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_confi
 from roll.diagnostics import run_doctor
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
+from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.helpers.parsing import parse_csv
 from roll.index import save_roll_index
 from roll.messages import Msg
 from roll.normalization import (
-    apply_normalization_plan,
+    apply_normalization_plans,
     build_normalization_plan,
     print_normalization_plan,
 )
@@ -39,18 +40,14 @@ def init(archive: Path = typer.Argument(..., help="Путь к архиву пл
     workspace.ensure_structure()
 
     typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
-    typer.echo(f"Archive: {archive}")
-    typer.echo(f"Config:  {CONFIG_FILE}")
+    echo_lines([f"Archive: {archive}", f"Config:  {CONFIG_FILE}"])
 
 
 @app.command("config")
 def config() -> None:
     """Показать текущую конфигурацию."""
     config = require_config()
-    typer.echo(Msg.CONFIG_HEADER)
-    typer.echo("")
-    for archive in config.archives:
-        typer.echo(f"{Msg.ARCHIVE_HEADER} {archive}")
+    echo_section(Msg.CONFIG_HEADER, [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives])
 
 
 @app.command("scan")
@@ -62,14 +59,11 @@ def scan() -> None:
         typer.echo(f"{Msg.ARCHIVE_MISSING} {archive}")
         raise typer.Exit(code=1)
 
-    typer.echo(Msg.ARCHIVE_HEADER)
-    typer.echo(str(archive))
-    typer.echo("")
+    echo_section(Msg.ARCHIVE_HEADER, [str(archive)])
 
     roll_folders = find_roll_folders(archive)
     typer.echo("Found roll folders:")
-    for roll_dir in roll_folders:
-        typer.echo(f"- {roll_dir.relative_to(archive)}")
+    echo_list((roll_dir.relative_to(archive) for roll_dir in roll_folders))
 
 
 @app.command("status")
@@ -80,17 +74,19 @@ def status() -> None:
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
 
-    typer.echo(Msg.STATUS_HEADER)
-    typer.echo("")
-    typer.echo(f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}")
-    typer.echo(f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}")
-    typer.echo(f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}")
+    echo_lines(
+        [
+            Msg.STATUS_HEADER,
+            "",
+            f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}",
+            f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}",
+            f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}",
+        ]
+    )
 
     if unindexed_folders:
-        typer.echo("")
-        typer.echo(Msg.STATUS_UNINDEXED_FOLDERS)
-        for folder in unindexed_folders:
-            typer.echo(f"- {folder.relative_to(archive)}")
+        echo_lines(["", Msg.STATUS_UNINDEXED_FOLDERS])
+        echo_list((folder.relative_to(archive) for folder in unindexed_folders))
 
 
 @app.command("index")
@@ -123,21 +119,13 @@ def vocab() -> None:
     archive = require_archive(require_config())
     vocab = archive_vocabulary(archive)
 
-    typer.echo(Msg.VOCAB_FILMS)
-    for film in vocab["films"].read():
-        typer.echo(f"- {film}")
-
-    typer.echo(f"\n{Msg.VOCAB_CAMERAS}")
-    for camera in vocab["cameras"].read():
-        typer.echo(f"- {camera}")
-
-    typer.echo(f"\n{Msg.VOCAB_FEATURES}")
-    for feature in vocab["features"].read():
-        typer.echo(f"- {feature}")
-
-    typer.echo(f"\n{Msg.VOCAB_KEYWORDS}")
-    for keyword in vocab["keywords"].read():
-        typer.echo(f"- {keyword}")
+    for title, items in (
+        (Msg.VOCAB_FILMS, vocab["films"].read()),
+        (Msg.VOCAB_CAMERAS, vocab["cameras"].read()),
+        (Msg.VOCAB_FEATURES, vocab["features"].read()),
+        (Msg.VOCAB_KEYWORDS, vocab["keywords"].read()),
+    ):
+        echo_section(title, [f"- {item}" for item in items])
 
 
 @app.command("search")
@@ -150,12 +138,10 @@ def search(query: str) -> None:
         typer.echo("Ничего не найдено.")
         return
 
-    typer.echo("Найдено:")
-    typer.echo("")
+    echo_lines(["Найдено:", ""])
 
     for roll in results:
-        typer.echo(f"{roll.loaded_at} — {roll.film}")
-        typer.echo(f"Камера: {roll.camera}")
+        echo_lines([f"{roll.loaded_at} — {roll.film}", f"Камера: {roll.camera}"])
 
         if roll.features:
             typer.echo(f"Особенности: {', '.join(roll.features)}")
@@ -163,8 +149,7 @@ def search(query: str) -> None:
         if roll.keywords:
             typer.echo(f"Ключевые слова: {', '.join(roll.keywords)}")
 
-        typer.echo(f"Папка: {roll.folder}")
-        typer.echo("")
+        echo_lines([f"Папка: {roll.folder}", ""])
 
 
 @app.command("doctor")
@@ -181,9 +166,14 @@ def doctor() -> None:
         typer.echo(Msg.DOCTOR_OK)
         return
 
-    for issue in report.issues:
-        prefix = Msg.DOCTOR_ERROR_PREFIX if issue.level == "error" else Msg.DOCTOR_WARN_PREFIX
-        typer.echo(highlight_cli_names(f"{prefix} {issue.message}"))
+    echo_lines(
+        [
+            highlight_cli_names(
+                f"{Msg.DOCTOR_ERROR_PREFIX if issue.level == 'error' else Msg.DOCTOR_WARN_PREFIX} {issue.message}"
+            )
+            for issue in report.issues
+        ]
+    )
 
     if report.has_errors:
         raise typer.Exit(code=1)
@@ -199,23 +189,18 @@ def normalize() -> None:
     has_changes = any(plan.has_changes for plan in plans)
 
     for plan in plans:
-        typer.echo(f"{Msg.ARCHIVE_HEADER} {plan.archive}")
-        for line in print_normalization_plan(plan):
-            typer.echo(line)
-        typer.echo("")
+        echo_lines([f"{Msg.ARCHIVE_HEADER} {plan.archive}", *print_normalization_plan(plan), ""])
 
     if not has_changes:
         return
 
     all_conflicts = [conflict for plan in plans for conflict in plan.conflicts]
     if all_conflicts:
-        typer.echo("Обнаружены конфликты:")
-        for conflict in all_conflicts:
-            typer.echo(f"- {conflict}")
+        echo_lines(["Обнаружены конфликты:"])
+        echo_list(all_conflicts)
         raise typer.Exit(code=1)
 
     if not typer.confirm(f"Переименовать {total_rules} папок?", default=False):
         return
 
-    for plan in plans:
-        apply_normalization_plan(plan)
+    apply_normalization_plans(plans)

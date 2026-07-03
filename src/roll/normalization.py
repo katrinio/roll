@@ -7,6 +7,7 @@ import re
 import tomllib
 
 from roll.archive import find_roll_folders, get_index_file
+from roll.messages import Normalize
 
 
 @dataclass(frozen=True)
@@ -73,9 +74,9 @@ def build_normalization_plan(archive: Path) -> NormalizationPlan:
 
 
 def print_normalization_plan(plan: NormalizationPlan) -> list[str]:
-    lines = ["Archive normalization"]
+    lines = [Normalize.HEADER]
     if not plan.rules:
-        lines.append("Archive is already normalized.")
+        lines.append(Normalize.ALREADY_NORMALIZED)
         return lines
 
     for rule in plan.rules:
@@ -86,38 +87,46 @@ def print_normalization_plan(plan: NormalizationPlan) -> list[str]:
 
 
 def apply_normalization_plan(plan: NormalizationPlan) -> None:
-    if not plan.is_safe:
+    apply_normalization_plans([plan])
+
+
+def apply_normalization_plans(plans: list[NormalizationPlan]) -> None:
+    if any(not plan.is_safe for plan in plans):
         raise ValueError("Normalization plan has conflicts.")
 
-    if not plan.rules:
+    all_rules: list[tuple[Path, Path, Path]] = []
+    for plan in plans:
+        for index, rule in enumerate(plan.rules):
+            temp_path = rule.folder.with_name(f".normalize-{index}-{rule.folder.name}")
+            all_rules.append((rule.folder, temp_path, rule.target))
+
+    if not all_rules:
         return
 
-    temp_rules: list[tuple[Path, Path, Path]] = []
-    for index, rule in enumerate(plan.rules):
-        temp_path = rule.folder.with_name(f".normalize-{index}-{rule.folder.name}")
-        temp_rules.append((rule.folder, temp_path, rule.target))
-
+    renamed_to_temp: list[tuple[Path, Path, Path]] = []
     try:
-        for source, temp_path, _ in temp_rules:
+        for source, temp_path, target in sorted(all_rules, key=lambda item: len(item[0].parts), reverse=True):
             os.replace(source, temp_path)
-        for _, temp_path, target in temp_rules:
+            renamed_to_temp.append((source, temp_path, target))
+        for _, temp_path, target in all_rules:
             os.replace(temp_path, target)
     except Exception:
-        for source, temp_path, target in reversed(temp_rules):
+        for source, temp_path, _ in reversed(renamed_to_temp):
             if temp_path.exists() and not source.exists():
                 os.replace(temp_path, source)
-            if target.exists() and not source.exists():
-                os.replace(target, source)
         raise
 
 
 def _detect_conflicts(rules: list[RenameRule]) -> list[str]:
     conflicts: list[str] = []
     targets: dict[Path, Path] = {}
+    sources = {rule.folder for rule in rules}
 
     for rule in rules:
         if rule.target.exists() and rule.target != rule.folder:
             conflicts.append(f"Target already exists: {rule.target}")
+        if rule.target in sources and rule.target != rule.folder:
+            conflicts.append(f"Target collides with source: {rule.target}")
         if rule.target in targets and targets[rule.target] != rule.folder:
             conflicts.append(f"Duplicate target: {rule.target}")
         targets[rule.target] = rule.folder
