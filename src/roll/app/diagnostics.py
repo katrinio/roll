@@ -7,6 +7,7 @@ import tomllib
 
 from roll.archive import find_roll_folders, get_index_file, find_unindexed_folders
 from roll.app.config import Config
+from roll.app.normalization import build_normalization_plan, build_safe_rename_plan
 from roll.messages import Doctor
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
@@ -28,6 +29,7 @@ class DoctorIssue:
 @dataclass(frozen=True)
 class DoctorReport:
     issues: list[DoctorIssue]
+    fixable: list[str]
 
     @property
     def has_errors(self) -> bool:
@@ -36,15 +38,21 @@ class DoctorReport:
 
 def run_doctor(config: Config) -> DoctorReport:
     issues: list[DoctorIssue] = []
+    fixable: list[str] = []
 
     if not config.archives:
         issues.append(DoctorIssue(DoctorText.ERROR, Doctor.NO_ARCHIVES))
-        return DoctorReport(issues=issues)
+        return DoctorReport(issues=issues, fixable=fixable)
 
     for archive in config.archives:
         issues.extend(_check_archive(archive))
+        plan = build_safe_rename_plan(archive)
+        fixable.extend(
+            f"{rule.folder.relative_to(archive)} -> {rule.target.relative_to(archive)}"
+            for rule in plan.rules
+        )
 
-    return DoctorReport(issues=issues)
+    return DoctorReport(issues=issues, fixable=fixable)
 
 
 def _check_archive(archive: Path) -> list[DoctorIssue]:

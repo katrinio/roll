@@ -41,6 +41,10 @@ class NamingStrategy:
     def is_normalized(folder: Path, loaded_at: str) -> bool:
         return folder.name == NamingStrategy.build_folder_name(loaded_at)
 
+    @staticmethod
+    def build_safe_folder_name(name: str) -> str:
+        return name.replace(".", "-")
+
 
 def build_normalization_plan(archive: Path) -> NormalizationPlan:
     rules: list[RenameRule] = []
@@ -66,6 +70,29 @@ def build_normalization_plan(archive: Path) -> NormalizationPlan:
 
         target = folder.with_name(target_name)
         rules.append(RenameRule(folder=folder, target=target))
+
+    conflicts.extend(_detect_conflicts(rules))
+    return NormalizationPlan(archive=archive, rules=rules, conflicts=conflicts)
+
+
+def build_safe_rename_plan(archive: Path) -> NormalizationPlan:
+    rules: list[RenameRule] = []
+    conflicts: list[str] = []
+
+    for year_dir in archive.iterdir():
+        if not year_dir.is_dir() or not year_dir.name.isdigit() or len(year_dir.name) != 4:
+            continue
+        for roll_dir in year_dir.iterdir():
+            if not roll_dir.is_dir():
+                continue
+            target_name = NamingStrategy.build_safe_folder_name(roll_dir.name)
+            if target_name == roll_dir.name:
+                continue
+            target = roll_dir.with_name(target_name)
+            if target.exists():
+                conflicts.append(f"Target already exists: {target}")
+                continue
+            rules.append(RenameRule(folder=roll_dir, target=target))
 
     conflicts.extend(_detect_conflicts(rules))
     return NormalizationPlan(archive=archive, rules=rules, conflicts=conflicts)
@@ -148,5 +175,4 @@ def _date_part(loaded_at: str) -> str:
         return f"{match.group(1)}-{match.group(2)}"
 
     return value.replace(".", "-").replace("/", "-")
-
 
