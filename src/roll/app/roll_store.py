@@ -65,7 +65,21 @@ def update_roll_keywords(path: Path, keywords: list[str]) -> RollMetadata:
         camera=metadata.camera,
         loaded_at=metadata.loaded_at,
         features=metadata.features,
-        keywords=_merge_unique(metadata.keywords, keywords),
+        keywords=_merge_unique(metadata.keywords, keywords, normalize=str.upper),
+    )
+    save_roll_metadata(path, updated)
+    return updated
+
+
+def update_roll_features(path: Path, features: list[str]) -> RollMetadata:
+    metadata = load_roll_metadata(path)
+    updated = RollMetadata(
+        status=metadata.status,
+        film=metadata.film,
+        camera=metadata.camera,
+        loaded_at=metadata.loaded_at,
+        features=_merge_unique(metadata.features, features),
+        keywords=metadata.keywords,
     )
     save_roll_metadata(path, updated)
     return updated
@@ -107,9 +121,10 @@ def _format_array(values: list[str]) -> str:
     return "[" + ", ".join(f'"{item}"' for item in values) + "]"
 
 
-def _merge_unique(existing: list[str], new_values: list[str]) -> list[str]:
+def _merge_unique(existing: list[str], new_values: list[str], normalize=lambda value: value) -> list[str]:
     merged: list[str] = []
     for value in [*existing, *new_values]:
-        if value not in merged:
-            merged.append(value)
+        normalized = normalize(value)
+        if normalized not in [normalize(item) for item in merged]:
+            merged.append(normalized)
     return merged

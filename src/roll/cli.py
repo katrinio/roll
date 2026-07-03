@@ -4,8 +4,14 @@ import typer
 
 from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
-from roll.app.diagnostics import run_doctor
-from roll.app.roll_store import load_roll_metadata, update_roll_keywords
+from roll.app.diagnostics import Doctor, run_doctor
+from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
+from roll.app.normalization import (
+    apply_normalization_plans,
+    build_normalization_plan,
+    build_safe_rename_plan,
+    print_normalization_plan,
+)
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
@@ -13,11 +19,6 @@ from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.app.stock import app as stock_app
 from roll.app.stock import load as load_roll
 from roll.messages import Msg
-from roll.app.normalization import (
-    apply_normalization_plans,
-    build_normalization_plan,
-    print_normalization_plan,
-)
 from roll.app.search import search_rolls
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
@@ -28,6 +29,25 @@ app.add_typer(stock_app, name="stock")
 
 tags_app = typer.Typer(help="Теги роллов.")
 app.add_typer(tags_app, name="tags")
+
+features_app = typer.Typer(help="Особенности роллов.")
+app.add_typer(features_app, name="features")
+
+
+DOCTOR_MESSAGE_PREFIXES = (
+    Msg.ARCHIVE_MISSING,
+    Doctor.WORKSPACE_MISSING,
+    Doctor.VOCAB_DIR_MISSING,
+    Doctor.VOCAB_FILE_MISSING,
+    Doctor.ROLL_UNREADABLE,
+    Doctor.REQUIRED_FIELD_MISSING,
+    Doctor.FILM_NOT_IN_VOCAB,
+    Doctor.CAMERA_NOT_IN_VOCAB,
+    Doctor.FEATURE_NOT_IN_VOCAB,
+    Doctor.KEYWORD_NOT_IN_VOCAB,
+    Doctor.SUSPICIOUS_YEAR,
+    Doctor.SUSPICIOUS_ROLL,
+)
 
 
 @app.command("init")
@@ -97,9 +117,9 @@ def status() -> None:
 
 
 @app.command("load")
-def load() -> None:
+def load(manual: bool = typer.Option(False, "--manual", help="Вводить пленку вручную через справочник.")) -> None:
     """Загрузить пленку из запаса в новый roll."""
-    load_roll()
+    load_roll(manual=manual)
 
 
 @app.command("vocab")
@@ -142,7 +162,10 @@ def search(query: str) -> None:
 
 
 @app.command("doctor")
-def doctor() -> None:
+def doctor(
+    fix: bool = typer.Option(False, "--fix", help="Применить безопасные исправления."),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список безопасных исправлений."),
+) -> None:
     """Проверить целостность архива и конфигурации."""
     try:
         config = load_config()
@@ -151,21 +174,92 @@ def doctor() -> None:
     else:
         report = run_doctor(config)
 
-    if not report.issues:
-        typer.echo(Msg.DOCTOR_OK)
+    if not report.issues and not report.missing_rolls:
+        typer.echo(Doctor.OK)
         return
 
-    echo_lines(
-        [
-            highlight_cli_names(
-                f"{Msg.DOCTOR_ERROR_PREFIX if issue.level == 'error' else Msg.DOCTOR_WARN_PREFIX} {issue.message}"
-            )
-            for issue in report.issues
-        ]
-    )
+    error_groups: dict[str, list[str]] = {}
+    warning_groups: dict[str, list[str]] = {}
+    error_order: list[str] = []
+    warning_order: list[str] = []
 
-    if report.has_errors:
+    if report.missing_rolls:
+        _append_doctor_group(
+            error_groups,
+            error_order,
+            Doctor.ROLL_MISSING,
+            [str(path) for path in report.missing_rolls],
+        )
+
+    for issue in report.issues:
+        title, item = _split_doctor_message(issue.message)
+        if issue.level == "error":
+            _append_doctor_group(error_groups, error_order, title, [item])
+        else:
+            _append_doctor_group(warning_groups, warning_order, title, [item])
+
+    if error_order:
+        _echo_doctor_block(Doctor.ERROR_PREFIX, error_order, error_groups)
+    if warning_order:
+        if error_order:
+            typer.echo("")
+        _echo_doctor_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
+
+    if report.fixable:
+        echo_lines([""])
+        typer.echo(highlight_cli_names(f"Можно исправить: {len(report.fixable)}"))
+        items = report.fixable if verbose else report.fixable[:5]
+        echo_lines([f"  {item}" for item in items])
+        if not verbose and len(report.fixable) > 5:
+            typer.echo(f"  ... и еще {len(report.fixable) - 5}")
+        if not fix:
+            typer.echo("")
+            typer.echo("Запусти: rl doctor --fix")
+        else:
+            plans = [build_safe_rename_plan(archive) for archive in config.archives]
+            apply_normalization_plans(plans)
+            typer.echo("Исправления применены.")
+            if verbose:
+                for plan in plans:
+                    if plan.rules:
+                        echo_lines([""])
+                        echo_lines(print_normalization_plan(plan))
+
+    if error_order:
         raise typer.Exit(code=1)
+
+
+def _append_doctor_group(
+    groups: dict[str, list[str]],
+    order: list[str],
+    title: str,
+    items: list[str],
+) -> None:
+    if title not in groups:
+        groups[title] = []
+        order.append(title)
+    groups[title].extend(items)
+
+
+def _split_doctor_message(message: str) -> tuple[str, str]:
+    for prefix in DOCTOR_MESSAGE_PREFIXES:
+        if message.startswith(prefix):
+            item = message.removeprefix(prefix).strip()
+            return prefix, item
+    return message, ""
+
+
+def _echo_doctor_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
+    total = sum(len(groups[title]) for title in order)
+    typer.echo(highlight_cli_names(f"{prefix} {total}"))
+    for title in order:
+        items = groups[title]
+        typer.echo(f"  {_doctor_group_title(title)} {len(items)}")
+        echo_lines([f"    {item}" for item in items])
+
+
+def _doctor_group_title(title: str) -> str:
+    return title if title.endswith(":") else f"{title}:"
 
 
 @tags_app.command("add")
@@ -187,6 +281,27 @@ def add_tags() -> None:
         raise typer.Exit(code=1)
 
     typer.echo(f"Теги обновлены: {metadata.film}")
+
+
+@features_app.command("add")
+def add_features() -> None:
+    archive = require_archive(require_config())
+    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
+
+    if not rolls:
+        typer.echo("Нет роллов.")
+        raise typer.Exit(code=1)
+
+    selected = _choose_roll_folder(rolls)
+    workspace = workspace_for(archive)
+    features = autocomplete_many_prompt("Особенности", workspace.dictionary("features"))
+    try:
+        metadata = update_roll_features(selected / "roll.toml", features)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Особенности обновлены: {metadata.film}")
 
 
 @app.command("normalize")
