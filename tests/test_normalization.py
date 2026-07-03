@@ -147,7 +147,7 @@ class NormalizationTests(unittest.TestCase):
             self.assertTrue(any("Workspace config" in issue.message for issue in report.issues))
 
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
-        from roll.cli import _count_roll_statuses
+        from roll.app.stats import _count_statuses
 
         rolls = [
             RollIndex(Path("a"), "loaded", "", "", "", [], []),
@@ -156,7 +156,7 @@ class NormalizationTests(unittest.TestCase):
             RollIndex(Path("d"), "processed", "", "", "", [], []),
         ]
 
-        self.assertEqual(_count_roll_statuses(rolls), {"loaded": 1, "processed": 2, "failed": 1})
+        self.assertEqual(_count_statuses(rolls), {"loaded": 1, "processed": 2, "failed": 1})
 
     def test_build_archive_tree_lists_years_and_rolls(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

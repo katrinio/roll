@@ -1,10 +1,10 @@
 from pathlib import Path
-from collections import Counter
 
 import typer
 
 from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.app.batch import process_archives
 from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords, update_roll_status
 from roll.app.normalization import (
@@ -26,6 +26,7 @@ from roll.messages import Msg
 from roll.app.search import find_rolls, search_rolls
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
+from roll.app.stats import build_stats_report, _count_statuses
 
 app = typer.Typer(help="Личный индекс пленок.")
 app.add_typer(stock_app, name="stock")
@@ -118,7 +119,7 @@ def status() -> None:
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
     rolls = find_rolls(archive)
-    status_counts = _count_roll_statuses(rolls)
+    status_counts = _count_statuses(rolls)
 
     echo_lines(
         [
@@ -148,36 +149,27 @@ def stats(
 ) -> None:
     """Показать статистику по архиву."""
     archive = require_archive(require_config())
-    rolls = find_rolls(archive)
+    report = build_stats_report(archive, year)
 
-    if year:
-        rolls = [roll for roll in rolls if roll.loaded_at.startswith(f"{year}-")]
-
-    if not rolls:
+    if not report.roll_count:
         typer.echo("Нет данных для статистики.")
         return
 
-    film_counts = Counter(roll.film for roll in rolls)
-    tag_counts = Counter(tag for roll in rolls for tag in roll.keywords)
-    camera_counts = Counter(roll.camera for roll in rolls)
-    year_counts = Counter(roll.loaded_at[:4] for roll in rolls if roll.loaded_at)
-    status_counts = _count_roll_statuses(rolls)
-
     echo_lines([Msg.STATUS_HEADER, ""])
-    if year:
-        typer.echo(f"Год: {year}")
-    typer.echo(f"Роллов: {len(rolls)}")
-    typer.echo(f"Пленок в статистике: {len(film_counts)}")
-    typer.echo(f"Тегов в статистике: {len(tag_counts)}")
+    if report.year:
+        typer.echo(f"Год: {report.year}")
+    typer.echo(f"Роллов: {report.roll_count}")
+    typer.echo(f"Пленок в статистике: {report.film_count}")
+    typer.echo(f"Тегов в статистике: {report.tag_count}")
     typer.echo("")
 
     limit = None if verbose else 5
 
-    _echo_counter_block("По статусам", status_counts, limit=limit)
-    _echo_counter_block("По годам", year_counts, limit=limit)
-    _echo_counter_block("По пленкам", film_counts, limit=limit)
-    _echo_counter_block("По тегам", tag_counts, limit=limit)
-    _echo_counter_block("По камерам", camera_counts, limit=limit)
+    _echo_counter_block("По статусам", report.status_counts, limit=limit)
+    _echo_counter_block("По годам", report.year_counts, limit=limit)
+    _echo_counter_block("По пленкам", report.film_counts, limit=limit)
+    _echo_counter_block("По тегам", report.tag_counts, limit=limit)
+    _echo_counter_block("По камерам", report.camera_counts, limit=limit)
 
 
 @app.command("load")
@@ -345,14 +337,14 @@ def _doctor_group_title(title: str) -> str:
     return title if title.endswith(":") else f"{title}:"
 
 
-def _echo_counter_block(title: str, counter: Counter[str], limit: int | None = None) -> None:
+def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
     if not counter:
         return
 
     typer.echo(title)
     items = counter.most_common(limit)
-    width = _bar_width(Counter(dict(items)))
-    label_width = _label_width(Counter(dict(items)))
+    width = _bar_width(dict(items))
+    label_width = _label_width(dict(items))
     for name, count in items:
         typer.echo(f"  {name:<{label_width}}  {count:>4}  {_render_bar(count, width)}")
     if limit is not None and len(counter) > limit:
@@ -360,11 +352,11 @@ def _echo_counter_block(title: str, counter: Counter[str], limit: int | None = N
     typer.echo("")
 
 
-def _bar_width(counter: Counter[str]) -> int:
+def _bar_width(counter) -> int:
     return max(1, min(20, max(counter.values(), default=0)))
 
 
-def _label_width(counter: Counter[str]) -> int:
+def _label_width(counter) -> int:
     return max(24, max((len(name) for name in counter), default=0))
 
 
@@ -419,29 +411,7 @@ def add_features() -> None:
 @batch_app.command("process")
 def batch_process() -> None:
     config = require_config()
-    loaded_rolls: list[Path] = []
-
-    for archive in config.archives:
-        for roll in find_rolls(archive):
-            if roll.status == "loaded":
-                loaded_rolls.append(roll.folder)
-
-    if not loaded_rolls:
-        typer.echo("Нет loaded-роллов.")
-        return
-
-    typer.echo(f"Будет обработано: {len(loaded_rolls)}")
-    echo_list((str(path) for path in loaded_rolls))
-
-    if not typer.confirm("Пометить все как processed?", default=False):
-        return
-
-    changed = 0
-    for folder in loaded_rolls:
-        update_roll_status(folder / "roll.toml", "processed")
-        changed += 1
-
-    typer.echo(f"Обработано: {changed}")
+    process_archives(config.archives)
 
 
 @app.command("normalize")
@@ -501,11 +471,3 @@ def _roll_status(path: Path) -> str:
         return load_roll_metadata(path / "roll.toml").status
     except ValueError:
         return "unknown"
-
-
-def _count_roll_statuses(rolls) -> Counter[str]:
-    counts = Counter({"loaded": 0, "processed": 0, "failed": 0})
-    for roll in rolls:
-        if roll.status in counts:
-            counts[roll.status] += 1
-    return counts
