@@ -1,57 +1,74 @@
 # Model
 
-Проект разделен на три уровня:
+Проект разделен на три уровня: global config → archive workspace → roll.
+
+```
+~/.config/roll/config.toml         1. global config — список архивов
+        │
+        ▼
+~/Pictures/plenka/                  архив
+├── .roll/                         2. workspace
+│   ├── config.toml
+│   ├── stock.toml                    запас пленки, отдельно от roll.toml
+│   └── vocabulary/
+│       ├── films.txt
+│       ├── cameras.txt
+│       ├── features.txt
+│       └── keywords.txt
+└── 2026/
+    └── 07-03/                     3. roll
+        └── roll.toml
+```
 
 ## 1. Global config
 
-Глобальная конфигурация приложения живет в:
-
-```text
-~/.config/roll/config.toml
-```
-
+Глобальная конфигурация приложения живет в `~/.config/roll/config.toml`.
 Она знает только список архивов.
 
 ## 2. Archive workspace
 
-У каждого архива есть свой workspace:
-
-```text
-~/Pictures/plenka/.roll/
-```
-
-Внутри лежат:
+У каждого архива есть свой workspace — `<архив>/.roll/`. Внутри:
 - `config.toml`
-- `stock.toml`
-- `vocabulary/films.txt`
-- `vocabulary/cameras.txt`
-- `vocabulary/features.txt`
-- `vocabulary/keywords.txt`
+- `stock.toml` — запас пленки
+- `vocabulary/{films,cameras,features,keywords}.txt`
 
 ## 3. Roll
 
-Один roll хранится в отдельной папке внутри архива:
+Один roll хранится в отдельной папке внутри архива, например `2026/07-03/`.
+Внутри лежит `roll.toml`. Минимальное состояние roll:
 
-```text
-2026/05-12/
-```
-
-Внутри лежит `roll.toml` с метаданными этой пленки.
-Минимальное состояние roll:
-
-- `status = "loaded"`
+- `status` — один из `loaded`, `processed`, `failed` (см. `roll.app.statuses.VALID_STATUSES`)
 - `film`
 - `camera`
 - `loaded_at`
+- `features`, `keywords` — пока всегда пустые: команды, которая бы их заполняла после создания roll, еще нет
+
+### Жизненный цикл ролла
+
+```
+[ запас ]  --rl stock add-->  лежит в stock.toml
+              │
+           rl load
+              ▼
+[ loaded ]   roll.toml создан
+              │
+       ┌──────┴──────┐
+  rl stock       rl stock
+  process          failed
+       ▼              ▼
+[ processed ]    [ failed ]
+```
+
+Переход по циклу — ручной и однонаправленный: обратно в `loaded` roll не возвращается.
 
 ## Команды
 
 - `rl init` — зарегистрировать архив и создать workspace;
 - `rl stock add` — добавить пленку в запас;
 - `rl stock list` — показать текущий запас пленки;
-- `rl load` — взять одну пленку из запаса и создать новый roll;
-- `rl process` — пометить roll как обработанную;
-- `rl failed` — пометить roll как испорченную;
+- `rl load` (= `rl stock load`) — взять одну пленку из запаса и создать новый roll;
+- `rl stock process` — пометить `loaded` roll как обработанную;
+- `rl stock failed` — пометить `loaded` roll как испорченную;
 - `rl search` — искать по уже известным данным;
 - `rl scan` — показать структуру архива;
 - `rl status` — показать состояние индекса;
@@ -67,6 +84,6 @@
 - новые значения пополняют словари автоматически;
 - запас пленки хранится в workspace, отдельно от `roll.toml`;
 - пленка попадает в roll только после загрузки в камеру;
-- roll начинается как `loaded` и позже может быть помечен как `processed` или `failed`;
+- roll начинается как `loaded` и переходит в `processed` или `failed`, дальше не меняется;
 - нормализация не меняет `roll.toml`;
 - до изменения диска сначала строится план.

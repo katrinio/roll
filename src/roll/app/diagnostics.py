@@ -135,7 +135,7 @@ def _check_unindexed(archive: Path) -> list[DoctorIssue]:
 def _check_naming(archive: Path) -> list[DoctorIssue]:
     issues: list[DoctorIssue] = []
     year_pattern = re.compile(r"^\d{4}$")
-    roll_pattern = re.compile(r"^e\d+$", re.IGNORECASE)
+    roll_pattern = re.compile(r"^\d{2}-\d{2}$")
 
     for year_dir in archive.iterdir():
         if not year_dir.is_dir():
