@@ -1,6 +1,6 @@
 # Development
 
-Короткая рабочая инструкция для локальной разработки.
+A working guide for local development. Architecture and commands — see [model.md](model.md), terms — see [glossary.md](glossary.md).
 
 ## Setup
 
@@ -10,7 +10,7 @@ source .venv/bin/activate
 pip install -e '.[dev]'
 ```
 
-Если `.venv` уже есть, обычно достаточно:
+If `.venv` already exists, this is usually enough:
 
 ```bash
 pip install -e '.[dev]'
@@ -23,7 +23,7 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-`pre-commit` использует тот же `ruff`, что и CI.
+`pre-commit` uses the same `ruff` as CI.
 
 ## Checks
 
@@ -45,14 +45,14 @@ rl stats 2026
 rl stats -v
 ```
 
-`rl load` работает от `stock.toml`, а `rl load --manual` позволяет создать roll по словарю пленок, не уменьшая stock.
+`rl load` works off `stock.toml`, while `rl load --manual` lets you create a roll from the film dictionary without touching stock.
 
-Для `rl features add` и `rl tags add` можно вводить несколько значений через запятую. Автокомплит работает по каждому значению, дубликаты не записываются. Внутри значения допустим `_`.
+For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
 
 ## CI
 
-GitHub Actions запускает:
+GitHub Actions runs:
 - `ruff check .`
 - `python -m unittest discover -s tests`
 
-Workflow срабатывает на pull request и push в `main`.
+The workflow triggers on pull requests and pushes to `main`.

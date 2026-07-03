@@ -1,109 +1,50 @@
-# Глоссарий
+# Glossary
 
-Этот документ фиксирует базовые понятия проекта. Если хочется добавить новую сущность или поле, сначала стоит понять, нельзя ли обойтись уже существующей моделью.
+Project concepts. File structure, code layout, and the full command list — see [model.md](model.md).
 
 ---
 
 ## Archive
 
-Папка с фотографическим архивом.
-
-```
-archive/
-├── .roll/              ← workspace
-└── 2026/07-03/roll.toml ← roll
-```
-
-Внутри архива лежат:
-- годы с роллами;
-- `.roll/` — workspace с локальной конфигурацией, запасом и словарями;
-- `roll.toml` у каждого загруженного ролла.
-
-`roll` не хранит данные архива у себя в коде. Приложение только знает, где лежит архив, и как с ним работать.
-
-## Filesystem
-
-Низкоуровневые функции работы с файловой структурой архива.
-
-Сейчас они живут в `src/roll/filesystem.py`.
+A folder with a film archive: years of rolls + `.roll/` (workspace). `roll` doesn't store archive data in code — it only knows where the archive is.
 
 ---
 
 ## Workspace
 
-Локальная область состояния внутри архива.
-
-Это `.roll/` и все, что внутри нее:
-- `config.toml`;
-- `stock.toml` — запас пленки (см. [[Stock]]);
-- `vocabulary/` — словари films, cameras, features, keywords.
-
-Workspace должен оставаться переносимым вместе с архивом.
+`.roll/` inside the archive: config, [[Stock]], and vocabularies. Should stay portable together with the archive.
 
 ---
 
 ## Stock
 
-Запас пленки, которая еще не заряжена в камеру.
-
-Хранится в `stock.toml` внутри workspace, отдельно от `roll.toml`: пока пленка в запасе, она не roll и не занимает папку в архиве.
-
-- `rl stock add` — добавить пленку в запас (название + количество);
-- `rl stock list` — показать текущий запас;
-- `rl load` — забрать одну штуку из запаса и создать новый roll;
-- `rl load --manual` — создать roll вручную по словарю пленок, не уменьшая stock.
-- `rl features add` — добавить особенности к roll;
-- `rl tags add` — добавить теги к roll.
+Film that hasn't been loaded into a camera yet. Stored in `stock.toml`, separate from `roll.toml`: while a film is in stock, it isn't a [[Roll]] yet and doesn't take up a folder in the archive. `rl load` decreases stock by one; `rl load --manual` creates a roll bypassing stock.
 
 ---
 
 ## Roll
 
-Одна отснятая пленка внутри архива.
-
-Это основная сущность проекта. У roll есть:
-- имя папки;
-- `status` (см. [[Status]]);
-- `film`;
-- `camera`;
-- `loaded_at`;
-- необязательные `features`;
-- необязательные `keywords`.
-
-`features`/`keywords` уже есть в формате `roll.toml`. Их в CLI редактируют отдельные команды: `rl features add` и `rl tags add`.
+One exposed roll of film. Fields and their requirements — see [model.md](model.md#roll). `features`/`keywords` always start empty and get filled in later by separate commands.
 
 ---
 
 ## Status
 
-Состояние ролла. Ровно три значения, переход односторонний:
-
-```
-loaded → processed
-       → failed
-```
-
-- `loaded` — roll создан командой `rl load`, пленка в камере или ждет проявки;
-- `processed` — помечен командой `rl stock process`, съемка доведена до конца;
-- `failed` — помечен командой `rl stock failed`, пленка испорчена или не дошла до результата.
-
-Назад в `loaded` roll не возвращается.
+`loaded → processed | failed`. The transition is manual and one-way, never back. See [model.md](model.md#roll-lifecycle).
 
 ---
 
 ## Camera
 
-Камера, в которой была заряжена пленка.
+The camera a film was loaded into.
 
 ---
 
 ## Film
 
-Тип пленки.
+The film stock type. Lives in the `vocabulary/films.txt` dictionary — used for autocomplete, grows with new values after confirmation.
 
-Пленки живут в словаре `vocabulary/films.txt`. Этот словарь используется для автокомплита и ручного режима `rl load --manual`, а также пополняется новыми значениями, если пользователь подтверждает добавление.
-
-Примеры:
+Examples:
 - Kodak Gold 200
 - Kodak ColorPlus 200
 - Ilford HP5 Plus
@@ -113,111 +54,42 @@ loaded → processed
 
 ## Features
 
-Короткие характеристики съемки.
+Short, reusable characteristics of a shoot that narrow down a search. Entered comma-separated (`rl features add`), autocomplete per value, duplicates aren't written, `_` is allowed inside a value.
 
-Это отдельные, повторно используемые значения, которые помогают уточнить поиск.
-
-В CLI `features` можно вводить через запятую. Автокомплит работает по каждому значению, дубликаты не записываются. Внутри значения допустим `_`.
-
-Примеры:
-- redscale
-- push +1
-- push +2
-- expired
+Examples: `redscale`, `push +1`, `push +2`, `expired`.
 
 ---
 
 ## Keywords
 
-Ключевые слова для поиска по памяти, которые в CLI называются тегами.
+Called "tags" in the CLI. Keywords for finding a roll from memory: short, no long descriptions, written the way you'd later search for them. Entered comma-separated (`rl tags add`), stored in uppercase.
 
-Правила простые:
-- коротко;
-- без длинных описаний;
-- писать так, как потом будешь искать.
-
-В CLI теги тоже можно вводить через запятую. Автокомплит работает по каждому значению, дубликаты не записываются. Внутри значения допустим `_`.
-
-Редактируются отдельной командой `rl tags add`.
-
-Примеры:
-- pizza
-- balcony
-- evening
-- belgrade
+Examples: `pizza`, `balcony`, `evening`, `belgrade`.
 
 ---
 
 ## Loaded at
 
-Дата зарядки пленки.
+The date a film was loaded into the camera.
 
-Это базовая дата, от которой строится имя папки и часть нормализации.
+This is the base date that the folder name and part of normalization are built from.
 
 ---
 
 ## Normalize
 
-Команда, которая приводит имена папок к единому виду.
-
-Сама команда не меняет `roll.toml`. Она только предлагает безопасные переименования и применяет их после подтверждения.
-
-Флаг `--tags` нормализует `keywords` в uppercase и в `roll.toml`, и в словаре.
+Brings folder names to a consistent shape: builds a plan → asks for confirmation, doesn't touch `roll.toml`. With `--tags` — brings `keywords` to uppercase in both `roll.toml` and the vocabulary.
 
 ---
 
 ## Doctor
 
-Команда проверки целостности.
-
-Она показывает:
-- есть ли глобальный конфиг;
-- существуют ли архивы;
-- есть ли `.roll/` и словари;
-- читаются ли `roll.toml`;
-- не расходятся ли данные со словарями;
-- есть ли подозрительные папки;
-- есть ли не проиндексированные папки.
-
-`rl doctor` показывает не проиндексированные папки, а также сколько safe fixes доступно. `rl doctor --fix` применяет только безопасные переименования, `-v` раскрывает полный список правок.
-
-## Messages
-
-Короткие user-facing строки для CLI.
-
-Они сгруппированы по зонам в `src/roll/messages/`:
-- `cli.py`
-- `doctor.py`
-- `normalize.py`
+Integrity check: global config, archives, `.roll/` and vocabularies, whether `roll.toml` files are readable, mismatches with vocabularies, suspicious and unindexed folders. `--fix` only applies safe renames, `-v` shows the full list of fixes.
 
 ---
 
 ## Principle
 
-Пользователь вводит только то, что нельзя определить автоматически.
+The user only enters what can't be figured out automatically. Everything else comes from the filesystem or is computed.
 
-Все, что можно прочитать из файловой системы или вычислить из уже известных данных, должно делаться автоматически.
-
----
-
-## Tests
-
-Набор проверок проекта лежит в `tests/`.
-
-Сейчас там есть:
-- точечные unit-тесты на storage и normalization;
-- smoke-тесты на CLI help;
-- запуск через `python -m unittest discover -s tests`.
-
----
-
-## Ruff
-
-Легкий линтер и formatter для разработки.
-
-Используется:
-- в `.pre-commit-config.yaml`;
-- в GitHub Actions;
-- как `dev`-зависимость.
-
-См. также [docs/development.md](development.md).
+Code, tests, and CI — see [docs/development.md](development.md).

@@ -1,80 +1,34 @@
-## roll
+# MVP
 
-<div align="center">
-  <img src="docs/images/film.gif" width="300"/>
-</div>
+> Find the right roll from memory: a person, a place, an event, a mood — months later.
 
-Небольшой CLI для учета пленочной фотографии.
-
-`roll` помогает сопровождать пленку от покупки до места в архиве.
-
----
-
-## Зачем
-
-Спустя несколько месяцев уже сложно вспомнить:
-
-- какие пленки еще лежат дома;
-- что сейчас заряжено;
-- где искать нужную съемку;
-- какой камерой и пленкой она была снята.
-
-`roll` хранит эту информацию рядом с архивом и берет на себя повторяющиеся действия.
-
----
-
-## Идея
-
-- архив остается обычной папкой;
-- данные хранятся рядом с архивом;
-- все хранится в текстовых файлах;
-- приложение можно удалить без потери данных;
-- пользователь вводит только то, что нельзя определить автоматически.
-
----
-
-## Установка
+## Scenario
 
 ```bash
-pip install git+https://github.com/katrinio/roll.git
+rl init ~/Pictures/plenka   # once
+rl stock add                # bought a film → into stock
+rl load                     # loaded the camera → roll created, asks for tags/features
+rl stock process            # or: rl stock failed
+rl search kir balcony       # half a year later — found it
 ```
 
-или
+## Commands
 
-```bash
-uv tool install git+https://github.com/katrinio/roll.git
-```
+| Task | Command |
+|---|---|
+| Film stock | `stock add`, `stock list` |
+| Roll | `load` (`--manual` — without stock), `stock process`, `stock failed` |
+| Fill in a roll | `features add`, `tags add` |
+| Find / view | `search`, `scan`, `status`, `stats [-v]`, `vocab` |
+| Archive hygiene | `doctor [--fix] [-v]`, `normalize [--tags]` |
+| Batch | `batch process` |
 
----
+## Out of MVP scope
 
-## Быстрый старт
+sync between machines · cloud · web UI · migrating old formats · image processing
 
-```bash
-rl init ~/Pictures/plenka
-rl stock add
-rl load
-```
+First thing right after MVP: localization — CLI strings are RU-only today, English is next.
 
-После загрузки пленки создается новая папка съемки:
+## Rule
 
-```text
-2026/
-└── 05-12/
-    └── roll.toml
-```
-
-Позже, после получения сканов:
-
-```bash
-rl normalize
-```
-
-приведет архив к единому стилю именования.
-
----
-
-## Документация
-
-- `docs/model.md` — архитектура проекта.
-- `docs/glossary.md` — основные сущности.
-- `docs/mvp.md` — границы MVP.
+If it doesn't help find a roll from memory faster — it's out of MVP.
