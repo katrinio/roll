@@ -5,6 +5,8 @@ import typer
 from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.diagnostics import run_doctor
+from roll.app.roll_store import load_roll_metadata, update_roll_keywords
+from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
 from roll.helpers.output import echo_lines, echo_list, echo_section
@@ -22,6 +24,10 @@ from roll.app.workspace import workspace_for
 
 app = typer.Typer(help="Личный индекс пленок.")
 app.add_typer(stock_app, name="stock")
+
+
+tags_app = typer.Typer(help="Теги роллов.")
+app.add_typer(tags_app, name="tags")
 
 
 @app.command("init")
@@ -130,7 +136,7 @@ def search(query: str) -> None:
             typer.echo(f"Особенности: {', '.join(roll.features)}")
 
         if roll.keywords:
-            typer.echo(f"Ключевые слова: {', '.join(roll.keywords)}")
+            typer.echo(f"Теги: {', '.join(roll.keywords)}")
 
         echo_lines([f"Папка: {roll.folder}", ""])
 
@@ -162,6 +168,27 @@ def doctor() -> None:
         raise typer.Exit(code=1)
 
 
+@tags_app.command("add")
+def add_tags() -> None:
+    archive = require_archive(require_config())
+    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
+
+    if not rolls:
+        typer.echo("Нет роллов.")
+        raise typer.Exit(code=1)
+
+    selected = _choose_roll_folder(rolls)
+    workspace = workspace_for(archive)
+    tags = autocomplete_many_prompt("Теги", workspace.dictionary("keywords"))
+    try:
+        metadata = update_roll_keywords(selected / "roll.toml", tags)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Теги обновлены: {metadata.film}")
+
+
 @app.command("normalize")
 def normalize() -> None:
     """Привести архив к единому виду."""
@@ -187,3 +214,20 @@ def normalize() -> None:
         return
 
     apply_normalization_plans(plans)
+
+
+def _choose_roll_folder(rolls: list[Path]) -> Path:
+    labels = [f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})" for path in rolls]
+    selected_label = choice_prompt("Roll", labels)
+    for path in rolls:
+        label = f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
+        if label == selected_label:
+            return path
+    raise ValueError("Не удалось выбрать roll.")
+
+
+def _roll_status(path: Path) -> str:
+    try:
+        return load_roll_metadata(path / "roll.toml").status
+    except ValueError:
+        return "unknown"
