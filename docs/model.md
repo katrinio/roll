@@ -77,6 +77,7 @@
 - `rl stock failed` — пометить `loaded` roll как испорченную;
 - `rl features add` — добавить особенности к roll;
 - `rl tags add` — добавить теги к roll;
+- `rl batch process` — массово пометить старые loaded-роллы как processed;
 - `rl search` — искать по уже известным данным;
 - `rl scan` — показать структуру архива;
 - `rl status` — показать состояние индекса;

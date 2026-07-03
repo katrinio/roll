@@ -5,7 +5,7 @@ import typer
 from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.diagnostics import Doctor, run_doctor
-from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
+from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords, update_roll_status
 from roll.app.normalization import (
     apply_normalization_plans,
     apply_keyword_vocab_fixes,
@@ -36,6 +36,9 @@ app.add_typer(tags_app, name="tags")
 
 features_app = typer.Typer(help="Особенности роллов.")
 app.add_typer(features_app, name="features")
+
+batch_app = typer.Typer(help="Пакетные операции.")
+app.add_typer(batch_app, name="batch")
 
 
 DOCTOR_MESSAGE_PREFIXES = (
@@ -343,6 +346,34 @@ def add_features() -> None:
         raise typer.Exit(code=1)
 
     typer.echo(f"Особенности обновлены: {metadata.film}")
+
+
+@batch_app.command("process")
+def batch_process() -> None:
+    config = require_config()
+    loaded_rolls: list[Path] = []
+
+    for archive in config.archives:
+        for roll in find_rolls(archive):
+            if roll.status == "loaded":
+                loaded_rolls.append(roll.folder)
+
+    if not loaded_rolls:
+        typer.echo("Нет loaded-роллов.")
+        return
+
+    typer.echo(f"Будет обработано: {len(loaded_rolls)}")
+    echo_list((str(path) for path in loaded_rolls))
+
+    if not typer.confirm("Пометить все как processed?", default=False):
+        return
+
+    changed = 0
+    for folder in loaded_rolls:
+        update_roll_status(folder / "roll.toml", "processed")
+        changed += 1
+
+    typer.echo(f"Обработано: {changed}")
 
 
 @app.command("normalize")
