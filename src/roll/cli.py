@@ -5,13 +5,10 @@ import typer
 from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
 from roll.app.workspace.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.archive.batch import process_archives
-from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords, update_roll_status
+from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
 from roll.app.archive.normalization import (
     apply_normalization_plans,
-    apply_keyword_vocab_fixes,
     build_normalization_plan,
-    build_safe_rename_plan,
-    collect_keyword_vocab_fixes,
     normalize_keywords_in_archive,
     print_normalization_plan,
 )
@@ -23,6 +20,7 @@ from roll.app.flows.stock import app as stock_app
 from roll.app.flows.stock import load as load_roll
 from roll.messages import Msg
 from roll.app.archive.search import find_rolls, search_rolls
+from roll.app.archive.search_output import render_search_results
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
 from roll.app.archive.stats import build_stats_report, _count_statuses
@@ -188,18 +186,7 @@ def search(query: str | None = typer.Argument(None, help="Строка для п
         typer.echo("Ничего не найдено.")
         return
 
-    echo_lines(["Найдено:", ""])
-
-    for roll in results:
-        echo_lines([f"{roll.loaded_at} — {roll.film}", f"Камера: {roll.camera}"])
-
-        if roll.features:
-            typer.echo(f"Особенности: {', '.join(roll.features)}")
-
-        if roll.keywords:
-            typer.echo(f"Теги: {', '.join(roll.keywords)}")
-
-        echo_lines([f"Папка: {roll.folder}", ""])
+    render_search_results(results)
 
 
 @app.command("doctor")
