@@ -19,11 +19,12 @@ from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.app.flows.stock import app as stock_app
 from roll.app.flows.stock import load as load_roll
 from roll.messages import Msg
+from roll.app.archive.status_output import render_status_report
 from roll.app.archive.search import find_rolls, search_rolls
 from roll.app.archive.search_output import render_search_results
+from roll.app.archive.stats_output import render_stats_report
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
-from roll.app.archive.stats import build_stats_report, _count_statuses
 from roll.app.diagnostics.doctor_output import render_doctor
 
 app = typer.Typer(help="Личный индекс пленок.")
@@ -100,25 +101,7 @@ def status() -> None:
     rolls = find_rolls(archive)
     status_counts = _count_statuses(rolls)
 
-    echo_lines(
-        [
-            Msg.STATUS_HEADER,
-            "",
-            f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}",
-            f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}",
-            f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}",
-            "",
-            "Пленки по статусам:",
-            f"loaded: {status_counts.get('loaded', 0)}",
-            f"processed: {status_counts.get('processed', 0)}",
-            f"failed: {status_counts.get('failed', 0)}",
-            f"без roll.toml: {len(unindexed_folders)}",
-        ]
-    )
-
-    if unindexed_folders:
-        echo_lines(["", Msg.STATUS_UNINDEXED_FOLDERS])
-        echo_list((folder.relative_to(archive) for folder in unindexed_folders))
+    render_status_report(archive, roll_folders, unindexed_folders, status_counts)
 
 
 @app.command("stats")
@@ -128,27 +111,7 @@ def stats(
 ) -> None:
     """Показать статистику по архиву."""
     archive = require_archive(require_config())
-    report = build_stats_report(archive, year)
-
-    if not report.roll_count:
-        typer.echo("Нет данных для статистики.")
-        return
-
-    echo_lines([Msg.STATUS_HEADER, ""])
-    if report.year:
-        typer.echo(f"Год: {report.year}")
-    typer.echo(f"Роллов: {report.roll_count}")
-    typer.echo(f"Пленок в статистике: {report.film_count}")
-    typer.echo(f"Тегов в статистике: {report.tag_count}")
-    typer.echo("")
-
-    limit = None if verbose else 5
-
-    _echo_counter_block("По статусам", report.status_counts, limit=limit)
-    _echo_counter_block("По годам", report.year_counts, limit=limit)
-    _echo_counter_block("По пленкам", report.film_counts, limit=limit)
-    _echo_counter_block("По тегам", report.tag_counts, limit=limit)
-    _echo_counter_block("По камерам", report.camera_counts, limit=limit)
+    render_stats_report(archive, year, verbose)
 
 
 @app.command("load")
@@ -297,3 +260,19 @@ def _roll_status(path: Path) -> str:
         return load_roll_metadata(path / "roll.toml").status
     except ValueError:
         return "unknown"
+
+
+def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
+    if not counter:
+        return
+
+    typer.echo(title)
+    items = counter.most_common(limit)
+    width = _bar_width(dict(items))
+    label_width = _label_width(dict(items))
+    for name, count in items:
+        typer.echo(f"  {name:<{label_width}}  {count:>4}  {_render_bar(count, width)}")
+    if limit is not None and len(counter) > limit:
+        typer.echo(f"  ... и еще {len(counter) - limit}")
+    typer.echo("")
+
