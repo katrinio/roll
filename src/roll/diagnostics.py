@@ -31,7 +31,7 @@ def run_doctor(config: Config) -> DoctorReport:
     issues: list[DoctorIssue] = []
 
     if not config.archives:
-        issues.append(DoctorIssue("error", "Global config does not contain any archives."))
+        issues.append(DoctorIssue("error", Doctor.NO_ARCHIVES))
         return DoctorReport(issues=issues)
 
     for archive in config.archives:
@@ -44,7 +44,7 @@ def _check_archive(archive: Path) -> list[DoctorIssue]:
     issues: list[DoctorIssue] = []
 
     if not archive.exists():
-        return [DoctorIssue("error", f"Archive does not exist: {archive}")]
+        return [DoctorIssue("error", f"{Doctor.ARCHIVE_MISSING} {archive}")]
 
     workspace = workspace_for(archive)
     issues.extend(_check_workspace(workspace))
