@@ -4,7 +4,7 @@ import typer
 
 from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
-from roll.app.diagnostics import run_doctor
+from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_keywords
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
@@ -152,13 +152,13 @@ def doctor() -> None:
         report = run_doctor(config)
 
     if not report.issues:
-        typer.echo(Msg.DOCTOR_OK)
+        typer.echo(Doctor.OK)
         return
 
     echo_lines(
         [
             highlight_cli_names(
-                f"{Msg.DOCTOR_ERROR_PREFIX if issue.level == 'error' else Msg.DOCTOR_WARN_PREFIX} {issue.message}"
+                f"{Doctor.ERROR_PREFIX if issue.level == 'error' else Doctor.WARN_PREFIX} {issue.message}"
             )
             for issue in report.issues
         ]

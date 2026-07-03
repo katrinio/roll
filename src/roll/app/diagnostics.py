@@ -138,10 +138,8 @@ def _check_naming(archive: Path) -> list[DoctorIssue]:
     roll_pattern = re.compile(r"^\d{2}-\d{2}$")
 
     for year_dir in archive.iterdir():
-        if not year_dir.is_dir():
+        if not year_dir.is_dir() or not year_pattern.match(year_dir.name):
             continue
-        if not year_pattern.match(year_dir.name):
-            issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.SUSPICIOUS_YEAR} {year_dir.name}"))
         for roll_dir in year_dir.iterdir():
             if roll_dir.is_dir() and not roll_pattern.match(roll_dir.name):
                 issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.SUSPICIOUS_ROLL} {roll_dir.name}"))
