@@ -144,8 +144,12 @@ def vocab() -> None:
 
 
 @app.command("search")
-def search(query: str) -> None:
+def search(query: str | None = typer.Argument(None, help="Строка для поиска по памяти.")) -> None:
     """Искать пленки по памяти."""
+    if not query:
+        typer.echo("Нужно указать строку поиска. Пример: rl search kir")
+        raise typer.Exit(code=1)
+
     archive = require_archive(require_config())
     results = search_rolls(archive, query)
 
