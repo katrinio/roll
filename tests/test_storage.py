@@ -4,9 +4,9 @@ import tempfile
 from pathlib import Path
 import unittest
 
-from roll.app.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata, update_roll_features, update_roll_keywords
-from roll.app.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
-from roll.app.normalization import normalize_keywords_in_archive
+from roll.app.workspace.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata, update_roll_features, update_roll_keywords
+from roll.app.workspace.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
+from roll.app.archive.normalization import normalize_keywords_in_archive
 
 
 class StockStoreTests(unittest.TestCase):

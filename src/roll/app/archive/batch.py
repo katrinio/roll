@@ -2,8 +2,8 @@ from pathlib import Path
 
 import typer
 
-from roll.app.roll_store import update_roll_status
-from roll.app.search import find_rolls
+from roll.app.workspace.roll_store import update_roll_status
+from roll.app.archive.search import find_rolls
 from roll.helpers.output import echo_list
 
 

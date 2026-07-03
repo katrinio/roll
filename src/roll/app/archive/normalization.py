@@ -7,8 +7,8 @@ import re
 import tomllib
 
 from roll.archive import find_roll_folders, get_index_file
-from roll.app.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata
-from roll.app.workspace import workspace_for
+from roll.app.workspace.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata
+from roll.app.workspace.workspace import workspace_for
 from roll.messages import Normalize
 
 

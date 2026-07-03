@@ -4,18 +4,18 @@ import tempfile
 from pathlib import Path
 import unittest
 
-from roll.app.config import Config
-from roll.app.diagnostics import run_doctor
-from roll.app.normalization import (
+from roll.app.workspace.config import Config
+from roll.app.diagnostics.diagnostics import run_doctor
+from roll.app.archive.normalization import (
     NamingStrategy,
     apply_keyword_vocab_fixes,
     apply_normalization_plan,
     build_safe_rename_plan,
     collect_keyword_vocab_fixes,
 )
-from roll.app.search import RollIndex
+from roll.app.archive.search import RollIndex
 from roll.archive import build_archive_tree, count_photo_files
-from roll.app.roll_store import RollMetadata, save_roll_metadata
+from roll.app.workspace.roll_store import RollMetadata, save_roll_metadata
 
 
 class NormalizationTests(unittest.TestCase):
@@ -147,7 +147,7 @@ class NormalizationTests(unittest.TestCase):
             self.assertTrue(any("Workspace config" in issue.message for issue in report.issues))
 
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
-        from roll.app.stats import _count_statuses
+        from roll.app.archive.stats import _count_statuses
 
         rolls = [
             RollIndex(Path("a"), "loaded", "", "", "", [], []),

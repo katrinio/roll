@@ -8,7 +8,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 
 from roll.archive import find_roll_folders
-from roll.app.roll_store import (
+from roll.app.workspace.roll_store import (
     RollMetadata,
     load_roll_metadata,
     save_roll_metadata,
@@ -16,9 +16,9 @@ from roll.app.roll_store import (
     update_roll_keywords,
     update_roll_status,
 )
-from roll.app.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
-from roll.app.statuses import VALID_STATUSES
-from roll.app.workspace import workspace_for
+from roll.app.workspace.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
+from roll.app.workspace.statuses import VALID_STATUSES
+from roll.app.workspace.workspace import workspace_for
 from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_prompt, choice_prompt
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines

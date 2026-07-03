@@ -5,7 +5,7 @@ from pathlib import Path
 import tomllib
 import os
 
-from roll.app.statuses import VALID_STATUSES
+from roll.app.workspace.statuses import VALID_STATUSES
 
 
 @dataclass(frozen=True)

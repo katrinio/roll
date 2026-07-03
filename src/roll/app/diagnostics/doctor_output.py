@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from roll.app.config import Config, load_config
-from roll.app.diagnostics import Doctor, run_doctor
-from roll.app.normalization import apply_keyword_vocab_fixes, apply_normalization_plans, build_safe_rename_plan, collect_keyword_vocab_fixes, print_normalization_plan
+from roll.app.workspace.config import Config, load_config
+from roll.app.diagnostics.diagnostics import Doctor, run_doctor
+from roll.app.archive.normalization import apply_keyword_vocab_fixes, apply_normalization_plans, build_safe_rename_plan, collect_keyword_vocab_fixes, print_normalization_plan
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.output import echo_lines
 

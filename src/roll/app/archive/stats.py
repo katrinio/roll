@@ -2,7 +2,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
-from roll.app.search import find_rolls
+from roll.app.archive.search import find_rolls
 
 
 @dataclass(frozen=True)

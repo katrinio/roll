@@ -3,10 +3,10 @@ from pathlib import Path
 import typer
 
 from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
-from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
-from roll.app.batch import process_archives
-from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords, update_roll_status
-from roll.app.normalization import (
+from roll.app.workspace.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.app.archive.batch import process_archives
+from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords, update_roll_status
+from roll.app.archive.normalization import (
     apply_normalization_plans,
     apply_keyword_vocab_fixes,
     build_normalization_plan,
@@ -19,14 +19,14 @@ from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
 from roll.helpers.output import echo_lines, echo_list, echo_section
-from roll.app.stock import app as stock_app
-from roll.app.stock import load as load_roll
+from roll.app.flows.stock import app as stock_app
+from roll.app.flows.stock import load as load_roll
 from roll.messages import Msg
-from roll.app.search import find_rolls, search_rolls
-from roll.app.vocabulary import archive_vocabulary
-from roll.app.workspace import workspace_for
-from roll.app.stats import build_stats_report, _count_statuses
-from roll.app.doctor_output import render_doctor
+from roll.app.archive.search import find_rolls, search_rolls
+from roll.app.workspace.vocabulary import archive_vocabulary
+from roll.app.workspace.workspace import workspace_for
+from roll.app.archive.stats import build_stats_report, _count_statuses
+from roll.app.diagnostics.doctor_output import render_doctor
 
 app = typer.Typer(help="Личный индекс пленок.")
 app.add_typer(stock_app, name="stock")
@@ -214,27 +214,20 @@ def doctor(
 
 @tags_app.command("add")
 def add_tags() -> None:
-    archive = require_archive(require_config())
-    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
-
-    if not rolls:
-        typer.echo("Нет роллов.")
-        raise typer.Exit(code=1)
-
-    selected = _choose_roll_folder(rolls)
-    workspace = workspace_for(archive)
-    tags = autocomplete_many_prompt("Теги", workspace.dictionary("keywords"))
-    try:
-        metadata = update_roll_keywords(selected / "roll.toml", tags)
-    except ValueError as exc:
-        typer.echo(str(exc))
-        raise typer.Exit(code=1)
-
-    typer.echo(f"Теги обновлены: {metadata.film}")
+    _update_roll_list_field("Теги", "keywords", update_roll_keywords, "Теги обновлены")
 
 
 @features_app.command("add")
 def add_features() -> None:
+    _update_roll_list_field("Особенности", "features", update_roll_features, "Особенности обновлены")
+
+
+def _update_roll_list_field(
+    prompt_title: str,
+    dictionary_name: str,
+    updater,
+    success_label: str,
+) -> None:
     archive = require_archive(require_config())
     rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
 
@@ -244,14 +237,14 @@ def add_features() -> None:
 
     selected = _choose_roll_folder(rolls)
     workspace = workspace_for(archive)
-    features = autocomplete_many_prompt("Особенности", workspace.dictionary("features"))
+    values = autocomplete_many_prompt(prompt_title, workspace.dictionary(dictionary_name))
     try:
-        metadata = update_roll_features(selected / "roll.toml", features)
+        metadata = updater(selected / "roll.toml", values)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=1)
 
-    typer.echo(f"Особенности обновлены: {metadata.film}")
+    typer.echo(f"{success_label}: {metadata.film}")
 
 
 @batch_app.command("process")
