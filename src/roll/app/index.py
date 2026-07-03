@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from roll.helpers.prompts import choose_many, choose_or_create
 from roll.app.workspace import workspace_for
+from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_prompt
 
 
 def save_roll_index(
@@ -16,16 +16,16 @@ def save_roll_index(
     workspace = workspace_for(archive or folder.parents[1])
 
     if not film:
-        film = choose_or_create(workspace.dictionary("films"), "Пленка:")
+        film = autocomplete_prompt("Пленка", workspace.dictionary("films"))
 
     if not camera:
-        camera = choose_or_create(workspace.dictionary("cameras"), "Камера:")
+        camera = autocomplete_prompt("Камера", workspace.dictionary("cameras"))
 
     if not features:
-        features = choose_many(workspace.dictionary("features"), "Features", "Введите номера или новые слова через запятую.")
+        features = autocomplete_many_prompt("Особенности", workspace.dictionary("features"))
 
     if not keywords:
-        keywords = choose_many(workspace.dictionary("keywords"), "Keywords", "Введите номера или новые слова через запятую.")
+        keywords = autocomplete_many_prompt("Ключевые слова", workspace.dictionary("keywords"))
 
     def format_array(values: list[str] | None) -> str:
         items = values or []
