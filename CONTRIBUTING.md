@@ -1,16 +1,16 @@
 # Contributing
 
-`roll` — небольшой личный проект, но PR и issues приветствуются.
+`roll` is a small personal project, but PRs and issues are welcome.
 
-## Перед началом
+## Before you start
 
-- Архитектура и команды — [docs/model.md](docs/model.md)
-- Термины — [docs/glossary.md](docs/glossary.md)
-- Границы MVP — [docs/mvp.md](docs/mvp.md): если фича не помогает быстрее найти пленку по памяти, обсудим ее отдельно перед PR
+- Architecture and commands — [docs/model.md](docs/model.md)
+- Terms — [docs/glossary.md](docs/glossary.md)
+- MVP scope — [docs/mvp.md](docs/mvp.md): if a feature doesn't help find a roll from memory faster, let's discuss it separately before a PR
 
 ## Setup
 
-Полная инструкция — [docs/development.md](docs/development.md). Коротко:
+Full instructions — [docs/development.md](docs/development.md). Short version:
 
 ```bash
 python -m venv .venv
@@ -19,23 +19,23 @@ pip install -e '.[dev]'
 pre-commit install
 ```
 
-## Перед PR
+## Before a PR
 
 ```bash
 ruff check .
 python -m unittest discover -s tests
 ```
 
-Оба шага гоняются в CI на каждый PR — красный CI не смержится.
+Both run in CI on every PR — a red CI won't get merged.
 
-## Стиль
+## Style
 
-- новую логику — в соответствующую зону (`app/workspace/`, `app/flows/`, `app/archive/`, `app/diagnostics/`), не в `cli.py`;
-- user-facing строки — в `messages/`, не хардкодом в коде;
-- деструктивные операции над архивом (переименования, запись) — сначала план, потом подтверждение;
-- тесты обязательны для новой логики хранения/нормализации.
+- put new logic in the right area (`app/workspace/`, `app/flows/`, `app/archive/`, `app/diagnostics/`), not in `cli.py`;
+- user-facing strings go in `messages/`, not hardcoded in the code;
+- destructive operations on the archive (renames, writes) always build a plan first, then ask for confirmation;
+- tests are required for new storage/normalization logic.
 
 ## PR
 
-- маленький и по одной теме;
-- если меняется поведение CLI или формат `roll.toml` — обнови `docs/model.md`/`docs/glossary.md` в том же PR.
+- keep it small and focused on one thing;
+- if it changes CLI behavior or the `roll.toml` format — update `docs/model.md`/`docs/glossary.md` in the same PR.

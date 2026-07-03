@@ -1,32 +1,32 @@
 # MVP
 
-> Найти нужную пленку по памяти: человек, место, событие, настроение — спустя месяцы.
+> Find the right roll from memory: a person, a place, an event, a mood — months later.
 
-## Сценарий
+## Scenario
 
 ```bash
-rl init ~/Pictures/plenka   # один раз
-rl stock add                # купил пленку → в запас
-rl load                     # зарядил в камеру → roll создан, спросит теги/особенности
-rl stock process            # или: rl stock failed
-rl search kir balcony       # через полгода — нашел
+rl init ~/Pictures/plenka   # once
+rl stock add                # bought a film → into stock
+rl load                     # loaded the camera → roll created, asks for tags/features
+rl stock process            # or: rl stock failed
+rl search kir balcony       # half a year later — found it
 ```
 
-## Команды
+## Commands
 
-| Задача | Команда |
+| Task | Command |
 |---|---|
-| Запас пленки | `stock add`, `stock list` |
-| Ролл | `load` (`--manual` — без запаса), `stock process`, `stock failed` |
-| Дозаполнить ролл | `features add`, `tags add` |
-| Найти / посмотреть | `search`, `scan`, `status`, `stats [-v]`, `vocab` |
-| Гигиена архива | `doctor [--fix] [-v]`, `normalize [--tags]` |
-| Массово | `batch process` |
+| Film stock | `stock add`, `stock list` |
+| Roll | `load` (`--manual` — without stock), `stock process`, `stock failed` |
+| Fill in a roll | `features add`, `tags add` |
+| Find / view | `search`, `scan`, `status`, `stats [-v]`, `vocab` |
+| Archive hygiene | `doctor [--fix] [-v]`, `normalize [--tags]` |
+| Batch | `batch process` |
 
-## Не входит в MVP
+## Out of MVP scope
 
-sync между машинами · облако · веб-интерфейс · миграция старых форматов · обработка изображений
+sync between machines · cloud · web UI · migrating old formats · image processing
 
-## Правило
+## Rule
 
-Не помогает быстрее найти пленку по памяти — не входит в MVP.
+If it doesn't help find a roll from memory faster — it's out of MVP.

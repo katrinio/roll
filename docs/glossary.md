@@ -1,50 +1,50 @@
-# Глоссарий
+# Glossary
 
-Понятия проекта. Структура файлов, code layout и полный список команд — в [model.md](model.md).
+Project concepts. File structure, code layout, and the full command list — see [model.md](model.md).
 
 ---
 
 ## Archive
 
-Папка с фотографическим архивом: годы с роллами + `.roll/` (workspace). `roll` не хранит данные архива у себя в коде — только знает, где он лежит.
+A folder with a film archive: years of rolls + `.roll/` (workspace). `roll` doesn't store archive data in code — it only knows where the archive is.
 
 ---
 
 ## Workspace
 
-`.roll/` внутри архива: конфиг, [[Stock]] и словари. Должен оставаться переносимым вместе с архивом.
+`.roll/` inside the archive: config, [[Stock]], and vocabularies. Should stay portable together with the archive.
 
 ---
 
 ## Stock
 
-Запас пленки, которая еще не заряжена в камеру. Хранится в `stock.toml`, отдельно от `roll.toml`: пока пленка в запасе, она не [[Roll]] и не занимает папку в архиве. `rl load` уменьшает stock на одну штуку; `rl load --manual` создает roll в обход stock.
+Film that hasn't been loaded into a camera yet. Stored in `stock.toml`, separate from `roll.toml`: while a film is in stock, it isn't a [[Roll]] yet and doesn't take up a folder in the archive. `rl load` decreases stock by one; `rl load --manual` creates a roll bypassing stock.
 
 ---
 
 ## Roll
 
-Одна отснятая пленка. Поля и обязательность — см. [model.md](model.md#roll). `features`/`keywords` при создании всегда пустые, заполняются позже отдельными командами.
+One exposed roll of film. Fields and their requirements — see [model.md](model.md#roll). `features`/`keywords` always start empty and get filled in later by separate commands.
 
 ---
 
 ## Status
 
-`loaded → processed | failed`. Переход ручной и односторонний, назад не возвращается. Подробнее — [model.md](model.md#жизненный-цикл-ролла).
+`loaded → processed | failed`. The transition is manual and one-way, never back. See [model.md](model.md#roll-lifecycle).
 
 ---
 
 ## Camera
 
-Камера, в которой была заряжена пленка.
+The camera a film was loaded into.
 
 ---
 
 ## Film
 
-Тип пленки. Живет в словаре `vocabulary/films.txt` — используется для автокомплита, пополняется новыми значениями с подтверждением.
+The film stock type. Lives in the `vocabulary/films.txt` dictionary — used for autocomplete, grows with new values after confirmation.
 
-Примеры:
+Examples:
 - Kodak Gold 200
 - Kodak ColorPlus 200
 - Ilford HP5 Plus
@@ -54,42 +54,42 @@
 
 ## Features
 
-Короткие повторно используемые характеристики съемки, уточняют поиск. Вводятся через запятую (`rl features add`), автокомплит по каждому значению, дубликаты не пишутся, внутри значения допустим `_`.
+Short, reusable characteristics of a shoot that narrow down a search. Entered comma-separated (`rl features add`), autocomplete per value, duplicates aren't written, `_` is allowed inside a value.
 
-Примеры: `redscale`, `push +1`, `push +2`, `expired`.
+Examples: `redscale`, `push +1`, `push +2`, `expired`.
 
 ---
 
 ## Keywords
 
-В CLI — "теги". Ключевые слова для поиска по памяти: коротко, без описаний, как потом будешь искать. Вводятся через запятую (`rl tags add`), хранятся в uppercase.
+Called "tags" in the CLI. Keywords for finding a roll from memory: short, no long descriptions, written the way you'd later search for them. Entered comma-separated (`rl tags add`), stored in uppercase.
 
-Примеры: `pizza`, `balcony`, `evening`, `belgrade`.
+Examples: `pizza`, `balcony`, `evening`, `belgrade`.
 
 ---
 
 ## Loaded at
 
-Дата зарядки пленки.
+The date a film was loaded into the camera.
 
-Это базовая дата, от которой строится имя папки и часть нормализации.
+This is the base date that the folder name and part of normalization are built from.
 
 ---
 
 ## Normalize
 
-Приводит имена папок к единому виду: план → подтверждение, `roll.toml` не трогает. С `--tags` — приводит `keywords` к uppercase в `roll.toml` и в словаре.
+Brings folder names to a consistent shape: builds a plan → asks for confirmation, doesn't touch `roll.toml`. With `--tags` — brings `keywords` to uppercase in both `roll.toml` and the vocabulary.
 
 ---
 
 ## Doctor
 
-Проверка целостности: глобальный конфиг, архивы, `.roll/` и словари, читаемость `roll.toml`, расхождения со словарями, подозрительные и не проиндексированные папки. `--fix` применяет только безопасные переименования, `-v` раскрывает полный список правок.
+Integrity check: global config, archives, `.roll/` and vocabularies, whether `roll.toml` files are readable, mismatches with vocabularies, suspicious and unindexed folders. `--fix` only applies safe renames, `-v` shows the full list of fixes.
 
 ---
 
 ## Principle
 
-Пользователь вводит только то, что нельзя определить автоматически. Все остальное — из файловой системы или вычислений.
+The user only enters what can't be figured out automatically. Everything else comes from the filesystem or is computed.
 
-Код, тесты и CI — в [docs/development.md](development.md).
+Code, tests, and CI — see [docs/development.md](development.md).

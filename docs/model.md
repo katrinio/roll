@@ -1,15 +1,15 @@
 # Model
 
-Проект разделен на три уровня: global config → archive workspace → roll.
+The project has three levels: global config → archive workspace → roll.
 
 ```
-~/.config/roll/config.toml         1. global config — список архивов
+~/.config/roll/config.toml         1. global config — list of archives
         │
         ▼
-~/Pictures/plenka/                  архив
+~/Pictures/plenka/                  archive
 ├── .roll/                         2. workspace
 │   ├── config.toml
-│   ├── stock.toml                    запас пленки, отдельно от roll.toml
+│   ├── stock.toml                    film stock, separate from roll.toml
 │   └── vocabulary/
 │       ├── films.txt
 │       ├── cameras.txt
@@ -20,46 +20,46 @@
         └── roll.toml
 ```
 
-| Уровень | Где | Что знает |
+| Level | Where | Knows about |
 |---|---|---|
-| Global config | `~/.config/roll/config.toml` | список архивов |
-| Workspace | `<архив>/.roll/` | config, stock, словари |
-| Roll | `<архив>/YYYY/MM-DD/roll.toml` | одна пленка |
+| Global config | `~/.config/roll/config.toml` | list of archives |
+| Workspace | `<archive>/.roll/` | config, stock, vocabularies |
+| Roll | `<archive>/YYYY/MM-DD/roll.toml` | one film roll |
 
-`stock.toml` и `vocabulary/*.txt` решают разные задачи: stock — что физически есть на руках, словари — канонические значения для автокомплита.
+`stock.toml` and `vocabulary/*.txt` solve different problems: stock tracks what you physically have on hand, vocabularies hold canonical values for autocomplete.
 
 ## Code layout
 
-| Путь | Зона |
+| Path | Area |
 |---|---|
-| `filesystem.py` | низкоуровневые операции с файловой структурой архива |
-| `app/workspace/` | workspace, словари, stock/roll storage |
-| `app/flows/` | интерактивные сценарии (`stock.py`: load/process/failed) |
-| `app/archive/` | search, stats, batch, normalization + рендер |
+| `filesystem.py` | low-level operations on the archive's file structure |
+| `app/workspace/` | workspace, vocabularies, stock/roll storage |
+| `app/flows/` | interactive scenarios (`stock.py`: load/process/failed) |
+| `app/archive/` | search, stats, batch, normalization + rendering |
 | `app/diagnostics/` | doctor |
-| `messages/` | user-facing строки по зонам |
+| `messages/` | user-facing strings, grouped by area |
 
 ## Roll
 
 `roll.toml`:
 
-| Поле | Обязательно | Комментарий |
+| Field | Required | Notes |
 |---|---|---|
-| `status` | да | `loaded` \| `processed` \| `failed` |
-| `film` | да | |
-| `camera` | да | |
-| `loaded_at` | да | определяет имя папки ролла |
-| `features` | нет | заполняется через `rl features add` |
-| `keywords` | нет | заполняется через `rl tags add` (в CLI — "теги") |
+| `status` | yes | `loaded` \| `processed` \| `failed` |
+| `film` | yes | |
+| `camera` | yes | |
+| `loaded_at` | yes | determines the roll's folder name |
+| `features` | no | filled in via `rl features add` |
+| `keywords` | no | filled in via `rl tags add` (called "tags" in the CLI) |
 
-### Жизненный цикл ролла
+### Roll lifecycle
 
 ```
-[ запас ]  --rl stock add-->  лежит в stock.toml
+[ stock ]  --rl stock add-->  sits in stock.toml
               │
            rl load
               ▼
-[ loaded ]   roll.toml создан
+[ loaded ]   roll.toml created
               │
        ┌──────┴──────┐
   rl stock       rl stock
@@ -68,25 +68,25 @@
 [ processed ]    [ failed ]
 ```
 
-Переход по циклу — ручной и однонаправленный: обратно в `loaded` roll не возвращается.
+The transition is manual and one-way: a roll never goes back to `loaded`.
 
-## Команды
+## Commands
 
-| Зона | Команда |
+| Area | Command |
 |---|---|
-| Инициализация | `rl init` |
-| Запас | `rl stock add`, `rl stock list` |
-| Ролл | `rl load` (`--manual` — без stock), `rl stock process`, `rl stock failed` |
-| Дозаполнить | `rl features add`, `rl tags add` |
-| Найти / посмотреть | `rl search`, `rl scan`, `rl status`, `rl stats [-v]`, `rl vocab` |
-| Гигиена архива | `rl doctor [--fix] [-v]`, `rl normalize [--tags]` |
-| Массово | `rl batch process` |
+| Setup | `rl init` |
+| Stock | `rl stock add`, `rl stock list` |
+| Roll | `rl load` (`--manual` — without stock), `rl stock process`, `rl stock failed` |
+| Fill in | `rl features add`, `rl tags add` |
+| Find / view | `rl search`, `rl scan`, `rl status`, `rl stats [-v]`, `rl vocab` |
+| Archive hygiene | `rl doctor [--fix] [-v]`, `rl normalize [--tags]` |
+| Batch | `rl batch process` |
 
-## Принципы
+## Principles
 
-- архив самодостаточен, приложение можно удалить без потери данных;
-- словари редактируются текстом и пополняются автоматически при вводе;
-- нормализация (`rl normalize`, `rl doctor --fix`) сначала строит план и только потом просит подтверждение;
-- roll начинается как `loaded`, дальше — терминально `processed`/`failed`, назад не возвращается.
+- the archive is self-contained; the app can be removed without losing data;
+- vocabularies are edited as plain text and grow automatically as you type;
+- normalization (`rl normalize`, `rl doctor --fix`) always builds a plan before asking for confirmation;
+- a roll starts as `loaded`, then ends as `processed`/`failed` — it never goes back.
 
-Настройка окружения и CI — в [docs/development.md](development.md).
+Environment setup and CI — see [docs/development.md](development.md).
