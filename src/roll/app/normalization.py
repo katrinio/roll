@@ -33,14 +33,13 @@ class NormalizationPlan:
 
 class NamingStrategy:
     @staticmethod
-    def build_folder_name(loaded_at: str, lab_id: str = "") -> str:
+    def build_folder_name(loaded_at: str) -> str:
         date_part = _date_part(loaded_at)
-        lab_part = _normalize_lab_id(lab_id)
-        return f"{date_part}-{lab_part}" if lab_part else date_part
+        return date_part
 
     @staticmethod
-    def is_normalized(folder: Path, loaded_at: str, lab_id: str = "") -> bool:
-        return folder.name == NamingStrategy.build_folder_name(loaded_at, lab_id)
+    def is_normalized(folder: Path, loaded_at: str) -> bool:
+        return folder.name == NamingStrategy.build_folder_name(loaded_at)
 
 
 def build_normalization_plan(archive: Path) -> NormalizationPlan:
@@ -58,11 +57,10 @@ def build_normalization_plan(archive: Path) -> NormalizationPlan:
             continue
 
         loaded_at = str(data.get("loaded_at", ""))
-        lab_id = str(data.get("lab_id", ""))
         if not loaded_at:
             continue
 
-        target_name = NamingStrategy.build_folder_name(loaded_at, lab_id)
+        target_name = NamingStrategy.build_folder_name(loaded_at)
         if folder.name == target_name:
             continue
 
@@ -151,10 +149,4 @@ def _date_part(loaded_at: str) -> str:
 
     return value.replace(".", "-").replace("/", "-")
 
-
-def _normalize_lab_id(lab_id: str) -> str:
-    value = lab_id.strip()
-    if not value:
-        return ""
-    return value if value.startswith("e") else f"e{value}"
 

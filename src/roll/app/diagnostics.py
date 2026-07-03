@@ -16,7 +16,7 @@ class DoctorText:
     ERROR = "error"
     WARNING = "warning"
     VOCAB_FILES = ("films", "cameras", "features", "keywords")
-    MANDATORY_FIELDS = ("film", "camera", "loaded_at")
+    MANDATORY_FIELDS = ("status", "film", "camera", "loaded_at")
 
 
 @dataclass(frozen=True)
