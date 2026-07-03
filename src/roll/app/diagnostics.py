@@ -154,6 +154,8 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                 issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.FEATURE_NOT_IN_VOCAB} {value} ({index_file})"))
 
         for value in keywords or []:
+            if value != value.upper():
+                issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.KEYWORD_NOT_NORMALIZED} {value} ({index_file})"))
             if value.casefold() not in allowed["keywords"]:
                 issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.KEYWORD_NOT_IN_VOCAB} {value} ({index_file})"))
 

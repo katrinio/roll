@@ -10,6 +10,7 @@ from roll.app.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
     build_safe_rename_plan,
+    normalize_keywords_in_archive,
     print_normalization_plan,
 )
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
@@ -305,9 +306,24 @@ def add_features() -> None:
 
 
 @app.command("normalize")
-def normalize() -> None:
+def normalize(
+    tags: bool = typer.Option(False, "--tags", help="Нормализовать теги в uppercase."),
+) -> None:
     """Привести архив к единому виду."""
     config = require_config()
+
+    if tags:
+        touched = []
+        for archive in config.archives:
+            touched.extend(normalize_keywords_in_archive(archive))
+        if touched:
+            typer.echo("Теги нормализованы.")
+            for path in touched:
+                typer.echo(f"  {path}")
+        else:
+            typer.echo("Теги уже нормализованы.")
+        return
+
     plans = [build_normalization_plan(archive) for archive in config.archives]
 
     total_rules = sum(len(plan.rules) for plan in plans)

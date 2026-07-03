@@ -39,6 +39,7 @@ rl --help
 rl init /path/to/archive
 rl doctor
 rl doctor --fix
+rl normalize --tags
 ```
 
 `rl load` работает от `stock.toml`, а `rl load --manual` позволяет создать roll по словарю пленок, не уменьшая stock.

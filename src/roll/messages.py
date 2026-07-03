@@ -43,6 +43,7 @@ class Doctor:
     CAMERA_NOT_IN_VOCAB = "Камера не в словаре:"
     FEATURE_NOT_IN_VOCAB = "Особенность не в словаре:"
     KEYWORD_NOT_IN_VOCAB = "Ключевое слово не в словаре:"
+    KEYWORD_NOT_NORMALIZED = "Ключевое слово не в uppercase:"
     UNINDEXED_FOLDERS = "Не проиндексировано папок:"
     SUSPICIOUS_YEAR = "Подозрительное имя года:"
     SUSPICIOUS_ROLL = "Подозрительное имя папки:"

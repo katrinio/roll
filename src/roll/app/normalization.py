@@ -7,6 +7,8 @@ import re
 import tomllib
 
 from roll.archive import find_roll_folders, get_index_file
+from roll.app.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata
+from roll.app.workspace import workspace_for
 from roll.messages import Normalize
 
 
@@ -142,6 +144,44 @@ def apply_normalization_plans(plans: list[NormalizationPlan]) -> None:
         raise
 
 
+def normalize_keywords_in_archive(archive: Path) -> list[Path]:
+    workspace = workspace_for(archive)
+    touched: list[Path] = []
+
+    keywords_file = workspace.vocabulary_file("keywords")
+    if keywords_file.exists():
+        values = _normalize_keywords(keywords_file.read_text(encoding="utf-8").splitlines())
+        keywords_file.write_text("\n".join(values) + ("\n" if values else ""), encoding="utf-8")
+        touched.append(keywords_file)
+
+    for folder in find_roll_folders(archive):
+        index_file = get_index_file(folder)
+        if not index_file.exists():
+            continue
+
+        try:
+            metadata = load_roll_metadata(index_file)
+        except ValueError:
+            continue
+
+        normalized = _normalize_keywords(metadata.keywords)
+        if normalized != metadata.keywords:
+            save_roll_metadata(
+                index_file,
+                RollMetadata(
+                    status=metadata.status,
+                    film=metadata.film,
+                    camera=metadata.camera,
+                    loaded_at=metadata.loaded_at,
+                    features=metadata.features,
+                    keywords=normalized,
+                ),
+            )
+            touched.append(index_file)
+
+    return touched
+
+
 def _detect_conflicts(rules: list[RenameRule]) -> list[str]:
     conflicts: list[str] = []
     targets: dict[Path, Path] = {}
@@ -176,3 +216,11 @@ def _date_part(loaded_at: str) -> str:
 
     return value.replace(".", "-").replace("/", "-")
 
+
+def _normalize_keywords(values: list[str]) -> list[str]:
+    normalized: list[str] = []
+    for value in values:
+        token = value.strip().upper()
+        if token and token not in normalized:
+            normalized.append(token)
+    return normalized
