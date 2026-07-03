@@ -11,6 +11,7 @@ class RollIndex:
     film: str
     camera: str
     loaded_at: str
+    lab_id: str
     features: list[str]
     keywords: list[str]
 
@@ -28,6 +29,7 @@ def load_roll_index(folder: Path) -> RollIndex | None:
         film=data.get("film", ""),
         camera=data.get("camera", ""),
         loaded_at=data.get("loaded_at", ""),
+        lab_id=data.get("lab_id", ""),
         features=data.get("features", []),
         keywords=data.get("keywords", []),
     )
@@ -63,3 +65,4 @@ def search_rolls(archive: Path, query: str) -> list[RollIndex]:
             results.append(roll)
 
     return results
+

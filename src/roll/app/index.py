@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from roll.helpers.prompts import choose_many, choose_or_create
-from roll.workspace import workspace_for
+from roll.app.workspace import workspace_for
 
 
 def save_roll_index(

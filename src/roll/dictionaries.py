@@ -4,9 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-DICTIONARIES_DIR = Path(__file__).resolve().parent / "dictionary_files"
-
-
 @dataclass(frozen=True)
 class Dictionary:
     name: str
