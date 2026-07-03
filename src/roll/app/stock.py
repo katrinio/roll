@@ -84,20 +84,12 @@ def load() -> None:
 
 @app.command("process")
 def process() -> None:
-    archive = require_archive(require_config())
-    loaded_rolls = _loaded_rolls(archive)
-    if not loaded_rolls:
-        typer.echo("Нет загруженных пленок.")
-        raise typer.Exit(code=1)
+    _finish_roll("processed", "Обработана")
 
-    selected = _choose_roll(loaded_rolls)
-    try:
-        metadata = update_roll_status(selected / "roll.toml", "processed")
-    except ValueError as exc:
-        typer.echo(str(exc))
-        raise typer.Exit(code=1)
 
-    typer.echo(f"Обработана: {metadata.film}")
+@app.command("failed")
+def failed() -> None:
+    _finish_roll("failed", "Помечена как испорченная")
 
 
 @app.command("list")
@@ -154,6 +146,23 @@ def _loaded_rolls(archive: Path) -> list[Path]:
         if metadata.status == "loaded":
             rolls.append(folder)
     return rolls
+
+
+def _finish_roll(status: str, label: str) -> None:
+    archive = require_archive(require_config())
+    loaded_rolls = _loaded_rolls(archive)
+    if not loaded_rolls:
+        typer.echo("Нет загруженных пленок.")
+        raise typer.Exit(code=1)
+
+    selected = _choose_roll(loaded_rolls)
+    try:
+        metadata = update_roll_status(selected / "roll.toml", status)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
+    typer.echo(f"{label}: {metadata.film}")
 
 
 def _choose_roll(rolls: list[Path]) -> Path:
