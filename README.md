@@ -4,69 +4,73 @@
   <img src="docs/images/film.gif" width="250"/>
 </div>
 
-Небольшой CLI для учета пленочной фотографии.
+A small CLI for managing a film photography archive.
 
-`roll` помогает сопровождать пленку на всем ее пути — от покупки до места в архиве.
-
----
-
-## Зачем
-
-Я снимаю на пленку не так часто, поэтому со временем становится сложно вспомнить:
-
-- какие пленки еще лежат дома;
-- что сейчас заряжено в камеру;
-- где искать нужную съемку;
-- какой пленкой, камерой и в какой лаборатории она была снята.
-
-Хочется хранить эту информацию рядом с архивом и не держать все в голове.
+`roll` follows a roll of film from the moment it is loaded into a camera until it becomes part of the archive.
 
 ---
 
-## Идея
+## Why
 
-`roll` не пытается заменить фотоархив.
+I don't shoot film often enough to remember everything months later.
 
-Архив остается обычной папкой, а `roll` берет на себя повторяющиеся действия и хранит только ту информацию, которую сложно восстановить позже.
+`roll` helps answer questions like:
 
-Мне нравится подход, где:
+- Which films do I still have?
+- What's currently loaded?
+- Where is that roll I took with Kir?
+- Which camera, film and lab was it?
 
-- архив принадлежит пользователю;
-- данные лежат рядом с архивом;
-- все хранится в обычных текстовых файлах;
-- приложение можно удалить без потери данных;
-- пользователь вводит только то, что нельзя определить автоматически.
+The goal is to keep this information next to the archive instead of in my head.
 
 ---
 
-## Установка
+## Principles
 
-```bash
+`roll` doesn't try to replace your photo archive.
+
+Your archive stays an ordinary folder. `roll` only keeps the information that would be difficult to reconstruct later.
+
+Some principles behind the project:
+
+- the archive belongs to the user;
+- data lives inside the archive;
+- everything is stored as plain text;
+- removing the application never removes your data;
+- the user only enters what cannot be detected automatically.
+
+---
+
+## Installation
+
+```text
 pip install git+https://github.com/katrinio/roll.git
 ```
 
-или
+or
 
-```bash
+```text
 uv tool install git+https://github.com/katrinio/roll.git
 ```
 
 ---
-## Начать работу
+
+## Getting started
+
+| Status | Command | Description |
+|--------|----------|-------------|
+| — | `rl init` | Initialize an archive |
+| `stock` | `rl stock add` | Add film to stock |
+| `stock → loaded` | `rl load` | Load a film into a camera |
+| `loaded → processed` | `rl stock process` | Mark the roll as finished |
+| `loaded → failed` | `rl stock failed` | Mark the roll as failed |
+| `processed` | `rl tags add` | Add keywords and features |
+| `processed` | `rl search` | Search the archive |
+| `processed` | `rl normalize` | Normalize folder names |
 
 ---
-| Статус | Команда | Назначение |
-|--------|----------|------------|
-| — | `rl init` | Подготовить архив |
-| `stock` | `rl stock add` | Добавить пленку в запас |
-| `stock → loaded` | `rl load` | Зарядить пленку |
-| `loaded → processed` | `rl stock process` | Завершить пленку |
-| `loaded → failed` | `rl stock failed` | Пометить как испорченную |
-| `processed` | `rl tags add` | Добавить метаданные |
-| `processed` | `rl search` | Найти съемку |
-| `processed` | `rl normalize` | Привести архив к единому стилю |
 
-## Где хранятся данные
+## Storage
 
 ```text
 <archive>
@@ -82,14 +86,16 @@ uv tool install git+https://github.com/katrinio/roll.git
         └── roll.toml
 ```
 
-- `stock.toml` — запас пленки;
-- `vocabulary/` — словари;
-- `roll.toml` — информация о конкретной пленке.
+- `stock.toml` — film stock
+- `vocabulary/` — autocomplete dictionaries
+- `roll.toml` — metadata for a single roll
+
+Everything lives inside the archive. The application can be removed or reinstalled without affecting your data.
 
 ---
 
-## Документация
+## Documentation
 
-- `docs/model.md` — архитектура проекта.
-- `docs/glossary.md` — основные сущности.
-- `docs/mvp.md` — границы MVP.
+- `docs/model.md` — architecture
+- `docs/glossary.md` — terminology
+- `docs/mvp.md` — project scope
