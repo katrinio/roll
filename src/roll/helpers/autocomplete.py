@@ -1,6 +1,7 @@
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
+import typer
 
 from roll.dictionaries import Dictionary
 
@@ -21,15 +22,27 @@ def autocomplete_prompt(title: str, dictionary: Dictionary) -> str:
 
 
 def autocomplete_many_prompt(title: str, dictionary: Dictionary) -> list[str]:
+    selected: list[str] = []
+
     while True:
-        value = prompt(f"{title}: ", completer=_completer(dictionary), complete_while_typing=True).strip()
+        completer = _completer(dictionary, exclude=selected)
+        value = prompt(f"{title}: ", completer=completer, complete_while_typing=True).strip()
 
         if not value:
-            return []
+            return selected
 
-        resolved = _resolve_many(dictionary, value)
-        if resolved is not None:
-            return resolved
+        if not _is_single_token(value):
+            typer.echo("Введите одно значение без запятых и пробелов.")
+            continue
+
+        existing = _existing_value(dictionary, value)
+        if existing is None:
+            if not _confirm_missing(value):
+                continue
+            existing = dictionary.add(value)
+
+        if existing not in selected:
+            selected.append(existing)
 
 
 def choice_prompt(title: str, choices: list[str]) -> str:
@@ -46,10 +59,10 @@ def choice_prompt(title: str, choices: list[str]) -> str:
             return matched
 
 
-def _completer(dictionary: Dictionary) -> FuzzyCompleter:
-    return FuzzyCompleter(
-        WordCompleter(dictionary.read(), ignore_case=True, sentence=True, match_middle=True)
-    )
+def _completer(dictionary: Dictionary, exclude: list[str] | None = None) -> FuzzyCompleter:
+    excluded = {value.casefold() for value in (exclude or [])}
+    choices = [value for value in dictionary.read() if value.casefold() not in excluded]
+    return FuzzyCompleter(WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True))
 
 
 def _existing_value(dictionary: Dictionary, candidate: str) -> str | None:
@@ -98,18 +111,8 @@ def _normalize_choice(value: str) -> str:
     return "".join(ch for ch in value.casefold() if ch.isalnum())
 
 
-def _resolve_many(dictionary: Dictionary, value: str) -> list[str] | None:
-    selected: list[str] = []
-    for token in [item.strip() for item in value.split(",") if item.strip()]:
-        existing = _existing_value(dictionary, token)
-        if existing is not None:
-            resolved = existing
-        elif _confirm_missing(token):
-            resolved = dictionary.add(token)
-        else:
-            return None
-
-        if resolved not in selected:
-            selected.append(resolved)
-
-    return selected
+def _is_single_token(value: str) -> bool:
+    if "," in value:
+        return False
+    parts = value.split()
+    return len(parts) == 1 and bool(parts[0]) and all(ch.isalnum() or ch == "_" for ch in parts[0])
