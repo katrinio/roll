@@ -23,8 +23,7 @@ from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.app.stock import app as stock_app
 from roll.app.stock import load as load_roll
 from roll.messages import Msg
-from roll.app.search import search_rolls
-from roll.app.search import find_rolls
+from roll.app.search import find_rolls, search_rolls
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
 

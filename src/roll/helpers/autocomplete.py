@@ -83,13 +83,6 @@ def _choice_completer(choices: list[str]) -> FuzzyCompleter:
     return FuzzyCompleter(WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True))
 
 
-def _existing_choice(choices: list[str], candidate: str) -> str | None:
-    for value in choices:
-        if value.casefold() == candidate.casefold():
-            return value
-    return None
-
-
 def _match_choice(choices: list[str], candidate: str) -> str | None:
     normalized = _normalize_choice(candidate)
     matches = [value for value in choices if _normalize_choice(value) == normalized]
