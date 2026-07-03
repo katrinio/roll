@@ -20,6 +20,17 @@
         └── roll.toml
 ```
 
+## Code Layout
+
+Код тоже разделен по зонам:
+
+- `src/roll/filesystem.py` — низкоуровневые операции с файловой структурой архива;
+- `src/roll/app/archive/` — чтение, анализ и массовые операции над архивом;
+- `src/roll/app/diagnostics/` — проверки и рендер отчета `doctor`;
+- `src/roll/app/flows/` — интерактивные сценарии команд;
+- `src/roll/app/workspace/` — workspace, словари и файлы состояния;
+- `src/roll/messages/` — короткие user-facing строки по зонам.
+
 ## 1. Global config
 
 Глобальная конфигурация приложения живет в `~/.config/roll/config.toml`.
