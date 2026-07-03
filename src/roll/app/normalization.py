@@ -150,7 +150,7 @@ def normalize_keywords_in_archive(archive: Path) -> list[Path]:
 
     keywords_file = workspace.vocabulary_file("keywords")
     if keywords_file.exists():
-        values = _normalize_keywords(keywords_file.read_text(encoding="utf-8").splitlines())
+        values = sorted(_normalize_keywords(keywords_file.read_text(encoding="utf-8").splitlines()), key=str.casefold)
         keywords_file.write_text("\n".join(values) + ("\n" if values else ""), encoding="utf-8")
         touched.append(keywords_file)
 
@@ -180,6 +180,46 @@ def normalize_keywords_in_archive(archive: Path) -> list[Path]:
             touched.append(index_file)
 
     return touched
+
+
+def collect_keyword_vocab_fixes(archive: Path) -> list[str]:
+    workspace = workspace_for(archive)
+    keywords_file = workspace.vocabulary_file("keywords")
+    existing = _normalize_keywords(
+        keywords_file.read_text(encoding="utf-8").splitlines() if keywords_file.exists() else []
+    )
+    existing_keys = {value.casefold() for value in existing}
+
+    missing: list[str] = []
+    for folder in find_roll_folders(archive):
+        index_file = get_index_file(folder)
+        if not index_file.exists():
+            continue
+
+        try:
+            metadata = load_roll_metadata(index_file)
+        except ValueError:
+            continue
+
+        for value in _normalize_keywords(metadata.keywords):
+            if value.casefold() not in existing_keys and value not in missing:
+                missing.append(value)
+
+    return sorted(missing, key=str.casefold)
+
+
+def apply_keyword_vocab_fixes(archive: Path, keywords: list[str]) -> Path | None:
+    if not keywords:
+        return None
+
+    workspace = workspace_for(archive)
+    keywords_file = workspace.vocabulary_file("keywords")
+    existing = _normalize_keywords(
+        keywords_file.read_text(encoding="utf-8").splitlines() if keywords_file.exists() else []
+    )
+    merged = sorted(_normalize_keywords([*existing, *keywords]), key=str.casefold)
+    keywords_file.write_text("\n".join(merged) + ("\n" if merged else ""), encoding="utf-8")
+    return keywords_file
 
 
 def _detect_conflicts(rules: list[RenameRule]) -> list[str]:

@@ -6,6 +6,7 @@ import unittest
 
 from roll.app.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata, update_roll_features, update_roll_keywords
 from roll.app.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
+from roll.app.normalization import normalize_keywords_in_archive
 
 
 class StockStoreTests(unittest.TestCase):
@@ -69,6 +70,25 @@ class RollStoreTests(unittest.TestCase):
 
             self.assertEqual(updated.keywords, ["FRIENDS", "BAR"])
 
+    def test_update_roll_keywords_keeps_uppercase_canonical(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "roll.toml"
+            save_roll_metadata(
+                path,
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-19",
+                    features=[],
+                    keywords=["friends"],
+                ),
+            )
+
+            updated = update_roll_keywords(path, ["bar"])
+
+            self.assertEqual(updated.keywords, ["FRIENDS", "BAR"])
+
     def test_update_roll_features_merges_unique_values(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "roll.toml"
@@ -87,3 +107,35 @@ class RollStoreTests(unittest.TestCase):
             updated = update_roll_features(path, ["redscale", "push +1"])
 
             self.assertEqual(updated.features, ["redscale", "push +1"])
+
+    def test_normalize_keywords_in_archive_uppercases_roll_and_vocabulary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            year = archive / "2025"
+            roll = year / "10-19"
+            roll.mkdir(parents=True)
+
+            save_roll_metadata(
+                roll / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-19",
+                    features=[],
+                    keywords=["friends", "BAR"],
+                ),
+            )
+
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            (vocabulary / "keywords.txt").write_text("friends\nBAR\n", encoding="utf-8")
+
+            normalize_keywords_in_archive(archive)
+
+            self.assertEqual(
+                load_roll_metadata(roll / "roll.toml").keywords,
+                ["FRIENDS", "BAR"],
+            )
+            self.assertEqual((vocabulary / "keywords.txt").read_text(encoding="utf-8"), "BAR\nFRIENDS\n")

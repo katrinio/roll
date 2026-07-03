@@ -34,6 +34,8 @@ class Doctor:
     NO_ARCHIVES = "В глобальной конфигурации нет архивов."
     ARCHIVE_MISSING = "Архив не найден:"
     WORKSPACE_MISSING = "Нет папки .roll:"
+    WORKSPACE_CONFIG_MISSING = "Нет файла workspace config:"
+    WORKSPACE_CONFIG_MISMATCH = "Workspace config не совпадает с архивом:"
     VOCAB_DIR_MISSING = "Нет папки словарей:"
     VOCAB_FILE_MISSING = "Нет файла словаря:"
     ROLL_MISSING = "Нет файла roll.toml:"

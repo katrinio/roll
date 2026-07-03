@@ -8,8 +8,10 @@ from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
 from roll.app.normalization import (
     apply_normalization_plans,
+    apply_keyword_vocab_fixes,
     build_normalization_plan,
     build_safe_rename_plan,
+    collect_keyword_vocab_fixes,
     normalize_keywords_in_archive,
     print_normalization_plan,
 )
@@ -37,6 +39,8 @@ app.add_typer(features_app, name="features")
 
 DOCTOR_MESSAGE_PREFIXES = (
     Msg.ARCHIVE_MISSING,
+    Doctor.WORKSPACE_CONFIG_MISSING,
+    Doctor.WORKSPACE_CONFIG_MISMATCH,
     Doctor.WORKSPACE_MISSING,
     Doctor.VOCAB_DIR_MISSING,
     Doctor.VOCAB_FILE_MISSING,
@@ -46,6 +50,7 @@ DOCTOR_MESSAGE_PREFIXES = (
     Doctor.CAMERA_NOT_IN_VOCAB,
     Doctor.FEATURE_NOT_IN_VOCAB,
     Doctor.KEYWORD_NOT_IN_VOCAB,
+    Doctor.KEYWORD_NOT_NORMALIZED,
     Doctor.SUSPICIOUS_YEAR,
     Doctor.SUSPICIOUS_ROLL,
 )
@@ -213,10 +218,7 @@ def doctor(
         echo_lines([f"  {item}" for item in items])
         if not verbose and len(report.fixable) > 5:
             typer.echo(f"  ... и еще {len(report.fixable) - 5}")
-        if not fix:
-            typer.echo("")
-            typer.echo("Запусти: rl doctor --fix")
-        else:
+        if fix:
             plans = [build_safe_rename_plan(archive) for archive in config.archives]
             apply_normalization_plans(plans)
             typer.echo("Исправления применены.")
@@ -225,6 +227,24 @@ def doctor(
                     if plan.rules:
                         echo_lines([""])
                         echo_lines(print_normalization_plan(plan))
+
+    if report.keyword_vocab_fixes:
+        echo_lines([""])
+        typer.echo(highlight_cli_names(f"Можно добавить в keywords: {len(report.keyword_vocab_fixes)}"))
+        items = report.keyword_vocab_fixes if verbose else report.keyword_vocab_fixes[:5]
+        echo_lines([f"  {item}" for item in items])
+        if not verbose and len(report.keyword_vocab_fixes) > 5:
+            typer.echo(f"  ... и еще {len(report.keyword_vocab_fixes) - 5}")
+        if fix:
+            for archive in config.archives:
+                applied = apply_keyword_vocab_fixes(archive, collect_keyword_vocab_fixes(archive))
+                if applied and verbose:
+                    echo_lines([""])
+                    typer.echo(f"  {applied}")
+            typer.echo("Исправления keywords применены.")
+        else:
+            typer.echo("")
+            typer.echo("Запусти: rl doctor --fix")
 
     if error_order:
         raise typer.Exit(code=1)
@@ -247,7 +267,7 @@ def _split_doctor_message(message: str) -> tuple[str, str]:
         if message.startswith(prefix):
             item = message.removeprefix(prefix).strip()
             return prefix, item
-    return message, ""
+    return message, message
 
 
 def _echo_doctor_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:

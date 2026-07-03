@@ -7,7 +7,7 @@ import tomllib
 
 from roll.archive import find_roll_folders, get_index_file, find_unindexed_folders
 from roll.app.config import Config
-from roll.app.normalization import build_safe_rename_plan
+from roll.app.normalization import build_safe_rename_plan, collect_keyword_vocab_fixes
 from roll.messages import Doctor
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
@@ -30,6 +30,7 @@ class DoctorIssue:
 class DoctorReport:
     issues: list[DoctorIssue]
     fixable: list[str]
+    keyword_vocab_fixes: list[str]
     missing_rolls: list[Path]
     missing_roll_count: int
     unindexed_folders: list[Path]
@@ -42,6 +43,7 @@ class DoctorReport:
 def run_doctor(config: Config) -> DoctorReport:
     issues: list[DoctorIssue] = []
     fixable: list[str] = []
+    keyword_vocab_fixes: list[str] = []
     missing_rolls: list[Path] = []
     unindexed_folders: list[Path] = []
     missing_roll_count = 0
@@ -51,6 +53,7 @@ def run_doctor(config: Config) -> DoctorReport:
         return DoctorReport(
             issues=issues,
             fixable=fixable,
+            keyword_vocab_fixes=keyword_vocab_fixes,
             missing_rolls=missing_rolls,
             missing_roll_count=missing_roll_count,
             unindexed_folders=unindexed_folders,
@@ -67,10 +70,12 @@ def run_doctor(config: Config) -> DoctorReport:
             f"{rule.folder.relative_to(archive)} -> {rule.target.relative_to(archive)}"
             for rule in plan.rules
         )
+        keyword_vocab_fixes.extend(collect_keyword_vocab_fixes(archive))
 
     return DoctorReport(
         issues=issues,
         fixable=fixable,
+        keyword_vocab_fixes=keyword_vocab_fixes,
         missing_rolls=missing_rolls,
         missing_roll_count=missing_roll_count,
         unindexed_folders=unindexed_folders,
@@ -103,13 +108,43 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
         issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.WORKSPACE_MISSING} {workspace.root}"))
         return issues
 
+    if not workspace.config_file.exists():
+        issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.WORKSPACE_CONFIG_MISSING} {workspace.config_file}"))
+    else:
+        try:
+            data = tomllib.loads(workspace.config_file.read_text(encoding="utf-8"))
+        except Exception as exc:
+            issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.WORKSPACE_CONFIG_MISSING} {workspace.config_file} ({exc})"))
+        else:
+            archive_value = str(data.get("archive", "")).strip()
+            if archive_value and Path(archive_value) != workspace.archive:
+                issues.append(
+                    DoctorIssue(
+                        DoctorText.WARNING,
+                        f"{Doctor.WORKSPACE_CONFIG_MISMATCH} {workspace.config_file} -> {archive_value}",
+                    )
+                )
+
     if not workspace.vocabulary_dir.exists():
         issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.VOCAB_DIR_MISSING} {workspace.vocabulary_dir}"))
         return issues
 
     for name in DoctorText.VOCAB_FILES:
-        if not workspace.vocabulary_file(name).exists():
-            issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.VOCAB_FILE_MISSING} {workspace.vocabulary_file(name)}"))
+        vocab_file = workspace.vocabulary_file(name)
+        if not vocab_file.exists():
+            issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.VOCAB_FILE_MISSING} {vocab_file}"))
+            continue
+
+        if name == "keywords":
+            try:
+                values = [line.strip() for line in vocab_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+            except Exception as exc:
+                issues.append(DoctorIssue(DoctorText.ERROR, f"{Doctor.VOCAB_FILE_MISSING} {vocab_file} ({exc})"))
+                continue
+
+            for value in values:
+                if value != value.upper():
+                    issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.KEYWORD_NOT_NORMALIZED} {value} ({vocab_file})"))
 
     return issues
 
