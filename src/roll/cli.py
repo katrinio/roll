@@ -5,7 +5,7 @@ import typer
 from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.diagnostics import Doctor, run_doctor
-from roll.app.roll_store import load_roll_metadata, update_roll_keywords
+from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
 from roll.app.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
@@ -29,6 +29,9 @@ app.add_typer(stock_app, name="stock")
 
 tags_app = typer.Typer(help="Теги роллов.")
 app.add_typer(tags_app, name="tags")
+
+features_app = typer.Typer(help="Особенности роллов.")
+app.add_typer(features_app, name="features")
 
 
 DOCTOR_MESSAGE_PREFIXES = (
@@ -278,6 +281,27 @@ def add_tags() -> None:
         raise typer.Exit(code=1)
 
     typer.echo(f"Теги обновлены: {metadata.film}")
+
+
+@features_app.command("add")
+def add_features() -> None:
+    archive = require_archive(require_config())
+    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
+
+    if not rolls:
+        typer.echo("Нет роллов.")
+        raise typer.Exit(code=1)
+
+    selected = _choose_roll_folder(rolls)
+    workspace = workspace_for(archive)
+    features = autocomplete_many_prompt("Особенности", workspace.dictionary("features"))
+    try:
+        metadata = update_roll_features(selected / "roll.toml", features)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Особенности обновлены: {metadata.film}")
 
 
 @app.command("normalize")

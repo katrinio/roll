@@ -71,6 +71,20 @@ def update_roll_keywords(path: Path, keywords: list[str]) -> RollMetadata:
     return updated
 
 
+def update_roll_features(path: Path, features: list[str]) -> RollMetadata:
+    metadata = load_roll_metadata(path)
+    updated = RollMetadata(
+        status=metadata.status,
+        film=metadata.film,
+        camera=metadata.camera,
+        loaded_at=metadata.loaded_at,
+        features=_merge_unique(metadata.features, features),
+        keywords=metadata.keywords,
+    )
+    save_roll_metadata(path, updated)
+    return updated
+
+
 def _load_toml(path: Path) -> dict:
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))

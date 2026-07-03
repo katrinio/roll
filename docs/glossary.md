@@ -46,6 +46,7 @@ Workspace должен оставаться переносимым вместе 
 - `rl stock list` — показать текущий запас;
 - `rl load` — забрать одну штуку из запаса и создать новый roll;
 - `rl load --manual` — создать roll вручную по словарю пленок, не уменьшая stock.
+- `rl features add` — добавить особенности к roll;
 - `rl tags add` — добавить теги к roll.
 
 ---
@@ -63,7 +64,7 @@ Workspace должен оставаться переносимым вместе 
 - необязательные `features`;
 - необязательные `keywords`.
 
-`features`/`keywords` уже есть в формате `roll.toml`. Теги в CLI редактируют именно `keywords`.
+`features`/`keywords` уже есть в формате `roll.toml`. Их в CLI редактируют отдельные команды: `rl features add` и `rl tags add`.
 
 ---
 

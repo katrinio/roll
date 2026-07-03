@@ -12,6 +12,7 @@ from roll.app.roll_store import (
     RollMetadata,
     load_roll_metadata,
     save_roll_metadata,
+    update_roll_features,
     update_roll_keywords,
     update_roll_status,
 )
@@ -86,6 +87,10 @@ def load(manual: bool = typer.Option(False, "--manual", help="Вводить п�
         )
         if not manual:
             save_stock(workspace.stock_file, remove_from_stock(stock, selected.film, 1))
+        features = autocomplete_many_prompt("Особенности", workspace.dictionary("features"))
+        if features:
+            update_roll_features(roll_file, features)
+
         tags = autocomplete_many_prompt("Теги", workspace.dictionary("keywords"))
         if tags:
             update_roll_keywords(roll_file, tags)
