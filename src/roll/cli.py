@@ -5,7 +5,6 @@ import typer
 from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.batch import process_archives
-from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords, update_roll_status
 from roll.app.normalization import (
     apply_normalization_plans,
@@ -27,6 +26,7 @@ from roll.app.search import find_rolls, search_rolls
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
 from roll.app.stats import build_stats_report, _count_statuses
+from roll.app.doctor_output import render_doctor
 
 app = typer.Typer(help="Личный индекс пленок.")
 app.add_typer(stock_app, name="stock")
@@ -40,25 +40,6 @@ app.add_typer(features_app, name="features")
 
 batch_app = typer.Typer(help="Пакетные операции.")
 app.add_typer(batch_app, name="batch")
-
-
-DOCTOR_MESSAGE_PREFIXES = (
-    Msg.ARCHIVE_MISSING,
-    Doctor.WORKSPACE_CONFIG_MISSING,
-    Doctor.WORKSPACE_CONFIG_MISMATCH,
-    Doctor.WORKSPACE_MISSING,
-    Doctor.VOCAB_DIR_MISSING,
-    Doctor.VOCAB_FILE_MISSING,
-    Doctor.ROLL_UNREADABLE,
-    Doctor.REQUIRED_FIELD_MISSING,
-    Doctor.FILM_NOT_IN_VOCAB,
-    Doctor.CAMERA_NOT_IN_VOCAB,
-    Doctor.FEATURE_NOT_IN_VOCAB,
-    Doctor.KEYWORD_NOT_IN_VOCAB,
-    Doctor.KEYWORD_NOT_NORMALIZED,
-    Doctor.SUSPICIOUS_YEAR,
-    Doctor.SUSPICIOUS_ROLL,
-)
 
 
 @app.command("init")
@@ -227,143 +208,8 @@ def doctor(
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список безопасных исправлений."),
 ) -> None:
     """Проверить целостность архива и конфигурации."""
-    try:
-        config = load_config()
-    except FileNotFoundError:
-        report = run_doctor(Config(archives=[]))
-    else:
-        report = run_doctor(config)
-
-    if not report.issues and not report.missing_rolls:
-        typer.echo(Doctor.OK)
-        return
-
-    error_groups: dict[str, list[str]] = {}
-    warning_groups: dict[str, list[str]] = {}
-    error_order: list[str] = []
-    warning_order: list[str] = []
-
-    if report.missing_rolls:
-        _append_doctor_group(
-            error_groups,
-            error_order,
-            Doctor.ROLL_MISSING,
-            [str(path) for path in report.missing_rolls],
-        )
-
-    for issue in report.issues:
-        title, item = _split_doctor_message(issue.message)
-        if issue.level == "error":
-            _append_doctor_group(error_groups, error_order, title, [item])
-        else:
-            _append_doctor_group(warning_groups, warning_order, title, [item])
-
-    if error_order:
-        _echo_doctor_block(Doctor.ERROR_PREFIX, error_order, error_groups)
-    if warning_order:
-        if error_order:
-            typer.echo("")
-        _echo_doctor_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
-
-    if report.fixable:
-        echo_lines([""])
-        typer.echo(highlight_cli_names(f"Можно исправить: {len(report.fixable)}"))
-        items = report.fixable if verbose else report.fixable[:5]
-        echo_lines([f"  {item}" for item in items])
-        if not verbose and len(report.fixable) > 5:
-            typer.echo(f"  ... и еще {len(report.fixable) - 5}")
-        if fix:
-            plans = [build_safe_rename_plan(archive) for archive in config.archives]
-            apply_normalization_plans(plans)
-            typer.echo("Исправления применены.")
-            if verbose:
-                for plan in plans:
-                    if plan.rules:
-                        echo_lines([""])
-                        echo_lines(print_normalization_plan(plan))
-
-    if report.keyword_vocab_fixes:
-        echo_lines([""])
-        typer.echo(highlight_cli_names(f"Можно добавить в keywords: {len(report.keyword_vocab_fixes)}"))
-        items = report.keyword_vocab_fixes if verbose else report.keyword_vocab_fixes[:5]
-        echo_lines([f"  {item}" for item in items])
-        if not verbose and len(report.keyword_vocab_fixes) > 5:
-            typer.echo(f"  ... и еще {len(report.keyword_vocab_fixes) - 5}")
-        if fix:
-            for archive in config.archives:
-                applied = apply_keyword_vocab_fixes(archive, collect_keyword_vocab_fixes(archive))
-                if applied and verbose:
-                    echo_lines([""])
-                    typer.echo(f"  {applied}")
-            typer.echo("Исправления keywords применены.")
-        else:
-            typer.echo("")
-            typer.echo("Запусти: rl doctor --fix")
-
-    if error_order:
+    if render_doctor(fix=fix, verbose=verbose):
         raise typer.Exit(code=1)
-
-
-def _append_doctor_group(
-    groups: dict[str, list[str]],
-    order: list[str],
-    title: str,
-    items: list[str],
-) -> None:
-    if title not in groups:
-        groups[title] = []
-        order.append(title)
-    groups[title].extend(items)
-
-
-def _split_doctor_message(message: str) -> tuple[str, str]:
-    for prefix in DOCTOR_MESSAGE_PREFIXES:
-        if message.startswith(prefix):
-            item = message.removeprefix(prefix).strip()
-            return prefix, item
-    return message, message
-
-
-def _echo_doctor_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
-    total = sum(len(groups[title]) for title in order)
-    typer.echo(highlight_cli_names(f"{prefix} {total}"))
-    for title in order:
-        items = groups[title]
-        typer.echo(f"  {_doctor_group_title(title)} {len(items)}")
-        echo_lines([f"    {item}" for item in items])
-
-
-def _doctor_group_title(title: str) -> str:
-    return title if title.endswith(":") else f"{title}:"
-
-
-def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
-    if not counter:
-        return
-
-    typer.echo(title)
-    items = counter.most_common(limit)
-    width = _bar_width(dict(items))
-    label_width = _label_width(dict(items))
-    for name, count in items:
-        typer.echo(f"  {name:<{label_width}}  {count:>4}  {_render_bar(count, width)}")
-    if limit is not None and len(counter) > limit:
-        typer.echo(f"  ... и еще {len(counter) - limit}")
-    typer.echo("")
-
-
-def _bar_width(counter) -> int:
-    return max(1, min(20, max(counter.values(), default=0)))
-
-
-def _label_width(counter) -> int:
-    return max(24, max((len(name) for name in counter), default=0))
-
-
-def _render_bar(count: int, max_count: int) -> str:
-    if count <= 0 or max_count <= 0:
-        return ""
-    return "█" * max(1, round((count / max_count) * 20))
 
 
 @tags_app.command("add")
