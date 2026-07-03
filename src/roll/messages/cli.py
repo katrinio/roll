@@ -12,6 +12,7 @@ class Headers:
     VOCAB_FEATURES = "Особенности:"
     VOCAB_KEYWORDS = "Ключевые слова:"
 
+
 class Msg(Headers):
     CLI_UNINITIALIZED = "roll не инициализирован."
     CLI_INITIALIZED = "roll инициализирован."
@@ -39,32 +40,3 @@ class Msg(Headers):
         ]
     )
 
-class Doctor:
-    OK = "OK"
-    ERROR_PREFIX = "ERROR:"
-    WARN_PREFIX = "WARN:"
-    NO_ARCHIVES = "В глобальной конфигурации нет архивов."
-    ARCHIVE_MISSING = "Архив не найден:"
-    WORKSPACE_MISSING = "Нет папки .roll:"
-    WORKSPACE_CONFIG_MISSING = "Нет файла workspace config:"
-    WORKSPACE_CONFIG_MISMATCH = "Workspace config не совпадает с архивом:"
-    VOCAB_DIR_MISSING = "Нет папки словарей:"
-    VOCAB_FILE_MISSING = "Нет файла словаря:"
-    ROLL_MISSING = "Нет файла roll.toml:"
-    ROLL_UNREADABLE = "Не удалось прочитать roll.toml:"
-    REQUIRED_FIELD_MISSING = "Нет обязательного поля"
-    FILM_NOT_IN_VOCAB = "Пленка не в словаре:"
-    CAMERA_NOT_IN_VOCAB = "Камера не в словаре:"
-    FEATURE_NOT_IN_VOCAB = "Особенность не в словаре:"
-    KEYWORD_NOT_IN_VOCAB = "Ключевое слово не в словаре:"
-    KEYWORD_NOT_NORMALIZED = "Ключевое слово не в uppercase:"
-    UNINDEXED_FOLDERS = "Не проиндексировано папок:"
-    SUSPICIOUS_YEAR = "Подозрительное имя года:"
-    SUSPICIOUS_ROLL = "Подозрительное имя папки:"
-
-
-class Normalize:
-    HEADER = "Нормализация архива"
-    ALREADY_NORMALIZED = "Архив уже нормализован."
-    QUESTION = "Переименовать {count} папок?"
-    CONFLICTS_HEADER = "Обнаружены конфликты:"
