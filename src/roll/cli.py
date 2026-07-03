@@ -114,9 +114,9 @@ def status() -> None:
 
 
 @app.command("load")
-def load() -> None:
+def load(manual: bool = typer.Option(False, "--manual", help="Вводить пленку вручную через справочник.")) -> None:
     """Загрузить пленку из запаса в новый roll."""
-    load_roll()
+    load_roll(manual=manual)
 
 
 @app.command("vocab")

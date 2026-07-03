@@ -120,7 +120,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
     missing_rolls: list[Path] = []
     vocab = archive_vocabulary(archive)
 
-    allowed = {key: set(dictionary.read()) for key, dictionary in vocab.items()}
+    allowed = {key: {value.casefold() for value in dictionary.read()} for key, dictionary in vocab.items()}
     mandatory = DoctorText.MANDATORY_FIELDS
 
     for folder in find_roll_folders(archive):
@@ -144,18 +144,18 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
         features = data.get("features", [])
         keywords = data.get("keywords", [])
 
-        if film and film not in allowed["films"]:
+        if film and film.casefold() not in allowed["films"]:
             issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.FILM_NOT_IN_VOCAB} {film} ({index_file})"))
 
-        if camera and camera not in allowed["cameras"]:
+        if camera and camera.casefold() not in allowed["cameras"]:
             issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.CAMERA_NOT_IN_VOCAB} {camera} ({index_file})"))
 
         for value in features or []:
-            if value not in allowed["features"]:
+            if value.casefold() not in allowed["features"]:
                 issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.FEATURE_NOT_IN_VOCAB} {value} ({index_file})"))
 
         for value in keywords or []:
-            if value not in allowed["keywords"]:
+            if value.casefold() not in allowed["keywords"]:
                 issues.append(DoctorIssue(DoctorText.WARNING, f"{Doctor.KEYWORD_NOT_IN_VOCAB} {value} ({index_file})"))
 
     return issues, missing_rolls
