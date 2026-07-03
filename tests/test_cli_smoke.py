@@ -9,7 +9,8 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RL = ROOT / ".venv" / "bin" / "rl"
+PYTHON = sys.executable
+CLI_ENTRY = "from roll.cli import app; app()"
 
 
 class CliSmokeTests(unittest.TestCase):
@@ -35,7 +36,7 @@ class CliSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as home:
             env["HOME"] = home
             return subprocess.run(
-                [str(RL), *args],
+                [PYTHON, "-c", CLI_ENTRY, *args],
                 cwd=ROOT,
                 env=env,
                 text=True,
