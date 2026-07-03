@@ -10,7 +10,6 @@ from roll.app.archive.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
     normalize_keywords_in_archive,
-    print_normalization_plan,
 )
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
@@ -22,6 +21,7 @@ from roll.messages import Msg
 from roll.app.archive.status_output import render_status_report
 from roll.app.archive.search import find_rolls, search_rolls
 from roll.app.archive.search_output import render_search_results
+from roll.app.archive.normalization_output import render_normalization_plans
 from roll.app.archive.stats_output import render_stats_report
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
@@ -223,20 +223,12 @@ def normalize(
         return
 
     plans = [build_normalization_plan(archive) for archive in config.archives]
-
-    total_rules = sum(len(plan.rules) for plan in plans)
-    has_changes = any(plan.has_changes for plan in plans)
-
-    for plan in plans:
-        echo_lines([f"{Msg.ARCHIVE_HEADER} {plan.archive}", *print_normalization_plan(plan), ""])
-
+    total_rules, has_changes = render_normalization_plans(plans)
     if not has_changes:
         return
 
     all_conflicts = [conflict for plan in plans for conflict in plan.conflicts]
     if all_conflicts:
-        echo_lines(["Обнаружены конфликты:"])
-        echo_list(all_conflicts)
         raise typer.Exit(code=1)
 
     if not typer.confirm(f"Переименовать {total_rules} папок?", default=False):
@@ -275,4 +267,3 @@ def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
     if limit is not None and len(counter) > limit:
         typer.echo(f"  ... и еще {len(counter) - limit}")
     typer.echo("")
-
