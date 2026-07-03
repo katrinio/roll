@@ -42,6 +42,7 @@ rl doctor --fix
 rl normalize --tags
 rl batch process
 rl stats 2026
+rl stats -v
 ```
 
 `rl load` работает от `stock.toml`, а `rl load --manual` позволяет создать roll по словарю пленок, не уменьшая stock.

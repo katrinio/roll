@@ -143,7 +143,10 @@ def status() -> None:
 
 
 @app.command("stats")
-def stats(year: str | None = typer.Argument(None, help="Год для фильтрации статистики.")) -> None:
+def stats(
+    year: str | None = typer.Argument(None, help="Год для фильтрации статистики."),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список значений."),
+) -> None:
     """Показать статистику по архиву."""
     archive = require_archive(require_config())
     rolls = find_rolls(archive)
@@ -169,11 +172,13 @@ def stats(year: str | None = typer.Argument(None, help="Год для фильт
     typer.echo(f"Тегов в статистике: {len(tag_counts)}")
     typer.echo("")
 
-    _echo_counter_block("По статусам", status_counts)
-    _echo_counter_block("По годам", year_counts)
-    _echo_counter_block("По пленкам", film_counts)
-    _echo_counter_block("По тегам", tag_counts)
-    _echo_counter_block("По камерам", camera_counts)
+    limit = None if verbose else 5
+
+    _echo_counter_block("По статусам", status_counts, limit=limit)
+    _echo_counter_block("По годам", year_counts, limit=limit)
+    _echo_counter_block("По пленкам", film_counts, limit=limit)
+    _echo_counter_block("По тегам", tag_counts, limit=limit)
+    _echo_counter_block("По камерам", camera_counts, limit=limit)
 
 
 @app.command("load")
@@ -341,14 +346,33 @@ def _doctor_group_title(title: str) -> str:
     return title if title.endswith(":") else f"{title}:"
 
 
-def _echo_counter_block(title: str, counter: Counter[str]) -> None:
+def _echo_counter_block(title: str, counter: Counter[str], limit: int | None = None) -> None:
     if not counter:
         return
 
     typer.echo(title)
-    for name, count in counter.most_common():
-        typer.echo(f"  {name}: {count}")
+    items = counter.most_common(limit)
+    width = _bar_width(Counter(dict(items)))
+    label_width = _label_width(Counter(dict(items)))
+    for name, count in items:
+        typer.echo(f"  {name:<{label_width}}  {count:>4}  {_render_bar(count, width)}")
+    if limit is not None and len(counter) > limit:
+        typer.echo(f"  ... и еще {len(counter) - limit}")
     typer.echo("")
+
+
+def _bar_width(counter: Counter[str]) -> int:
+    return max(1, min(20, max(counter.values(), default=0)))
+
+
+def _label_width(counter: Counter[str]) -> int:
+    return max(24, max((len(name) for name in counter), default=0))
+
+
+def _render_bar(count: int, max_count: int) -> str:
+    if count <= 0 or max_count <= 0:
+        return ""
+    return "█" * max(1, round((count / max_count) * 20))
 
 
 @tags_app.command("add")
