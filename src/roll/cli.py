@@ -2,7 +2,7 @@ from pathlib import Path
 
 import typer
 
-from roll.archive import find_roll_folders, find_unindexed_folders
+from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
@@ -94,10 +94,17 @@ def scan() -> None:
         raise typer.Exit(code=1)
 
     echo_section(Msg.ARCHIVE_HEADER, [str(archive)])
-
     roll_folders = find_roll_folders(archive)
-    typer.echo("Found roll folders:")
-    echo_list((roll_dir.relative_to(archive) for roll_dir in roll_folders))
+    tree = build_archive_tree(archive)
+    photo_count = sum(count_photo_files(folder) for folder in roll_folders)
+
+    if tree:
+        typer.echo("Дерево архива:")
+        echo_lines(tree)
+        typer.echo("")
+
+    typer.echo(f"Папок: {len(roll_folders)}")
+    typer.echo(f"Фото: {photo_count}")
 
 
 @app.command("status")

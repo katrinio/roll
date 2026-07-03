@@ -14,6 +14,7 @@ from roll.app.normalization import (
     collect_keyword_vocab_fixes,
 )
 from roll.app.search import RollIndex
+from roll.archive import build_archive_tree, count_photo_files
 from roll.app.roll_store import RollMetadata, save_roll_metadata
 
 
@@ -156,3 +157,25 @@ class NormalizationTests(unittest.TestCase):
         ]
 
         self.assertEqual(_count_roll_statuses(rolls), {"loaded": 1, "processed": 2, "failed": 1})
+
+    def test_build_archive_tree_lists_years_and_rolls(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            (archive / "2025" / "10-19").mkdir(parents=True)
+            (archive / "2025" / "11-03").mkdir(parents=True)
+            (archive / "2026" / "01-01").mkdir(parents=True)
+
+            self.assertEqual(
+                build_archive_tree(archive),
+                ["2025", "  ├── 10-19", "  └── 11-03", "2026", "  └── 01-01"],
+            )
+
+    def test_count_photo_files_counts_common_extensions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "a.jpg").write_text("", encoding="utf-8")
+            (folder / "b.txt").write_text("", encoding="utf-8")
+            (folder / "nested").mkdir()
+            (folder / "nested" / "c.PNG").write_text("", encoding="utf-8")
+
+            self.assertEqual(count_photo_files(folder), 2)
