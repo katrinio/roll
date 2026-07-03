@@ -6,7 +6,12 @@ from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_keywords
-from roll.app.normalization import apply_normalization_plans, build_safe_rename_plan, build_normalization_plan, print_normalization_plan
+from roll.app.normalization import (
+    apply_normalization_plans,
+    build_normalization_plan,
+    build_safe_rename_plan,
+    print_normalization_plan,
+)
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
@@ -24,6 +29,22 @@ app.add_typer(stock_app, name="stock")
 
 tags_app = typer.Typer(help="Теги роллов.")
 app.add_typer(tags_app, name="tags")
+
+
+DOCTOR_MESSAGE_PREFIXES = (
+    Msg.ARCHIVE_MISSING,
+    Doctor.WORKSPACE_MISSING,
+    Doctor.VOCAB_DIR_MISSING,
+    Doctor.VOCAB_FILE_MISSING,
+    Doctor.ROLL_UNREADABLE,
+    Doctor.REQUIRED_FIELD_MISSING,
+    Doctor.FILM_NOT_IN_VOCAB,
+    Doctor.CAMERA_NOT_IN_VOCAB,
+    Doctor.FEATURE_NOT_IN_VOCAB,
+    Doctor.KEYWORD_NOT_IN_VOCAB,
+    Doctor.SUSPICIOUS_YEAR,
+    Doctor.SUSPICIOUS_ROLL,
+)
 
 
 @app.command("init")
@@ -150,18 +171,36 @@ def doctor(
     else:
         report = run_doctor(config)
 
-    if not report.issues:
+    if not report.issues and not report.missing_rolls:
         typer.echo(Doctor.OK)
         return
 
-    echo_lines(
-        [
-            highlight_cli_names(
-                f"{Doctor.ERROR_PREFIX if issue.level == 'error' else Doctor.WARN_PREFIX} {issue.message}"
-            )
-            for issue in report.issues
-        ]
-    )
+    error_groups: dict[str, list[str]] = {}
+    warning_groups: dict[str, list[str]] = {}
+    error_order: list[str] = []
+    warning_order: list[str] = []
+
+    if report.missing_rolls:
+        _append_doctor_group(
+            error_groups,
+            error_order,
+            Doctor.ROLL_MISSING,
+            [str(path) for path in report.missing_rolls],
+        )
+
+    for issue in report.issues:
+        title, item = _split_doctor_message(issue.message)
+        if issue.level == "error":
+            _append_doctor_group(error_groups, error_order, title, [item])
+        else:
+            _append_doctor_group(warning_groups, warning_order, title, [item])
+
+    if error_order:
+        _echo_doctor_block(Doctor.ERROR_PREFIX, error_order, error_groups)
+    if warning_order:
+        if error_order:
+            typer.echo("")
+        _echo_doctor_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
 
     if report.fixable:
         echo_lines([""])
@@ -183,8 +222,41 @@ def doctor(
                         echo_lines([""])
                         echo_lines(print_normalization_plan(plan))
 
-    if report.has_errors:
+    if error_order:
         raise typer.Exit(code=1)
+
+
+def _append_doctor_group(
+    groups: dict[str, list[str]],
+    order: list[str],
+    title: str,
+    items: list[str],
+) -> None:
+    if title not in groups:
+        groups[title] = []
+        order.append(title)
+    groups[title].extend(items)
+
+
+def _split_doctor_message(message: str) -> tuple[str, str]:
+    for prefix in DOCTOR_MESSAGE_PREFIXES:
+        if message.startswith(prefix):
+            item = message.removeprefix(prefix).strip()
+            return prefix, item
+    return message, ""
+
+
+def _echo_doctor_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
+    total = sum(len(groups[title]) for title in order)
+    typer.echo(highlight_cli_names(f"{prefix} {total}"))
+    for title in order:
+        items = groups[title]
+        typer.echo(f"  {_doctor_group_title(title)} {len(items)}")
+        echo_lines([f"    {item}" for item in items])
+
+
+def _doctor_group_title(title: str) -> str:
+    return title if title.endswith(":") else f"{title}:"
 
 
 @tags_app.command("add")
