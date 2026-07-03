@@ -9,7 +9,7 @@ from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
 from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.app.stock import app as stock_app
-from roll.app.stock import load_roll
+from roll.app.stock import load as load_roll
 from roll.messages import Msg
 from roll.app.normalization import (
     apply_normalization_plans,
