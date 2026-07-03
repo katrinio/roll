@@ -5,7 +5,6 @@ from pathlib import Path
 import unittest
 
 from roll.app.normalization import NamingStrategy, apply_normalization_plan, build_safe_rename_plan
-from roll.app.roll_store import RollMetadata, save_roll_metadata
 
 
 class NormalizationTests(unittest.TestCase):
