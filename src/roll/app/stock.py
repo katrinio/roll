@@ -7,6 +7,7 @@ import tomllib
 
 import typer
 
+from roll.archive import find_roll_folders, get_index_file
 from roll.app.workspace import workspace_for
 from roll.helpers.autocomplete import autocomplete_prompt, choice_prompt
 from roll.helpers.guards import require_archive, require_config
@@ -79,6 +80,21 @@ def load_roll() -> None:
     save_stock(workspace.stock_file, updated)
 
     typer.echo(f"Заряжено: {selected.film}")
+
+
+@app.command("process")
+def process() -> None:
+    archive = require_archive(require_config())
+    workspace = workspace_for(archive)
+
+    loaded_rolls = _loaded_rolls(archive)
+    if not loaded_rolls:
+        typer.echo("Нет загруженных пленок.")
+        raise typer.Exit(code=1)
+
+    selected = _choose_roll(loaded_rolls)
+    updated = _update_roll_status(selected.folder / "roll.toml", "processed")
+    typer.echo(f"Обработана: {updated}")
 
 
 @app.command("list")
@@ -223,6 +239,45 @@ def _choose_stock_item(items: list[StockItem]) -> StockItem:
         if selected_label == f"{item.film} ×{item.quantity}":
             return item
     raise ValueError("Не удалось выбрать пленку из запаса.")
+
+
+def _loaded_rolls(archive: Path) -> list[Path]:
+    rolls: list[Path] = []
+    for roll_dir in find_roll_folders(archive):
+        index_file = get_index_file(roll_dir)
+        if not index_file.exists():
+            continue
+        data = tomllib.loads(index_file.read_text(encoding="utf-8"))
+        if data.get("status") == "loaded":
+            rolls.append(roll_dir)
+    return rolls
+
+
+def _choose_roll(rolls: list[Path]) -> Path:
+    labels = [str(path.relative_to(path.parents[1])) for path in rolls]
+    selected_label = choice_prompt("Roll", labels)
+    for path in rolls:
+        if selected_label == str(path.relative_to(path.parents[1])):
+            return path
+    raise ValueError("Не удалось выбрать roll.")
+
+
+def _update_roll_status(path: Path, status: str) -> str:
+    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    data["status"] = status
+    path.write_text(
+        "\n".join(
+            [
+                f'status = "{data["status"]}"',
+                f'film = "{data.get("film", "")}"',
+                f'camera = "{data.get("camera", "")}"',
+                f'loaded_at = "{data.get("loaded_at", "")}"',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return str(path.parent.relative_to(path.parents[1]))
 
 
 def _create_roll_folder(archive: Path, loaded_at: str) -> Path:
