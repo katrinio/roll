@@ -13,6 +13,7 @@ from roll.app.normalization import (
     build_safe_rename_plan,
     collect_keyword_vocab_fixes,
 )
+from roll.app.search import RollIndex
 from roll.app.roll_store import RollMetadata, save_roll_metadata
 
 
@@ -143,3 +144,15 @@ class NormalizationTests(unittest.TestCase):
             report = run_doctor(Config(archives=[archive]))
 
             self.assertTrue(any("Workspace config" in issue.message for issue in report.issues))
+
+    def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
+        from roll.cli import _count_roll_statuses
+
+        rolls = [
+            RollIndex(Path("a"), "loaded", "", "", "", [], []),
+            RollIndex(Path("b"), "processed", "", "", "", [], []),
+            RollIndex(Path("c"), "failed", "", "", "", [], []),
+            RollIndex(Path("d"), "processed", "", "", "", [], []),
+        ]
+
+        self.assertEqual(_count_roll_statuses(rolls), {"loaded": 1, "processed": 2, "failed": 1})

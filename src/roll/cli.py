@@ -23,6 +23,7 @@ from roll.app.stock import app as stock_app
 from roll.app.stock import load as load_roll
 from roll.messages import Msg
 from roll.app.search import search_rolls
+from roll.app.search import find_rolls
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
 
@@ -106,6 +107,8 @@ def status() -> None:
 
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
+    rolls = find_rolls(archive)
+    status_counts = _count_roll_statuses(rolls)
 
     echo_lines(
         [
@@ -114,6 +117,12 @@ def status() -> None:
             f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}",
             f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}",
             f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}",
+            "",
+            "Пленки по статусам:",
+            f"loaded: {status_counts.get('loaded', 0)}",
+            f"processed: {status_counts.get('processed', 0)}",
+            f"failed: {status_counts.get('failed', 0)}",
+            f"без roll.toml: {len(unindexed_folders)}",
         ]
     )
 
@@ -386,3 +395,11 @@ def _roll_status(path: Path) -> str:
         return load_roll_metadata(path / "roll.toml").status
     except ValueError:
         return "unknown"
+
+
+def _count_roll_statuses(rolls) -> dict[str, int]:
+    counts = {"loaded": 0, "processed": 0, "failed": 0}
+    for roll in rolls:
+        if roll.status in counts:
+            counts[roll.status] += 1
+    return counts
