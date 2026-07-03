@@ -1,7 +1,7 @@
 ## `roll`
 
 <div align="center">
-  <img src="docs/images/film.gif" width="250"/>
+  <img src="docs/images/roll.png" width="310"/>
 </div>
 
 A small CLI for managing a film photography archive.
