@@ -6,7 +6,7 @@ from roll.archive import find_roll_folders, find_unindexed_folders
 from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.diagnostics import Doctor, run_doctor
 from roll.app.roll_store import load_roll_metadata, update_roll_keywords
-from roll.app.normalization import apply_normalization_plans, build_normalization_plan
+from roll.app.normalization import apply_normalization_plans, build_safe_rename_plan, build_normalization_plan, print_normalization_plan
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
@@ -14,12 +14,6 @@ from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.app.stock import app as stock_app
 from roll.app.stock import load as load_roll
 from roll.messages import Msg
-from roll.app.normalization import (
-    apply_normalization_plans,
-    build_normalization_plan,
-    build_safe_rename_plan,
-    print_normalization_plan,
-)
 from roll.app.search import search_rolls
 from roll.app.vocabulary import archive_vocabulary
 from roll.app.workspace import workspace_for
@@ -144,7 +138,10 @@ def search(query: str) -> None:
 
 
 @app.command("doctor")
-def doctor(fix: bool = typer.Option(False, "--fix", help="Применить безопасные исправления.")) -> None:
+def doctor(
+    fix: bool = typer.Option(False, "--fix", help="Применить безопасные исправления."),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список безопасных исправлений."),
+) -> None:
     """Проверить целостность архива и конфигурации."""
     try:
         config = load_config()
@@ -169,8 +166,9 @@ def doctor(fix: bool = typer.Option(False, "--fix", help="Применить б�
     if report.fixable:
         echo_lines([""])
         typer.echo(highlight_cli_names(f"Можно исправить: {len(report.fixable)}"))
-        echo_lines([f"  {item}" for item in report.fixable[:5]])
-        if len(report.fixable) > 5:
+        items = report.fixable if verbose else report.fixable[:5]
+        echo_lines([f"  {item}" for item in items])
+        if not verbose and len(report.fixable) > 5:
             typer.echo(f"  ... и еще {len(report.fixable) - 5}")
         if not fix:
             typer.echo("")
@@ -179,6 +177,11 @@ def doctor(fix: bool = typer.Option(False, "--fix", help="Применить б�
             plans = [build_safe_rename_plan(archive) for archive in config.archives]
             apply_normalization_plans(plans)
             typer.echo("Исправления применены.")
+            if verbose:
+                for plan in plans:
+                    if plan.rules:
+                        echo_lines([""])
+                        echo_lines(print_normalization_plan(plan))
 
     if report.has_errors:
         raise typer.Exit(code=1)
