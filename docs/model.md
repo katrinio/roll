@@ -37,7 +37,7 @@ The project has three levels: global config → archive workspace → roll.
 | `app/flows/` | interactive scenarios (`stock.py`: load/process/failed) |
 | `app/archive/` | search, stats, batch, normalization + rendering |
 | `app/diagnostics/` | doctor |
-| `messages/` | user-facing strings, grouped by area |
+| `messages/` | user-facing strings, grouped by area — RU only for now, English locale is planned |
 
 ## Roll
 

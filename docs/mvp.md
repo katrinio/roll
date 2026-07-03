@@ -27,6 +27,8 @@ rl search kir balcony       # half a year later — found it
 
 sync between machines · cloud · web UI · migrating old formats · image processing
 
+First thing right after MVP: localization — CLI strings are RU-only today, English is next.
+
 ## Rule
 
 If it doesn't help find a roll from memory faster — it's out of MVP.
