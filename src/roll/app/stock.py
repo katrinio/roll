@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from datetime import date
 import tomllib
 
 import typer
@@ -39,6 +40,51 @@ def add() -> None:
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=1)
+
+
+@app.command("load")
+def load() -> None:
+    archive = require_archive(require_config())
+    workspace = workspace_for(archive)
+
+    try:
+        stock = load_stock(workspace.stock_file)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
+    if not stock:
+        typer.echo("Запас пуст.")
+        raise typer.Exit(code=1)
+
+    film = autocomplete_prompt("Пленка", workspace.dictionary("films"))
+    selected = _pick_stock_item(stock, film)
+    if selected is None:
+        typer.echo("Такой пленки нет в запасе.")
+        raise typer.Exit(code=1)
+
+    camera = autocomplete_prompt("Камера", workspace.dictionary("cameras"))
+    loaded_at = typer.prompt("Дата загрузки:")
+
+    roll_folder = _create_roll_folder(archive, loaded_at)
+    roll_folder.mkdir(parents=True, exist_ok=False)
+    (roll_folder / "roll.toml").write_text(
+        "\n".join(
+            [
+                'status = "loaded"',
+                f'film = "{selected.film}"',
+                f'camera = "{camera}"',
+                f'loaded_at = "{loaded_at}"',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    updated = remove_from_stock(stock, selected.film, 1)
+    save_stock(workspace.stock_file, updated)
+
+    typer.echo(f"Заряжено: {selected.film}")
 
 
 @app.command("list")
@@ -124,6 +170,31 @@ def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[Stock
     return _sort_and_merge(list(merged.values()))
 
 
+def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
+    if quantity <= 0:
+        raise ValueError("Количество должно быть положительным.")
+
+    updated: list[StockItem] = []
+    removed = False
+    for item in items:
+        if item.film.casefold() != film.casefold():
+            updated.append(item)
+            continue
+
+        if item.quantity < quantity:
+            raise ValueError("В запасе недостаточно пленки.")
+
+        removed = True
+        remaining = item.quantity - quantity
+        if remaining > 0:
+            updated.append(StockItem(film=item.film, quantity=remaining))
+
+    if not removed:
+        raise ValueError("Такой пленки нет в запасе.")
+
+    return _sort_and_merge(updated)
+
+
 def _sort_and_merge(items: list[StockItem]) -> list[StockItem]:
     merged: dict[str, StockItem] = {}
     for item in items:
@@ -134,3 +205,16 @@ def _sort_and_merge(items: list[StockItem]) -> list[StockItem]:
         else:
             merged[key] = item
     return sorted(merged.values(), key=lambda item: item.film.casefold())
+
+
+def _pick_stock_item(items: list[StockItem], film: str) -> StockItem | None:
+    for item in items:
+        if item.film.casefold() == film.casefold():
+            return item
+    return None
+
+
+def _create_roll_folder(archive: Path, loaded_at: str) -> Path:
+    normalized = loaded_at.strip().split("T", 1)[0].split(" ", 1)[0]
+    loaded_date = date.fromisoformat(normalized)
+    return archive / loaded_date.strftime("%Y") / loaded_date.strftime("%m-%d")

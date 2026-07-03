@@ -11,6 +11,7 @@ from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.helpers.parsing import parse_csv
 from roll.app.index import save_roll_index
 from roll.app.stock import app as stock_app
+from roll.app.stock import load as load_stock
 from roll.messages import Msg
 from roll.app.normalization import (
     apply_normalization_plans,
@@ -113,6 +114,12 @@ def index(
     )
 
     typer.echo(Msg.INDEX_DONE)
+
+
+@app.command("load")
+def load() -> None:
+    """Загрузить пленку из запаса в новый roll."""
+    load_stock()
 
 
 @app.command("vocab")
