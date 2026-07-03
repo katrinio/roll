@@ -135,7 +135,7 @@ loaded → processed
 Сейчас заполняются только вручную в `roll.toml` — команды для этого в CLI еще нет (см. [[Roll]]).
 
 Примеры:
-- kir
+- pizza
 - balcony
 - evening
 - belgrade

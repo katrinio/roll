@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import Counter
 
 import typer
 
@@ -141,6 +142,40 @@ def status() -> None:
         echo_list((folder.relative_to(archive) for folder in unindexed_folders))
 
 
+@app.command("stats")
+def stats(year: str | None = typer.Argument(None, help="Год для фильтрации статистики.")) -> None:
+    """Показать статистику по архиву."""
+    archive = require_archive(require_config())
+    rolls = find_rolls(archive)
+
+    if year:
+        rolls = [roll for roll in rolls if roll.loaded_at.startswith(f"{year}-")]
+
+    if not rolls:
+        typer.echo("Нет данных для статистики.")
+        return
+
+    film_counts = Counter(roll.film for roll in rolls)
+    tag_counts = Counter(tag for roll in rolls for tag in roll.keywords)
+    camera_counts = Counter(roll.camera for roll in rolls)
+    year_counts = Counter(roll.loaded_at[:4] for roll in rolls if roll.loaded_at)
+    status_counts = _count_roll_statuses(rolls)
+
+    echo_lines([Msg.STATUS_HEADER, ""])
+    if year:
+        typer.echo(f"Год: {year}")
+    typer.echo(f"Роллов: {len(rolls)}")
+    typer.echo(f"Пленок в статистике: {len(film_counts)}")
+    typer.echo(f"Тегов в статистике: {len(tag_counts)}")
+    typer.echo("")
+
+    _echo_counter_block("По статусам", status_counts)
+    _echo_counter_block("По годам", year_counts)
+    _echo_counter_block("По пленкам", film_counts)
+    _echo_counter_block("По тегам", tag_counts)
+    _echo_counter_block("По камерам", camera_counts)
+
+
 @app.command("load")
 def load(manual: bool = typer.Option(False, "--manual", help="Вводить пленку вручную через справочник.")) -> None:
     """Загрузить пленку из запаса в новый roll."""
@@ -166,7 +201,7 @@ def vocab() -> None:
 def search(query: str | None = typer.Argument(None, help="Строка для поиска по памяти.")) -> None:
     """Искать пленки по памяти."""
     if not query:
-        typer.echo("Нужно указать строку поиска. Пример: rl search kir")
+        typer.echo("Нужно указать строку поиска. Пример: rl search pizza")
         raise typer.Exit(code=1)
 
     archive = require_archive(require_config())
@@ -306,6 +341,16 @@ def _doctor_group_title(title: str) -> str:
     return title if title.endswith(":") else f"{title}:"
 
 
+def _echo_counter_block(title: str, counter: Counter[str]) -> None:
+    if not counter:
+        return
+
+    typer.echo(title)
+    for name, count in counter.most_common():
+        typer.echo(f"  {name}: {count}")
+    typer.echo("")
+
+
 @tags_app.command("add")
 def add_tags() -> None:
     archive = require_archive(require_config())
@@ -435,8 +480,8 @@ def _roll_status(path: Path) -> str:
         return "unknown"
 
 
-def _count_roll_statuses(rolls) -> dict[str, int]:
-    counts = {"loaded": 0, "processed": 0, "failed": 0}
+def _count_roll_statuses(rolls) -> Counter[str]:
+    counts = Counter({"loaded": 0, "processed": 0, "failed": 0})
     for roll in rolls:
         if roll.status in counts:
             counts[roll.status] += 1

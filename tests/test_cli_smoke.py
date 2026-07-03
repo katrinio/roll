@@ -31,6 +31,16 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("add", self._output(result))
 
+    def test_batch_help(self) -> None:
+        result = self._run("batch", "--help")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("process", self._output(result))
+
+    def test_stats_help(self) -> None:
+        result = self._run("stats", "--help")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Год", self._output(result))
+
     def _run(self, *args: str) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         with tempfile.TemporaryDirectory() as home:
