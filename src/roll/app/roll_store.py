@@ -57,6 +57,20 @@ def update_roll_status(path: Path, status: str) -> RollMetadata:
     return updated
 
 
+def update_roll_keywords(path: Path, keywords: list[str]) -> RollMetadata:
+    metadata = load_roll_metadata(path)
+    updated = RollMetadata(
+        status=metadata.status,
+        film=metadata.film,
+        camera=metadata.camera,
+        loaded_at=metadata.loaded_at,
+        features=metadata.features,
+        keywords=_merge_unique(metadata.keywords, keywords),
+    )
+    save_roll_metadata(path, updated)
+    return updated
+
+
 def _load_toml(path: Path) -> dict:
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))
@@ -91,3 +105,11 @@ def _validate_metadata(data: dict, path: Path) -> RollMetadata:
 
 def _format_array(values: list[str]) -> str:
     return "[" + ", ".join(f'"{item}"' for item in values) + "]"
+
+
+def _merge_unique(existing: list[str], new_values: list[str]) -> list[str]:
+    merged: list[str] = []
+    for value in [*existing, *new_values]:
+        if value not in merged:
+            merged.append(value)
+    return merged
