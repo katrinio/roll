@@ -8,7 +8,7 @@ import tomllib
 import typer
 
 from roll.app.workspace import workspace_for
-from roll.helpers.autocomplete import autocomplete_prompt
+from roll.helpers.autocomplete import autocomplete_prompt, choice_prompt
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines
 
@@ -61,29 +61,19 @@ def load_roll() -> None:
         typer.echo("Запас пуст.")
         raise typer.Exit(code=1)
 
-    film = autocomplete_prompt("Пленка", workspace.dictionary("films"))
-    selected = _pick_stock_item(stock, film)
-    if selected is None:
-        typer.echo("Такой пленки нет в запасе.")
-        raise typer.Exit(code=1)
+    selected = _choose_stock_item(stock)
 
     camera = autocomplete_prompt("Камера", workspace.dictionary("cameras"))
     loaded_at = typer.prompt("Дата загрузки:")
+    status = "loaded"
 
     roll_folder = _create_roll_folder(archive, loaded_at)
+    if roll_folder.exists():
+        typer.echo(f"Папка уже существует: {roll_folder}")
+        raise typer.Exit(code=1)
+
     roll_folder.mkdir(parents=True, exist_ok=False)
-    (roll_folder / "roll.toml").write_text(
-        "\n".join(
-            [
-                'status = "loaded"',
-                f'film = "{selected.film}"',
-                f'camera = "{camera}"',
-                f'loaded_at = "{loaded_at}"',
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    write_roll_metadata(roll_folder / "roll.toml", status=status, film=selected.film, camera=camera, loaded_at=loaded_at)
 
     updated = remove_from_stock(stock, selected.film, 1)
     save_stock(workspace.stock_file, updated)
@@ -160,6 +150,21 @@ def save_stock(path: Path, items: list[StockItem]) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def write_roll_metadata(path: Path, status: str, film: str, camera: str, loaded_at: str) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                f'status = "{status}"',
+                f'film = "{film}"',
+                f'camera = "{camera}"',
+                f'loaded_at = "{loaded_at}"',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
 def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
     if quantity <= 0:
         raise ValueError("Количество должно быть положительным.")
@@ -211,11 +216,13 @@ def _sort_and_merge(items: list[StockItem]) -> list[StockItem]:
     return sorted(merged.values(), key=lambda item: item.film.casefold())
 
 
-def _pick_stock_item(items: list[StockItem], film: str) -> StockItem | None:
+def _choose_stock_item(items: list[StockItem]) -> StockItem:
+    labels = [f"{item.film} ×{item.quantity}" for item in items]
+    selected_label = choice_prompt("Пленка", labels)
     for item in items:
-        if item.film.casefold() == film.casefold():
+        if selected_label == f"{item.film} ×{item.quantity}":
             return item
-    return None
+    raise ValueError("Не удалось выбрать пленку из запаса.")
 
 
 def _create_roll_folder(archive: Path, loaded_at: str) -> Path:
