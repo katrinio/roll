@@ -48,3 +48,10 @@ class Doctor:
     UNINDEXED_FOLDERS = "Не проиндексировано папок:"
     SUSPICIOUS_YEAR = "Подозрительное имя года:"
     SUSPICIOUS_ROLL = "Подозрительное имя папки:"
+
+
+class Normalize:
+    HEADER = "Нормализация архива"
+    ALREADY_NORMALIZED = "Архив уже нормализован."
+    QUESTION = "Переименовать {count} папок?"
+    CONFLICTS_HEADER = "Обнаружены конфликты:"

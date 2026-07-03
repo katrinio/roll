@@ -10,6 +10,11 @@ from roll.helpers.guards import require_archive, require_config, require_directo
 from roll.helpers.parsing import parse_csv
 from roll.index import save_roll_index
 from roll.messages import Msg
+from roll.normalization import (
+    apply_normalization_plan,
+    build_normalization_plan,
+    print_normalization_plan,
+)
 from roll.search import search_rolls
 from roll.vocabulary import archive_vocabulary
 from roll.workspace import workspace_for
@@ -182,3 +187,35 @@ def doctor() -> None:
 
     if report.has_errors:
         raise typer.Exit(code=1)
+
+
+@app.command("normalize")
+def normalize() -> None:
+    """Привести архив к единому виду."""
+    config = require_config()
+    plans = [build_normalization_plan(archive) for archive in config.archives]
+
+    total_rules = sum(len(plan.rules) for plan in plans)
+    has_changes = any(plan.has_changes for plan in plans)
+
+    for plan in plans:
+        typer.echo(f"{Msg.ARCHIVE_HEADER} {plan.archive}")
+        for line in print_normalization_plan(plan):
+            typer.echo(line)
+        typer.echo("")
+
+    if not has_changes:
+        return
+
+    all_conflicts = [conflict for plan in plans for conflict in plan.conflicts]
+    if all_conflicts:
+        typer.echo("Обнаружены конфликты:")
+        for conflict in all_conflicts:
+            typer.echo(f"- {conflict}")
+        raise typer.Exit(code=1)
+
+    if not typer.confirm(f"Переименовать {total_rules} папок?", default=False):
+        return
+
+    for plan in plans:
+        apply_normalization_plan(plan)
