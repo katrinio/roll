@@ -2,7 +2,7 @@ from pathlib import Path
 
 import typer
 
-from roll.archive import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
+from roll.filesystem import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
 from roll.app.workspace.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
 from roll.app.archive.batch import process_archives
 from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
@@ -14,7 +14,7 @@ from roll.app.archive.normalization import (
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
-from roll.helpers.output import echo_lines, echo_list, echo_section
+from roll.helpers.output import echo_lines, echo_section
 from roll.app.flows.stock import app as stock_app
 from roll.app.flows.stock import load as load_roll
 from roll.messages import Msg
@@ -22,6 +22,7 @@ from roll.app.archive.status_output import render_status_report
 from roll.app.archive.search import find_rolls, search_rolls
 from roll.app.archive.search_output import render_search_results
 from roll.app.archive.normalization_output import render_normalization_plans
+from roll.app.archive.stats import _count_statuses
 from roll.app.archive.stats_output import render_stats_report
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
@@ -146,7 +147,7 @@ def search(query: str | None = typer.Argument(None, help="Строка для п
     results = search_rolls(archive, query)
 
     if not results:
-        typer.echo("Ничего не найдено.")
+        typer.echo(Msg.NO_RESULTS)
         return
 
     render_search_results(results)
@@ -182,7 +183,7 @@ def _update_roll_list_field(
     rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
 
     if not rolls:
-        typer.echo("Нет роллов.")
+        typer.echo(Msg.NO_ROLLS)
         raise typer.Exit(code=1)
 
     selected = _choose_roll_folder(rolls)
@@ -215,11 +216,11 @@ def normalize(
         for archive in config.archives:
             touched.extend(normalize_keywords_in_archive(archive))
         if touched:
-            typer.echo("Теги нормализованы.")
+            typer.echo(Msg.TAGS_NORMALIZED)
             for path in touched:
                 typer.echo(f"  {path}")
         else:
-            typer.echo("Теги уже нормализованы.")
+            typer.echo(Msg.TAGS_ALREADY_NORMALIZED)
         return
 
     plans = [build_normalization_plan(archive) for archive in config.archives]
@@ -252,18 +253,3 @@ def _roll_status(path: Path) -> str:
         return load_roll_metadata(path / "roll.toml").status
     except ValueError:
         return "unknown"
-
-
-def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
-    if not counter:
-        return
-
-    typer.echo(title)
-    items = counter.most_common(limit)
-    width = _bar_width(dict(items))
-    label_width = _label_width(dict(items))
-    for name, count in items:
-        typer.echo(f"  {name:<{label_width}}  {count:>4}  {_render_bar(count, width)}")
-    if limit is not None and len(counter) > limit:
-        typer.echo(f"  ... и еще {len(counter) - limit}")
-    typer.echo("")

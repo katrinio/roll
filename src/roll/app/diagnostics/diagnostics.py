@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import tomllib
 
-from roll.archive import find_roll_folders, get_index_file, find_unindexed_folders
+from roll.filesystem import find_roll_folders, get_index_file, find_unindexed_folders
 from roll.app.workspace.config import Config
 from roll.app.archive.normalization import build_safe_rename_plan, collect_keyword_vocab_fixes
 from roll.messages import Doctor

@@ -99,7 +99,9 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
             echo("Исправления keywords применены.")
         else:
             echo_lines([""])
-            echo("Запусти: rl doctor --fix")
+            from roll.messages import Msg
+
+            echo(Msg.DOCTOR_FIX_HINT)
 
     return 1 if error_order else 0
 

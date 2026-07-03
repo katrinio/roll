@@ -2,7 +2,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from roll.archive import find_roll_folders, get_index_file
+from roll.filesystem import find_roll_folders, get_index_file
 
 
 @dataclass(frozen=True)

@@ -7,7 +7,7 @@ import typer
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 
-from roll.archive import find_roll_folders
+from roll.filesystem import find_roll_folders
 from roll.app.workspace.roll_store import (
     RollMetadata,
     load_roll_metadata,
@@ -22,6 +22,7 @@ from roll.app.workspace.workspace import workspace_for
 from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_prompt, choice_prompt
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines
+from roll.messages import Msg
 
 app = typer.Typer(help="Запас пленки.")
 
@@ -34,7 +35,7 @@ def add() -> None:
     film = autocomplete_prompt("Пленка", workspace.dictionary("films"))
     quantity = typer.prompt("Количество:", type=int)
     if quantity <= 0:
-        typer.echo("Количество должно быть положительным.")
+        typer.echo(Msg.INVALID_QUANTITY)
         raise typer.Exit(code=1)
 
     try:
@@ -59,7 +60,7 @@ def load(manual: bool = typer.Option(False, "--manual", help="Вводить п�
             raise typer.Exit(code=1)
 
         if not stock:
-            typer.echo("Запас пуст. Используй --manual для ручного ввода.")
+            typer.echo(Msg.STOCK_EMPTY_MANUAL)
             raise typer.Exit(code=1)
 
     selected = _choose_stock_item(stock) if not manual else _choose_manual_film(workspace)
@@ -123,7 +124,7 @@ def list_stock() -> None:
         raise typer.Exit(code=1)
 
     if not items:
-        typer.echo("Запас пуст.")
+        typer.echo(Msg.STOCK_EMPTY)
         return
 
     echo_lines(["Запас пленки"])
@@ -137,7 +138,7 @@ def _prompt_loaded_at() -> str:
     try:
         return date.fromisoformat(normalized).isoformat()
     except ValueError as exc:
-        typer.echo("Неверная дата.")
+        typer.echo(Msg.INVALID_DATE)
         raise typer.Exit(code=1) from exc
 
 
@@ -205,7 +206,7 @@ def _finish_roll(status: str, label: str) -> None:
     archive = require_archive(require_config())
     loaded_rolls = _loaded_rolls(archive)
     if not loaded_rolls:
-        typer.echo("Нет загруженных пленок.")
+        typer.echo(Msg.NO_LOADED_ROLLS)
         raise typer.Exit(code=1)
 
     selected = _choose_roll(loaded_rolls)

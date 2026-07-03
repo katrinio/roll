@@ -14,7 +14,7 @@ from roll.app.archive.normalization import (
     collect_keyword_vocab_fixes,
 )
 from roll.app.archive.search import RollIndex
-from roll.archive import build_archive_tree, count_photo_files
+from roll.filesystem import build_archive_tree, count_photo_files
 from roll.app.workspace.roll_store import RollMetadata, save_roll_metadata
 
 
