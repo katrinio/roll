@@ -2,26 +2,31 @@ from pathlib import Path
 
 import typer
 
-from roll.archive import find_roll_folders, find_unindexed_folders
-from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
-from roll.app.diagnostics import Doctor, run_doctor
-from roll.app.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
-from roll.app.normalization import (
+from roll.filesystem import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
+from roll.app.workspace.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.app.archive.batch import process_archives
+from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
+from roll.app.archive.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
-    build_safe_rename_plan,
-    print_normalization_plan,
+    normalize_keywords_in_archive,
 )
 from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
-from roll.helpers.output import echo_lines, echo_list, echo_section
-from roll.app.stock import app as stock_app
-from roll.app.stock import load as load_roll
+from roll.helpers.output import echo_lines, echo_section
+from roll.app.flows.stock import app as stock_app
+from roll.app.flows.stock import load as load_roll
 from roll.messages import Msg
-from roll.app.search import search_rolls
-from roll.app.vocabulary import archive_vocabulary
-from roll.app.workspace import workspace_for
+from roll.app.archive.status_output import render_status_report
+from roll.app.archive.search import find_rolls, search_rolls
+from roll.app.archive.search_output import render_search_results
+from roll.app.archive.normalization_output import render_normalization_plans
+from roll.app.archive.stats import _count_statuses
+from roll.app.archive.stats_output import render_stats_report
+from roll.app.workspace.vocabulary import archive_vocabulary
+from roll.app.workspace.workspace import workspace_for
+from roll.app.diagnostics.doctor_output import render_doctor
 
 app = typer.Typer(help="Личный индекс пленок.")
 app.add_typer(stock_app, name="stock")
@@ -33,21 +38,8 @@ app.add_typer(tags_app, name="tags")
 features_app = typer.Typer(help="Особенности роллов.")
 app.add_typer(features_app, name="features")
 
-
-DOCTOR_MESSAGE_PREFIXES = (
-    Msg.ARCHIVE_MISSING,
-    Doctor.WORKSPACE_MISSING,
-    Doctor.VOCAB_DIR_MISSING,
-    Doctor.VOCAB_FILE_MISSING,
-    Doctor.ROLL_UNREADABLE,
-    Doctor.REQUIRED_FIELD_MISSING,
-    Doctor.FILM_NOT_IN_VOCAB,
-    Doctor.CAMERA_NOT_IN_VOCAB,
-    Doctor.FEATURE_NOT_IN_VOCAB,
-    Doctor.KEYWORD_NOT_IN_VOCAB,
-    Doctor.SUSPICIOUS_YEAR,
-    Doctor.SUSPICIOUS_ROLL,
-)
+batch_app = typer.Typer(help="Пакетные операции.")
+app.add_typer(batch_app, name="batch")
 
 
 @app.command("init")
@@ -87,10 +79,17 @@ def scan() -> None:
         raise typer.Exit(code=1)
 
     echo_section(Msg.ARCHIVE_HEADER, [str(archive)])
-
     roll_folders = find_roll_folders(archive)
-    typer.echo("Found roll folders:")
-    echo_list((roll_dir.relative_to(archive) for roll_dir in roll_folders))
+    tree = build_archive_tree(archive)
+    photo_count = sum(count_photo_files(folder) for folder in roll_folders)
+
+    if tree:
+        typer.echo("Дерево архива:")
+        echo_lines(tree)
+        typer.echo("")
+
+    typer.echo(f"Папок: {len(roll_folders)}")
+    typer.echo(f"Фото: {photo_count}")
 
 
 @app.command("status")
@@ -100,20 +99,20 @@ def status() -> None:
 
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
+    rolls = find_rolls(archive)
+    status_counts = _count_statuses(rolls)
 
-    echo_lines(
-        [
-            Msg.STATUS_HEADER,
-            "",
-            f"{Msg.STATUS_ARCHIVE_FOLDERS} {len(roll_folders)}",
-            f"{Msg.STATUS_INDEXED} {len(roll_folders) - len(unindexed_folders)}",
-            f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}",
-        ]
-    )
+    render_status_report(archive, roll_folders, unindexed_folders, status_counts)
 
-    if unindexed_folders:
-        echo_lines(["", Msg.STATUS_UNINDEXED_FOLDERS])
-        echo_list((folder.relative_to(archive) for folder in unindexed_folders))
+
+@app.command("stats")
+def stats(
+    year: str | None = typer.Argument(None, help="Год для фильтрации статистики."),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список значений."),
+) -> None:
+    """Показать статистику по архиву."""
+    archive = require_archive(require_config())
+    render_stats_report(archive, year, verbose)
 
 
 @app.command("load")
@@ -138,27 +137,20 @@ def vocab() -> None:
 
 
 @app.command("search")
-def search(query: str) -> None:
+def search(query: str | None = typer.Argument(None, help="Строка для поиска по памяти.")) -> None:
     """Искать пленки по памяти."""
+    if not query:
+        typer.echo("Нужно указать строку поиска. Пример: rl search pizza")
+        raise typer.Exit(code=1)
+
     archive = require_archive(require_config())
     results = search_rolls(archive, query)
 
     if not results:
-        typer.echo("Ничего не найдено.")
+        typer.echo(Msg.NO_RESULTS)
         return
 
-    echo_lines(["Найдено:", ""])
-
-    for roll in results:
-        echo_lines([f"{roll.loaded_at} — {roll.film}", f"Камера: {roll.camera}"])
-
-        if roll.features:
-            typer.echo(f"Особенности: {', '.join(roll.features)}")
-
-        if roll.keywords:
-            typer.echo(f"Теги: {', '.join(roll.keywords)}")
-
-        echo_lines([f"Папка: {roll.folder}", ""])
+    render_search_results(results)
 
 
 @app.command("doctor")
@@ -167,162 +159,77 @@ def doctor(
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список безопасных исправлений."),
 ) -> None:
     """Проверить целостность архива и конфигурации."""
-    try:
-        config = load_config()
-    except FileNotFoundError:
-        report = run_doctor(Config(archives=[]))
-    else:
-        report = run_doctor(config)
-
-    if not report.issues and not report.missing_rolls:
-        typer.echo(Doctor.OK)
-        return
-
-    error_groups: dict[str, list[str]] = {}
-    warning_groups: dict[str, list[str]] = {}
-    error_order: list[str] = []
-    warning_order: list[str] = []
-
-    if report.missing_rolls:
-        _append_doctor_group(
-            error_groups,
-            error_order,
-            Doctor.ROLL_MISSING,
-            [str(path) for path in report.missing_rolls],
-        )
-
-    for issue in report.issues:
-        title, item = _split_doctor_message(issue.message)
-        if issue.level == "error":
-            _append_doctor_group(error_groups, error_order, title, [item])
-        else:
-            _append_doctor_group(warning_groups, warning_order, title, [item])
-
-    if error_order:
-        _echo_doctor_block(Doctor.ERROR_PREFIX, error_order, error_groups)
-    if warning_order:
-        if error_order:
-            typer.echo("")
-        _echo_doctor_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
-
-    if report.fixable:
-        echo_lines([""])
-        typer.echo(highlight_cli_names(f"Можно исправить: {len(report.fixable)}"))
-        items = report.fixable if verbose else report.fixable[:5]
-        echo_lines([f"  {item}" for item in items])
-        if not verbose and len(report.fixable) > 5:
-            typer.echo(f"  ... и еще {len(report.fixable) - 5}")
-        if not fix:
-            typer.echo("")
-            typer.echo("Запусти: rl doctor --fix")
-        else:
-            plans = [build_safe_rename_plan(archive) for archive in config.archives]
-            apply_normalization_plans(plans)
-            typer.echo("Исправления применены.")
-            if verbose:
-                for plan in plans:
-                    if plan.rules:
-                        echo_lines([""])
-                        echo_lines(print_normalization_plan(plan))
-
-    if error_order:
+    if render_doctor(fix=fix, verbose=verbose):
         raise typer.Exit(code=1)
-
-
-def _append_doctor_group(
-    groups: dict[str, list[str]],
-    order: list[str],
-    title: str,
-    items: list[str],
-) -> None:
-    if title not in groups:
-        groups[title] = []
-        order.append(title)
-    groups[title].extend(items)
-
-
-def _split_doctor_message(message: str) -> tuple[str, str]:
-    for prefix in DOCTOR_MESSAGE_PREFIXES:
-        if message.startswith(prefix):
-            item = message.removeprefix(prefix).strip()
-            return prefix, item
-    return message, ""
-
-
-def _echo_doctor_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
-    total = sum(len(groups[title]) for title in order)
-    typer.echo(highlight_cli_names(f"{prefix} {total}"))
-    for title in order:
-        items = groups[title]
-        typer.echo(f"  {_doctor_group_title(title)} {len(items)}")
-        echo_lines([f"    {item}" for item in items])
-
-
-def _doctor_group_title(title: str) -> str:
-    return title if title.endswith(":") else f"{title}:"
 
 
 @tags_app.command("add")
 def add_tags() -> None:
-    archive = require_archive(require_config())
-    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
-
-    if not rolls:
-        typer.echo("Нет роллов.")
-        raise typer.Exit(code=1)
-
-    selected = _choose_roll_folder(rolls)
-    workspace = workspace_for(archive)
-    tags = autocomplete_many_prompt("Теги", workspace.dictionary("keywords"))
-    try:
-        metadata = update_roll_keywords(selected / "roll.toml", tags)
-    except ValueError as exc:
-        typer.echo(str(exc))
-        raise typer.Exit(code=1)
-
-    typer.echo(f"Теги обновлены: {metadata.film}")
+    _update_roll_list_field("Теги", "keywords", update_roll_keywords, "Теги обновлены")
 
 
 @features_app.command("add")
 def add_features() -> None:
+    _update_roll_list_field("Особенности", "features", update_roll_features, "Особенности обновлены")
+
+
+def _update_roll_list_field(
+    prompt_title: str,
+    dictionary_name: str,
+    updater,
+    success_label: str,
+) -> None:
     archive = require_archive(require_config())
     rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
 
     if not rolls:
-        typer.echo("Нет роллов.")
+        typer.echo(Msg.NO_ROLLS)
         raise typer.Exit(code=1)
 
     selected = _choose_roll_folder(rolls)
     workspace = workspace_for(archive)
-    features = autocomplete_many_prompt("Особенности", workspace.dictionary("features"))
+    values = autocomplete_many_prompt(prompt_title, workspace.dictionary(dictionary_name))
     try:
-        metadata = update_roll_features(selected / "roll.toml", features)
+        metadata = updater(selected / "roll.toml", values)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=1)
 
-    typer.echo(f"Особенности обновлены: {metadata.film}")
+    typer.echo(f"{success_label}: {metadata.film}")
+
+
+@batch_app.command("process")
+def batch_process() -> None:
+    config = require_config()
+    process_archives(config.archives)
 
 
 @app.command("normalize")
-def normalize() -> None:
+def normalize(
+    tags: bool = typer.Option(False, "--tags", help="Нормализовать теги в uppercase."),
+) -> None:
     """Привести архив к единому виду."""
     config = require_config()
+
+    if tags:
+        touched = []
+        for archive in config.archives:
+            touched.extend(normalize_keywords_in_archive(archive))
+        if touched:
+            typer.echo(Msg.TAGS_NORMALIZED)
+            for path in touched:
+                typer.echo(f"  {path}")
+        else:
+            typer.echo(Msg.TAGS_ALREADY_NORMALIZED)
+        return
+
     plans = [build_normalization_plan(archive) for archive in config.archives]
-
-    total_rules = sum(len(plan.rules) for plan in plans)
-    has_changes = any(plan.has_changes for plan in plans)
-
-    for plan in plans:
-        echo_lines([f"{Msg.ARCHIVE_HEADER} {plan.archive}", *print_normalization_plan(plan), ""])
-
+    total_rules, has_changes = render_normalization_plans(plans)
     if not has_changes:
         return
 
     all_conflicts = [conflict for plan in plans for conflict in plan.conflicts]
     if all_conflicts:
-        echo_lines(["Обнаружены конфликты:"])
-        echo_list(all_conflicts)
         raise typer.Exit(code=1)
 
     if not typer.confirm(f"Переименовать {total_rules} папок?", default=False):

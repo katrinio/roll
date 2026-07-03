@@ -2,7 +2,7 @@ from pathlib import Path
 
 import typer
 
-from roll.app.config import Config, load_config
+from roll.app.workspace.config import Config, load_config
 from roll.helpers.formatting import highlight_cli_names
 from roll.messages import Msg
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from roll.app.config import Config
+from roll.app.workspace.config import Config
 from roll.dictionaries import Dictionary
 
 WORKSPACE_DIR_NAME = ".roll"

@@ -2,7 +2,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from roll.archive import find_roll_folders, get_index_file
+from roll.filesystem import find_roll_folders, get_index_file
 
 
 @dataclass(frozen=True)
@@ -46,7 +46,10 @@ def find_rolls(archive: Path) -> list[RollIndex]:
     return rolls
 
 
-def search_rolls(archive: Path, query: str) -> list[RollIndex]:
+def search_rolls(archive: Path, query: str | None) -> list[RollIndex]:
+    if not query:
+        return []
+
     normalized_query = query.lower()
     results: list[RollIndex] = []
 

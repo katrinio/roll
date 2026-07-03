@@ -39,9 +39,15 @@ rl --help
 rl init /path/to/archive
 rl doctor
 rl doctor --fix
+rl normalize --tags
+rl batch process
+rl stats 2026
+rl stats -v
 ```
 
 `rl load` работает от `stock.toml`, а `rl load --manual` позволяет создать roll по словарю пленок, не уменьшая stock.
+
+Для `rl features add` и `rl tags add` можно вводить несколько значений через запятую. Автокомплит работает по каждому значению, дубликаты не записываются. Внутри значения допустим `_`.
 
 ## CI
 

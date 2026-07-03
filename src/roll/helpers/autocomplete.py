@@ -46,10 +46,25 @@ def choice_prompt(title: str, choices: list[str]) -> str:
             return matched
 
 
-def _completer(dictionary: Dictionary) -> FuzzyCompleter:
-    return FuzzyCompleter(
-        WordCompleter(dictionary.read(), ignore_case=True, sentence=True, match_middle=True)
-    )
+def _completer(dictionary: Dictionary, exclude: list[str] | None = None) -> FuzzyCompleter:
+    excluded = {value.casefold() for value in (exclude or [])}
+    choices = [value for value in dictionary.read() if value.casefold() not in excluded]
+    return FuzzyCompleter(WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True))
+
+
+def _resolve_many(dictionary: Dictionary, value: str) -> list[str] | None:
+    selected: list[str] = []
+    for token in [item.strip() for item in value.split(",") if item.strip()]:
+        existing = _existing_value(dictionary, token)
+        if existing is None:
+            if not _confirm_missing(token):
+                return None
+            existing = dictionary.add(token)
+
+        if existing not in selected:
+            selected.append(existing)
+
+    return selected
 
 
 def _existing_value(dictionary: Dictionary, candidate: str) -> str | None:
@@ -66,13 +81,6 @@ def _confirm_missing(value: str) -> bool:
 
 def _choice_completer(choices: list[str]) -> FuzzyCompleter:
     return FuzzyCompleter(WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True))
-
-
-def _existing_choice(choices: list[str], candidate: str) -> str | None:
-    for value in choices:
-        if value.casefold() == candidate.casefold():
-            return value
-    return None
 
 
 def _match_choice(choices: list[str], candidate: str) -> str | None:
@@ -96,20 +104,3 @@ def _match_choice(choices: list[str], candidate: str) -> str | None:
 
 def _normalize_choice(value: str) -> str:
     return "".join(ch for ch in value.casefold() if ch.isalnum())
-
-
-def _resolve_many(dictionary: Dictionary, value: str) -> list[str] | None:
-    selected: list[str] = []
-    for token in [item.strip() for item in value.split(",") if item.strip()]:
-        existing = _existing_value(dictionary, token)
-        if existing is not None:
-            resolved = existing
-        elif _confirm_missing(token):
-            resolved = dictionary.add(token)
-        else:
-            return None
-
-        if resolved not in selected:
-            selected.append(resolved)
-
-    return selected
