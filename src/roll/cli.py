@@ -8,10 +8,8 @@ from roll.app.diagnostics import run_doctor
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
 from roll.helpers.output import echo_lines, echo_list, echo_section
-from roll.helpers.parsing import parse_csv
-from roll.app.index import save_roll_index
 from roll.app.stock import app as stock_app
-from roll.app.stock import load as load_stock
+from roll.app.stock import load_roll
 from roll.messages import Msg
 from roll.app.normalization import (
     apply_normalization_plans,
@@ -92,34 +90,10 @@ def status() -> None:
         echo_list((folder.relative_to(archive) for folder in unindexed_folders))
 
 
-@app.command("index")
-def index(
-    folder: Path,
-    film: str = typer.Option("", prompt=True),
-    features: str = typer.Option(""),
-    camera: str = typer.Option("", prompt=True),
-    loaded_at: str = typer.Option(..., prompt=True),
-    keywords: str = typer.Option(""),
-) -> None:
-    """Проиндексировать папку пленки."""
-    folder = require_directory(folder, "Папка не найдена:")
-    save_roll_index(
-        folder=folder,
-        archive=folder.parents[1],
-        film=film,
-        features=parse_csv(features),
-        camera=camera,
-        loaded_at=loaded_at,
-        keywords=parse_csv(keywords),
-    )
-
-    typer.echo(Msg.INDEX_DONE)
-
-
 @app.command("load")
 def load() -> None:
     """Загрузить пленку из запаса в новый roll."""
-    load_stock()
+    load_roll()
 
 
 @app.command("vocab")

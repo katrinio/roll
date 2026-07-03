@@ -44,6 +44,10 @@ def add() -> None:
 
 @app.command("load")
 def load() -> None:
+    load_roll()
+
+
+def load_roll() -> None:
     archive = require_archive(require_config())
     workspace = workspace_for(archive)
 

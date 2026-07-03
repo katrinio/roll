@@ -2,8 +2,6 @@ class Headers:
     CONFIG_HEADER = "Конфигурация:"
     ARCHIVE_HEADER = "Архив:"
     ARCHIVE_MISSING = "Архив не найден:"
-    SEARCH_NOT_IMPLEMENTED = "Поиск пока не реализован:"
-    INDEX_DONE = "Пленка проиндексирована."
     STATUS_HEADER = "Состояние индекса"
     STATUS_ARCHIVE_FOLDERS = "Папок в архиве:"
     STATUS_INDEXED = "Проиндексировано:"
