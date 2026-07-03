@@ -176,3 +176,27 @@ loaded → processed
 Пользователь вводит только то, что нельзя определить автоматически.
 
 Все, что можно прочитать из файловой системы или вычислить из уже известных данных, должно делаться автоматически.
+
+---
+
+## Tests
+
+Набор проверок проекта лежит в `tests/`.
+
+Сейчас там есть:
+- точечные unit-тесты на storage и normalization;
+- smoke-тесты на CLI help;
+- запуск через `python -m unittest discover -s tests`.
+
+---
+
+## Ruff
+
+Легкий линтер и formatter для разработки.
+
+Используется:
+- в `.pre-commit-config.yaml`;
+- в GitHub Actions;
+- как `dev`-зависимость.
+
+См. также [docs/development.md](development.md).
