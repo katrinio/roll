@@ -15,11 +15,11 @@ class Headers:
     VOCAB_KEYWORDS = "Ключевые слова:"
 
 class Msg(Headers):
-    CLI_UNINITIALIZED = "roll is not initialized."
-    CLI_INITIALIZED = "roll is initialized."
+    CLI_UNINITIALIZED = "roll не инициализирован."
+    CLI_INITIALIZED = "roll инициализирован."
 
     RUN_TO_INITIALIZE = "  rl init ~/your/archive/path"
-    UNINITIALIZED_MESSAGE = "roll is not initialized.\nRun: rl init ~/your/archive/path"
+    UNINITIALIZED_MESSAGE = "roll не инициализирован.\nЗапусти: rl init ~/your/archive/path"
     UNINITIALIZED_NOTICE = "\n".join(
         [
             CLI_UNINITIALIZED,
