@@ -5,11 +5,11 @@ from pathlib import Path
 import re
 import tomllib
 
-from src.roll.archive import find_roll_folders, get_index_file, find_unindexed_folders
-from src.roll.config import Config
-from src.roll.messages import Doctor
-from src.roll.vocabulary import archive_vocabulary
-from src.roll.workspace import workspace_for
+from roll.archive import find_roll_folders, get_index_file, find_unindexed_folders
+from roll.app.config import Config
+from roll.messages import Doctor
+from roll.app.vocabulary import archive_vocabulary
+from roll.app.workspace import workspace_for
 
 
 class DoctorText:

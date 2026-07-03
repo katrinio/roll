@@ -157,3 +157,4 @@ def _normalize_lab_id(lab_id: str) -> str:
     if not value:
         return ""
     return value if value.startswith("e") else f"e{value}"
+

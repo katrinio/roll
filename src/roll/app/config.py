@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-import yaml
 import tomllib
+import yaml
 
 from roll.messages import Msg
 
 CONFIG_DIR = Path.home() / ".config" / "roll"
 CONFIG_FILE = CONFIG_DIR / "config.toml"
+
+
 @dataclass(frozen=True)
 class Config:
     archives: list[Path]
@@ -49,3 +51,4 @@ def load_config() -> Config:
         raise FileNotFoundError(Msg.UNINITIALIZED_MESSAGE)
 
     return Config(archives=[Path(archive) for archive in archives])
+

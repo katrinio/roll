@@ -65,3 +65,4 @@ def search_rolls(archive: Path, query: str) -> list[RollIndex]:
             results.append(roll)
 
     return results
+

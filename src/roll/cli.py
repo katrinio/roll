@@ -3,22 +3,22 @@ from pathlib import Path
 import typer
 
 from roll.archive import find_roll_folders, find_unindexed_folders
-from roll.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
-from roll.diagnostics import run_doctor
+from roll.app.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.app.diagnostics import run_doctor
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_archive, require_config, require_directory
 from roll.helpers.output import echo_lines, echo_list, echo_section
 from roll.helpers.parsing import parse_csv
-from roll.index import save_roll_index
+from roll.app.index import save_roll_index
 from roll.messages import Msg
-from roll.normalization import (
+from roll.app.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
     print_normalization_plan,
 )
-from roll.search import search_rolls
-from roll.vocabulary import archive_vocabulary
-from roll.workspace import workspace_for
+from roll.app.search import search_rolls
+from roll.app.vocabulary import archive_vocabulary
+from roll.app.workspace import workspace_for
 
 app = typer.Typer(help="Личный индекс пленок.")
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from roll.dictionaries import Dictionary
-from roll.workspace import workspace_for
+from roll.app.workspace import workspace_for
 
 
 def archive_vocabulary(archive: Path) -> dict[str, Dictionary]:

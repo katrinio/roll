@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from roll.config import Config
+from roll.app.config import Config
 from roll.dictionaries import Dictionary
 
 WORKSPACE_DIR_NAME = ".roll"
@@ -51,3 +51,4 @@ def primary_archive(config: Config) -> Path:
     if not config.archives:
         raise FileNotFoundError("No archives configured")
     return config.archives[0]
+
