@@ -23,3 +23,10 @@ def require_directory(path: Path, message: str) -> Path:
         raise typer.Exit(code=1)
 
     return resolved_path
+
+
+def require_archive(config: Config) -> Path:
+    if not config.archives:
+        typer.echo(highlight_cli_names(Msg.UNINITIALIZED_NOTICE))
+        raise typer.Exit(code=1)
+    return config.archives[0]

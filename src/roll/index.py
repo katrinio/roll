@@ -1,36 +1,43 @@
 from pathlib import Path
 
 from roll.helpers.prompts import choose_many, choose_or_create
-from roll.vocabulary import FILMS, CAMERAS, FEATURES, KEYWORDS
+from roll.workspace import workspace_for
 
 
 def save_roll_index(
     folder: Path,
+    archive: Path | None = None,
     film: str | None = None,
     features: list[str] | None = None,
     camera: str | None = None,
     loaded_at: str | None = None,
     keywords: list[str] | None = None,
 ) -> None:
+    workspace = workspace_for(archive or folder.parents[1])
+
     if not film:
-        film = choose_or_create(FILMS, "Пленка:")
+        film = choose_or_create(workspace.dictionary("films"), "Пленка:")
 
     if not camera:
-        camera = choose_or_create(CAMERAS, "Камера:")
+        camera = choose_or_create(workspace.dictionary("cameras"), "Камера:")
 
     if not features:
-        features = choose_many(FEATURES, "Features", "Введите номера или новые слова через запятую.")
+        features = choose_many(workspace.dictionary("features"), "Features", "Введите номера или новые слова через запятую.")
 
     if not keywords:
-        keywords = choose_many(KEYWORDS, "Keywords", "Введите номера или новые слова через запятую.")
+        keywords = choose_many(workspace.dictionary("keywords"), "Keywords", "Введите номера или новые слова через запятую.")
+
+    def format_array(values: list[str] | None) -> str:
+        items = values or []
+        return "[" + ", ".join(f'"{item}"' for item in items) + "]"
 
     content = "\n".join(
         [
             f'film = "{film}"',
-            f'features = "{features or "-"}"',
+            f"features = {format_array(features)}",
             f'camera = "{camera}"',
             f'loaded_at = "{loaded_at}"',
-            f'keywords = {keywords!r}',
+            f"keywords = {format_array(keywords)}",
             "",
         ]
     )
