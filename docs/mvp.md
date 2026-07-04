@@ -2,7 +2,7 @@
 
 > Find the right roll from memory: a person, a place, an event, a mood - months later.
 
-## Scenario
+## Main Flow
 
 ```bash
 rl init ~/Pictures/plenka   # once
@@ -12,16 +12,18 @@ rl stock process            # or: rl stock failed
 rl search kir balcony       # half a year later — found it
 ```
 
-## Commands
+## What MVP Covers
 
-| Task | Command |
+| Flow | Command |
 |---|---|
-| Film stock | `stock add`, `stock list` |
-| Roll | `load` (`--manual` — without stock), `stock process`, `stock failed` |
-| Fill in a roll | `features add`, `tags add` |
-| Find / view | `search`, `scan`, `status`, `stats [-v]`, `vocab` |
-| Archive hygiene | `doctor [--fix] [-v]`, `normalize [--tags]` |
-| Batch | `batch process` |
+| Start | `rl init`, `rl config lang` |
+| Film stock | `rl stock add`, `rl stock list` |
+| Roll creation | `rl load`, `rl load --manual` |
+| Status update | `rl stock process`, `rl stock failed` |
+| Fill in a roll | `rl features add`, `rl tags add` |
+| Find / inspect | `rl search`, `rl scan`, `rl status`, `rl stats [-v]`, `rl vocab` |
+| Integrity | `rl doctor`, `rl doctor --fix`, `rl normalize --tags` |
+| Batch | `rl batch process` |
 
 ## Out of MVP scope
 

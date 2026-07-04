@@ -1,70 +1,62 @@
 # Model
 
-The project has three levels: global config → archive workspace → roll.
+This is a file-first tool. The main question is always: which files are read, which are written, and what can be fixed automatically.
+
+## File Map
+
+| Layer | Path | Purpose |
+|---|---|---|
+| Global config | `~/.config/roll/config.toml` | archive list, UI language |
+| Workspace | `<archive>/.roll/` | workspace config, stock, vocabularies |
+| Roll | `<archive>/YYYY/MM-DD/roll.toml` | one film roll |
 
 ```
-~/.config/roll/config.toml         1. global config — list of archives
+~/.config/roll/config.toml
         │
         ▼
-~/Pictures/plenka/                  archive
-├── .roll/                         2. workspace
+~/Pictures/plenka/
+├── .roll/
 │   ├── config.toml
-│   ├── stock.toml                    film stock, separate from roll.toml
+│   ├── stock.toml
 │   └── vocabulary/
 │       ├── films.txt
 │       ├── cameras.txt
 │       ├── features.txt
 │       └── keywords.txt
 └── 2026/
-    └── 07-03/                     3. roll
+    └── 07-03/
         └── roll.toml
 ```
 
-| Level | Where | Knows about |
-|---|---|---|
-| Global config | `~/.config/roll/config.toml` | list of archives, UI language |
-| Workspace | `<archive>/.roll/` | config, stock, vocabularies |
-| Roll | `<archive>/YYYY/MM-DD/roll.toml` | one film roll |
-
-`stock.toml` and `vocabulary/*.txt` solve different problems: stock tracks what you physically have on hand, vocabularies hold canonical values for autocomplete.
-
-The global config stores the UI language and the archive list:
+`config.toml` is the only root config file. `lang` defaults to `EN` when missing or invalid.
 
 ```toml
-lang = "EN"   # or "RU"
+lang = "EN"
 archives = ["/path/to/archive"]
 ```
 
-`lang` defaults to `EN` when missing or invalid. `config.toml` is the only root config file used by the app.
+`stock.toml` tracks unused film. `vocabulary/*.txt` tracks canonical autocomplete values. They solve different problems and are intentionally separate.
 
-## Code layout
+## Command Effects
 
-| Path | Area |
-|---|---|
-| `filesystem.py` | low-level operations on the archive's file structure |
-| `app/workspace/` | workspace, vocabularies, stock/roll storage |
-| `app/flows/` | interactive scenarios (`stock.py`: load/process/failed) |
-| `app/archive/` | search, stats, batch, normalization + rendering |
-| `app/diagnostics/` | doctor |
-| `messages/` | user-facing strings, grouped by area and localized by UI language |
+| Command | Reads | Writes | Auto-fix | Scope |
+|---|---|---|---|---|
+| `rl init` | filesystem | global config, workspace | no | setup |
+| `rl config lang` | global config | global config | yes, with `--fix` in `doctor` | config |
+| `rl stock add` | global config, workspace, vocabulary, stock | stock | no | workspace |
+| `rl load` | global config, stock, vocabulary | stock, roll | no | roll creation |
+| `rl load --manual` | global config, vocabulary | roll | no | roll creation |
+| `rl stock process` / `rl stock failed` | global config, workspace, roll | roll | no | roll status |
+| `rl features add` / `rl tags add` | global config, workspace, vocabulary, roll | roll, vocabulary | no | roll editing |
+| `rl search` / `rl scan` / `rl status` / `rl stats` / `rl vocab` | global config, workspace, roll, vocabulary | no | no | read-only |
+| `rl doctor` | global config, workspace, stock, roll, vocabulary | no | yes with `--fix` | integrity |
+| `rl normalize` | workspace, roll, vocabulary | roll, vocabulary | yes | normalization |
+| `rl batch process` | global config, workspace, roll | roll | no | batch update |
 
-## Roll
-
-`roll.toml`:
-
-| Field | Required | Notes |
-|---|---|---|
-| `status` | yes | `loaded` \| `processed` \| `failed` |
-| `film` | yes | |
-| `camera` | yes | |
-| `loaded_at` | yes | determines the roll's folder name |
-| `features` | no | filled in via `rl features add` |
-| `keywords` | no | filled in via `rl tags add` (called "tags" in the CLI) |
-
-### Roll lifecycle
+## Lifecycle
 
 ```
-[ stock ]  --rl stock add-->  sits in stock.toml
+[ stock ]  --rl stock add-->  stock.toml
               │
            rl load
               ▼
@@ -79,24 +71,55 @@ archives = ["/path/to/archive"]
 
 The transition is manual and one-way: a roll never goes back to `loaded`.
 
-## Commands
+## Scenarios
 
-| Area | Command |
+### First setup
+
+```bash
+rl init ~/Pictures/plenka
+rl config lang EN
+```
+
+### Film workflow
+
+```bash
+rl stock add
+rl load
+rl stock process
+```
+
+### Later lookup
+
+```bash
+rl search kir balcony
+rl status
+rl stats -v
+```
+
+### Integrity pass
+
+```bash
+rl doctor
+rl doctor --fix
+```
+
+## Code Layout
+
+| Path | Area |
 |---|---|
-| Setup | `rl init` |
-| Config | `rl config`, `rl config lang [EN|RU]` |
-| Stock | `rl stock add`, `rl stock list` |
-| Roll | `rl load` (`--manual` — without stock), `rl stock process`, `rl stock failed` |
-| Fill in | `rl features add`, `rl tags add` |
-| Find / view | `rl search`, `rl scan`, `rl status`, `rl stats [-v]`, `rl vocab` |
-| Archive hygiene | `rl doctor [--fix] [-v]`, `rl normalize [--tags]` |
-| Batch | `rl batch process` |
+| `filesystem.py` | archive tree and file discovery |
+| `app/workspace/` | config, stock, roll storage, vocabularies |
+| `app/flows/` | interactive flows |
+| `app/archive/` | search, stats, batch, normalization |
+| `app/diagnostics/` | doctor |
+| `messages/` | localized user-facing text |
 
 ## Principles
 
-- the archive is self-contained; the app can be removed without losing data;
-- vocabularies are edited as plain text and grow automatically as you type;
-- normalization (`rl normalize`, `rl doctor --fix`) always builds a plan before asking for confirmation;
-- a roll starts as `loaded`, then ends as `processed`/`failed` — it never goes back.
+- the archive is self-contained;
+- user edits only what the filesystem cannot infer;
+- normalization and doctor fixes build a plan before changing anything;
+- vocabularies stay plain text and grow automatically;
+- English is the default UI language.
 
 Environment setup and CI — see [docs/development.md](development.md).
