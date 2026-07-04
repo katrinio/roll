@@ -1,4 +1,6 @@
 from pathlib import Path
+import subprocess
+import sys
 
 import typer
 
@@ -44,7 +46,9 @@ from roll.app.workspace.workspace import workspace_for
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace.config import set_lang
 from roll.messages import Normalize
-from roll.version import get_version
+from roll.version import get_latest_version, get_version, is_outdated
+
+UPDATE_SOURCE = "git+https://github.com/katrinio/roll.git@main"
 
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
@@ -70,7 +74,11 @@ def main(
     ),
 ) -> None:
     if version:
-        typer.echo(get_version())
+        current = get_version()
+        typer.echo(current)
+        latest = get_latest_version()
+        if latest and is_outdated(current=current, latest=latest):
+            typer.echo(f"New version available: {latest}. Run `rl update`.")
         raise typer.Exit()
     if ctx.invoked_subcommand is not None:
         return
@@ -94,6 +102,15 @@ def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
 
     typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
     echo_lines([f"Archive: {archive}", f"Config:  {CONFIG_FILE}"])
+
+
+@app.command("update")
+def update() -> None:
+    """Update the installed package."""
+    result = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-U", UPDATE_SOURCE]
+    )
+    raise typer.Exit(code=result.returncode)
 
 
 @config_app.callback(invoke_without_command=True)
