@@ -1,33 +1,36 @@
 from roll.helpers.output import echo_lines
+from roll.messages import Msg
+from roll.messages.cli import detect_locale
 
 from roll.app.archive.stats import build_stats_report
 
 
 def render_stats_report(archive, year: str | None = None, verbose: bool = False) -> None:
     report = build_stats_report(archive, year)
+    english = detect_locale() == "en"
 
     if not report.roll_count:
         from typer import echo
 
-        echo("Нет данных для статистики.")
+        echo(Msg.NO_STATS_DATA)
         return
 
     from typer import echo
 
-    echo_lines(["Состояние индекса", ""])
+    echo_lines([Msg.STATUS_HEADER, ""])
     if report.year:
-        echo(f"Год: {report.year}")
-    echo(f"Роллов: {report.roll_count}")
-    echo(f"Пленок в статистике: {report.film_count}")
-    echo(f"Тегов в статистике: {report.tag_count}")
+        echo(f"{'Year' if english else 'Год'}: {report.year}")
+    echo(f"{'Rolls' if english else 'Роллов'}: {report.roll_count}")
+    echo(f"{'Films in stats' if english else 'Пленок в статистике'}: {report.film_count}")
+    echo(f"{'Tags in stats' if english else 'Тегов в статистике'}: {report.tag_count}")
     echo("")
 
     limit = None if verbose else 5
-    _echo_counter_block("По статусам", report.status_counts, limit=limit)
-    _echo_counter_block("По годам", report.year_counts, limit=limit)
-    _echo_counter_block("По пленкам", report.film_counts, limit=limit)
-    _echo_counter_block("По тегам", report.tag_counts, limit=limit)
-    _echo_counter_block("По камерам", report.camera_counts, limit=limit)
+    _echo_counter_block("By status" if english else "По статусам", report.status_counts, limit=limit)
+    _echo_counter_block("By year" if english else "По годам", report.year_counts, limit=limit)
+    _echo_counter_block("By film" if english else "По пленкам", report.film_counts, limit=limit)
+    _echo_counter_block("By tag" if english else "По тегам", report.tag_counts, limit=limit)
+    _echo_counter_block("By camera" if english else "По камерам", report.camera_counts, limit=limit)
 
 
 def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
@@ -43,7 +46,7 @@ def _echo_counter_block(title: str, counter, limit: int | None = None) -> None:
     for name, count in items:
         echo(f"  {name:<{label_width}}  {count:>4}  {_render_bar(count, width)}")
     if limit is not None and len(counter) > limit:
-        echo(f"  ... и еще {len(counter) - limit}")
+        echo(f"  ... and {len(counter) - limit} more" if detect_locale() == "en" else f"  ... и еще {len(counter) - limit}")
     echo("")
 
 
