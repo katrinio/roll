@@ -41,10 +41,20 @@ class Doctor:
         "Нет файла workspace config:",
         "Missing workspace config file:",
     )
+    WORKSPACE_CONFIG_INVALID = Message(
+        "doctor.workspace_config_invalid",
+        "Не удалось прочитать workspace config:",
+        "Could not read workspace config:",
+    )
     WORKSPACE_CONFIG_MISMATCH = Message(
         "doctor.workspace_config_mismatch",
         "Workspace config не совпадает с архивом:",
         "Workspace config does not match archive:",
+    )
+    WORKSPACE_CONFIG_ARCHIVE_MISSING = Message(
+        "doctor.workspace_config_archive_missing",
+        "В workspace config не задан archive.",
+        "workspace config does not set archive.",
     )
     VOCAB_DIR_MISSING = Message(
         "doctor.vocab_dir_missing", "Нет папки словарей:", "Missing vocabulary folder:"

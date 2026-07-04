@@ -53,17 +53,12 @@ def run_doctor(config: Config) -> DoctorReport:
 
     global_issues = _check_global_config()
     issues.extend(global_issues)
-    if any(issue.level == DoctorText.ERROR for issue in global_issues):
-        return DoctorReport(
-            issues=issues,
-            fixable=fixable,
-            keyword_vocab_fixes=keyword_vocab_fixes,
-            missing_rolls=missing_rolls,
-            missing_roll_count=missing_roll_count,
-            unindexed_folders=unindexed_folders,
-        )
+    global_config_missing = any(
+        issue.message.startswith(str(Doctor.GLOBAL_CONFIG_MISSING))
+        for issue in global_issues
+    )
 
-    if not config.archives:
+    if not config.archives and not global_config_missing:
         issues.append(DoctorIssue(DoctorText.ERROR, Doctor.NO_ARCHIVES))
         return DoctorReport(
             issues=issues,
@@ -178,12 +173,19 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
             issues.append(
                 DoctorIssue(
                     DoctorText.ERROR,
-                    f"{Doctor.WORKSPACE_CONFIG_MISSING} {workspace.config_file} ({exc})",
+                    f"{Doctor.WORKSPACE_CONFIG_INVALID} {workspace.config_file} ({exc})",
                 )
             )
         else:
             archive_value = str(data.get("archive", "")).strip()
-            if archive_value and Path(archive_value) != workspace.archive:
+            if not archive_value:
+                issues.append(
+                    DoctorIssue(
+                        DoctorText.WARNING,
+                        str(Doctor.WORKSPACE_CONFIG_ARCHIVE_MISSING),
+                    )
+                )
+            elif Path(archive_value) != workspace.archive:
                 issues.append(
                     DoctorIssue(
                         DoctorText.WARNING,
