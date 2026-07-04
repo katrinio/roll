@@ -30,6 +30,11 @@ class Doctor:
         "Неверный язык в глобальной конфигурации, используется EN.",
         "Invalid language in global config; using EN.",
     )
+    GLOBAL_CONFIG_DUPLICATE_ARCHIVES = Message(
+        "doctor.global_config_duplicate_archives",
+        "В глобальной конфигурации есть дубли архивов:",
+        "Global config contains duplicate archives:",
+    )
     ARCHIVE_MISSING = Message(
         "doctor.archive_missing", "Архив не найден:", "Archive not found:"
     )

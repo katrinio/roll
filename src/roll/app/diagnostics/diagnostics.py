@@ -124,6 +124,23 @@ def _check_global_config() -> list[DoctorIssue]:
         if lang not in {"EN", "RU"}:
             issues.append(DoctorIssue(DoctorText.WARNING, str(Doctor.LANGUAGE_INVALID)))
 
+    archives = data.get("archives") or []
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for archive in archives:
+        value = str(archive)
+        if value in seen:
+            duplicates.append(value)
+        else:
+            seen.add(value)
+    if duplicates:
+        issues.append(
+            DoctorIssue(
+                DoctorText.WARNING,
+                f"{Doctor.GLOBAL_CONFIG_DUPLICATE_ARCHIVES} {', '.join(sorted(set(duplicates)))}",
+            )
+        )
+
     return issues
 
 

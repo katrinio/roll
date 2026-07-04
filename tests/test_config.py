@@ -91,6 +91,27 @@ class ConfigTests(unittest.TestCase):
                 )
             )
 
+    def test_doctor_warns_on_duplicate_archives_in_global_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.mkdir()
+            config_module.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
+            config_module.CONFIG_FILE.write_text(
+                f'lang = "EN"\narchives = ["{archive}", "{archive}"]\n',
+                encoding="utf-8",
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "duplicate archives" in issue.message.lower()
+                    for issue in report.issues
+                )
+            )
+
     def test_doctor_errors_when_global_config_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)
