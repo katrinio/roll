@@ -47,32 +47,39 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         echo(Doctor.OK)
         return 0
 
-    error_groups: dict[str, list[str]] = {}
-    warning_groups: dict[str, list[str]] = {}
-    error_order: list[str] = []
-    warning_order: list[str] = []
+    workspace_issues = [issue for issue in report.issues if issue.archive is not None]
+    global_issues = [issue for issue in report.issues if issue.archive is None]
+    grouped_by_archive = len({issue.archive for issue in workspace_issues}) > 1
+
+    if global_issues:
+        _render_issue_groups(global_issues, highlight_archives=False)
+
+    if workspace_issues:
+        if global_issues:
+            echo_lines([""])
+        if grouped_by_archive:
+            archives = []
+            for issue in workspace_issues:
+                if issue.archive not in archives:
+                    archives.append(issue.archive)
+            for index, archive in enumerate(archives):
+                archive_issues = [
+                    issue for issue in workspace_issues if issue.archive == archive
+                ]
+                _render_workspace_group(archive, archive_issues)
+                if index < len(archives) - 1:
+                    echo_lines([""])
+        else:
+            _render_issue_groups(workspace_issues, highlight_archives=False)
 
     if report.missing_rolls:
-        _append_group(
-            error_groups,
-            error_order,
-            Doctor.ROLL_MISSING,
-            [str(path) for path in report.missing_rolls],
-        )
-
-    for issue in report.issues:
-        title, item = _split_message(issue.message)
-        if issue.level == "error":
-            _append_group(error_groups, error_order, title, [item])
-        else:
-            _append_group(warning_groups, warning_order, title, [item])
-
-    if error_order:
-        _echo_block(Doctor.ERROR_PREFIX, error_order, error_groups)
-    if warning_order:
-        if error_order:
+        if global_issues or workspace_issues:
             echo_lines([""])
-        _echo_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
+        _echo_block(
+            Doctor.ERROR_PREFIX,
+            [Doctor.ROLL_MISSING],
+            {Doctor.ROLL_MISSING: [str(path) for path in report.missing_rolls]},
+        )
 
     if report.fixable:
         echo_lines([""])
@@ -124,7 +131,43 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
 
             echo(Msg.DOCTOR_FIX_HINT)
 
-    return 1 if error_order else 0
+    return (
+        1
+        if any(issue.level == "error" for issue in report.issues)
+        or report.missing_rolls
+        else 0
+    )
+
+
+def _render_issue_groups(issues: list, highlight_archives: bool) -> None:
+    error_groups: dict[str, list[str]] = {}
+    warning_groups: dict[str, list[str]] = {}
+    error_order: list[str] = []
+    warning_order: list[str] = []
+
+    for issue in issues:
+        title, item = _split_message(issue.message)
+        group_title = title
+        if highlight_archives and issue.archive is not None:
+            group_title = f"{issue.archive} {title}"
+        if issue.level == "error":
+            _append_group(error_groups, error_order, group_title, [item])
+        else:
+            _append_group(warning_groups, warning_order, group_title, [item])
+
+    if error_order:
+        _echo_block(Doctor.ERROR_PREFIX, error_order, error_groups)
+    if warning_order:
+        if error_order:
+            echo_lines([""])
+        _echo_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
+
+
+def _render_workspace_group(archive, issues: list) -> None:
+    from typer import echo
+
+    echo(str(archive))
+    _render_issue_groups(issues, highlight_archives=False)
 
 
 def _append_group(

@@ -27,6 +27,7 @@ class DoctorText:
 class DoctorIssue:
     level: str
     message: str
+    archive: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -132,7 +133,11 @@ def _check_archive(archive: Path) -> tuple[list[DoctorIssue], list[Path], list[P
 
     if not archive.exists():
         return (
-            [DoctorIssue(DoctorText.ERROR, f"{Doctor.ARCHIVE_MISSING} {archive}")],
+            [
+                DoctorIssue(
+                    DoctorText.ERROR, f"{Doctor.ARCHIVE_MISSING} {archive}", archive
+                )
+            ],
             missing_rolls,
             unindexed_folders,
         )
@@ -154,7 +159,9 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
     if not workspace.root.exists():
         issues.append(
             DoctorIssue(
-                DoctorText.ERROR, f"{Doctor.WORKSPACE_MISSING} {workspace.root}"
+                DoctorText.ERROR,
+                f"{Doctor.WORKSPACE_MISSING} {workspace.root}",
+                workspace.archive,
             )
         )
         return issues
@@ -164,6 +171,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
             DoctorIssue(
                 DoctorText.ERROR,
                 f"{Doctor.WORKSPACE_CONFIG_MISSING} {workspace.config_file}",
+                workspace.archive,
             )
         )
     else:
@@ -174,6 +182,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                 DoctorIssue(
                     DoctorText.ERROR,
                     f"{Doctor.WORKSPACE_CONFIG_INVALID} {workspace.config_file} ({exc})",
+                    workspace.archive,
                 )
             )
         else:
@@ -183,6 +192,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                     DoctorIssue(
                         DoctorText.WARNING,
                         str(Doctor.WORKSPACE_CONFIG_ARCHIVE_MISSING),
+                        workspace.archive,
                     )
                 )
             elif Path(archive_value) != workspace.archive:
@@ -190,6 +200,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                     DoctorIssue(
                         DoctorText.WARNING,
                         f"{Doctor.WORKSPACE_CONFIG_MISMATCH} {workspace.config_file} -> {archive_value}",
+                        workspace.archive,
                     )
                 )
 
@@ -198,6 +209,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
             DoctorIssue(
                 DoctorText.ERROR,
                 f"{Doctor.VOCAB_DIR_MISSING} {workspace.vocabulary_dir}",
+                workspace.archive,
             )
         )
         return issues
@@ -207,7 +219,9 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
         if not vocab_file.exists():
             issues.append(
                 DoctorIssue(
-                    DoctorText.ERROR, f"{Doctor.VOCAB_FILE_MISSING} {vocab_file}"
+                    DoctorText.ERROR,
+                    f"{Doctor.VOCAB_FILE_MISSING} {vocab_file}",
+                    workspace.archive,
                 )
             )
             continue
@@ -224,6 +238,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                     DoctorIssue(
                         DoctorText.ERROR,
                         f"{Doctor.VOCAB_FILE_MISSING} {vocab_file} ({exc})",
+                        workspace.archive,
                     )
                 )
                 continue
@@ -234,6 +249,7 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                         DoctorIssue(
                             DoctorText.WARNING,
                             f"{Doctor.KEYWORD_NOT_NORMALIZED} {value} ({vocab_file})",
+                            workspace.archive,
                         )
                     )
 
@@ -262,7 +278,9 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
         except Exception as exc:
             issues.append(
                 DoctorIssue(
-                    DoctorText.ERROR, f"{Doctor.ROLL_UNREADABLE} {index_file} ({exc})"
+                    DoctorText.ERROR,
+                    f"{Doctor.ROLL_UNREADABLE} {index_file} ({exc})",
+                    archive,
                 )
             )
             continue
@@ -273,6 +291,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                     DoctorIssue(
                         DoctorText.ERROR,
                         f"{Doctor.REQUIRED_FIELD_MISSING} '{key}' in {index_file}",
+                        archive,
                     )
                 )
 
@@ -286,6 +305,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                 DoctorIssue(
                     DoctorText.WARNING,
                     f"{Doctor.FILM_NOT_IN_VOCAB} {film} ({index_file})",
+                    archive,
                 )
             )
 
@@ -294,6 +314,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                 DoctorIssue(
                     DoctorText.WARNING,
                     f"{Doctor.CAMERA_NOT_IN_VOCAB} {camera} ({index_file})",
+                    archive,
                 )
             )
 
@@ -303,6 +324,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                     DoctorIssue(
                         DoctorText.WARNING,
                         f"{Doctor.FEATURE_NOT_IN_VOCAB} {value} ({index_file})",
+                        archive,
                     )
                 )
 
@@ -312,6 +334,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                     DoctorIssue(
                         DoctorText.WARNING,
                         f"{Doctor.KEYWORD_NOT_NORMALIZED} {value} ({index_file})",
+                        archive,
                     )
                 )
             if value.casefold() not in allowed["keywords"]:
@@ -319,6 +342,7 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                     DoctorIssue(
                         DoctorText.WARNING,
                         f"{Doctor.KEYWORD_NOT_IN_VOCAB} {value} ({index_file})",
+                        archive,
                     )
                 )
 
@@ -342,7 +366,9 @@ def _check_naming(archive: Path) -> list[DoctorIssue]:
             if roll_dir.is_dir() and not roll_pattern.match(roll_dir.name):
                 issues.append(
                     DoctorIssue(
-                        DoctorText.WARNING, f"{Doctor.SUSPICIOUS_ROLL} {roll_dir.name}"
+                        DoctorText.WARNING,
+                        f"{Doctor.SUSPICIOUS_ROLL} {roll_dir.name}",
+                        archive,
                     )
                 )
 

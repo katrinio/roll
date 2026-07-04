@@ -3,10 +3,13 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest.mock import patch
 
 from roll.app.diagnostics.diagnostics import run_doctor
 from roll.app.diagnostics import diagnostics as diagnostics_module
+from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace import config as config_module
 from roll.app.workspace.config import Config, load_config, save_config, set_lang
 from roll.messages import Msg
@@ -100,6 +103,35 @@ class ConfigTests(unittest.TestCase):
                     for issue in report.issues
                 )
             )
+
+    def test_doctor_groups_issues_by_workspace_when_multiple_archives_exist(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            self._patch_message_home(tmp)
+
+            first = Path(tmp) / "archive-a"
+            second = Path(tmp) / "archive-b"
+            for archive in (first, second):
+                archive.mkdir()
+                workspace = archive / ".roll"
+                vocabulary = workspace / "vocabulary"
+                vocabulary.mkdir(parents=True)
+                for name in ("films", "cameras", "features", "keywords"):
+                    (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+                (workspace / "config.toml").write_text("", encoding="utf-8")
+
+            save_config(Config(archives=[first, second], lang="EN"))
+
+            buffer = StringIO()
+            with redirect_stdout(buffer):
+                render_doctor()
+
+            output = buffer.getvalue()
+            self.assertIn(str(first), output)
+            self.assertIn(str(second), output)
+            self.assertLess(output.index(str(first)), output.index(str(second)))
 
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"
