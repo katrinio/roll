@@ -31,28 +31,29 @@ from roll.app.workspace.config import set_lang
 from roll.messages import Normalize
 from roll.messages.cli import detect_locale
 
-EN = detect_locale() == "en"
+def _en() -> bool:
+    return detect_locale() == "en"
 
-app = typer.Typer(help="Personal film roll index" if EN else "Личный индекс пленок.")
+app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
-config_app = typer.Typer(help="Global config" if EN else "Общий конфиг")
+config_app = typer.Typer(help=Msg.CONFIG_HEADER)
 app.add_typer(config_app, name="config")
 
 
-tags_app = typer.Typer(help="Roll tags" if EN else "Теги роллов.")
+tags_app = typer.Typer(help=Msg.VOCAB_KEYWORDS)
 app.add_typer(tags_app, name="tags")
 
-features_app = typer.Typer(help="Roll features" if EN else "Особенности роллов.")
+features_app = typer.Typer(help=Msg.VOCAB_FEATURES)
 app.add_typer(features_app, name="features")
 
-batch_app = typer.Typer(help="Batch operations" if EN else "Пакетные операции.")
+batch_app = typer.Typer(help=Msg.BATCH_WILL_PROCESS)
 app.add_typer(batch_app, name="batch")
 
 
 @app.command("init")
-def init(archive: Path = typer.Argument(..., help="Archive path." if EN else "Путь к архиву пленок.")) -> None:
+def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
     """Initialize roll."""
-    archive = require_directory(archive, "Folder not found:" if EN else "Папка не найдена:")
+    archive = require_directory(archive, Msg.ARCHIVE_MISSING)
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     try:
@@ -77,21 +78,21 @@ def config() -> None:
 
 
 @config_app.command("lang")
-def config_lang(lang: str | None = typer.Argument(None, help="Language code: EN or RU." if EN else "Код языка: EN или RU.")) -> None:
+def config_lang(lang: str | None = typer.Argument(None, help=Msg.STOCK_HEADER)) -> None:
     """Show or set UI language."""
     config = require_config()
 
     if lang is None:
-        typer.echo(f"{'Language' if EN else 'Язык'}: {config.lang}")
+        typer.echo(f"{'Language' if _en() else 'Язык'}: {config.lang}")
         return
 
     normalized = lang.upper()
     if normalized not in {"EN", "RU"}:
-        typer.echo("Allowed values: EN, RU." if EN else "Допустимые значения: EN, RU.")
+        typer.echo("Allowed values: EN, RU." if _en() else "Допустимые значения: EN, RU.")
         raise typer.Exit(code=1)
 
     updated = set_lang(normalized)
-    typer.echo(f"{'Language set to' if EN else 'Язык установлен'}: {updated.lang}")
+    typer.echo(f"{'Language set to' if _en() else 'Язык установлен'}: {updated.lang}")
 
 
 @app.command("scan")
@@ -132,8 +133,8 @@ def status() -> None:
 
 @app.command("stats")
 def stats(
-    year: str | None = typer.Argument(None, help="Year filter." if EN else "Год для фильтрации статистики."),
-    verbose: bool = typer.Option(False, "-v", "--verbose", help="Show full list of values." if EN else "Показать полный список значений."),
+    year: str | None = typer.Argument(None, help=Msg.STATS_YEAR),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help=Msg.STATS_MORE),
 ) -> None:
     """Show archive statistics."""
     archive = require_archive(require_config())
@@ -141,7 +142,7 @@ def stats(
 
 
 @app.command("load")
-def load(manual: bool = typer.Option(False, "--manual", help="Enter film manually from dictionary." if EN else "Вводить пленку вручную через справочник.")) -> None:
+def load(manual: bool = typer.Option(False, "--manual", help=Msg.STOCK_EMPTY_MANUAL)) -> None:
     """Load a film from stock into a new roll."""
     load_roll(manual=manual)
 
@@ -162,7 +163,7 @@ def vocab() -> None:
 
 
 @app.command("search")
-def search(query: str | None = typer.Argument(None, help="Search string." if EN else "Строка для поиска по памяти.")) -> None:
+def search(query: str | None = typer.Argument(None, help=Msg.SEARCH_QUERY_REQUIRED)) -> None:
     """Search rolls from memory."""
     if not query:
         typer.echo(Msg.SEARCH_QUERY_REQUIRED)
@@ -180,8 +181,8 @@ def search(query: str | None = typer.Argument(None, help="Search string." if EN 
 
 @app.command("doctor")
 def doctor(
-    fix: bool = typer.Option(False, "--fix", help="Apply safe fixes." if EN else "Применить безопасные исправления."),
-    verbose: bool = typer.Option(False, "-v", "--verbose", help="Show full list of safe fixes." if EN else "Показать полный список безопасных исправлений."),
+    fix: bool = typer.Option(False, "--fix", help=Msg.DOCTOR_CAN_FIX),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help=Msg.DOCTOR_CAN_ADD),
 ) -> None:
     """Check archive and config integrity."""
     if render_doctor(fix=fix, verbose=verbose):
@@ -190,12 +191,12 @@ def doctor(
 
 @tags_app.command("add")
 def add_tags() -> None:
-    _update_roll_list_field("Tags" if EN else "Теги", "keywords", update_roll_keywords, "Tags updated" if EN else "Теги обновлены")
+    _update_roll_list_field("Tags", "keywords", update_roll_keywords, "Tags updated")
 
 
 @features_app.command("add")
 def add_features() -> None:
-    _update_roll_list_field("Features" if EN else "Особенности", "features", update_roll_features, "Features updated" if EN else "Особенности обновлены")
+    _update_roll_list_field("Features", "features", update_roll_features, "Features updated")
 
 
 def _update_roll_list_field(
@@ -231,7 +232,7 @@ def batch_process() -> None:
 
 @app.command("normalize")
 def normalize(
-    tags: bool = typer.Option(False, "--tags", help="Normalize tags to uppercase." if EN else "Нормализовать теги в uppercase."),
+    tags: bool = typer.Option(False, "--tags", help=Msg.TAGS_NORMALIZED),
 ) -> None:
     """Normalize archive layout."""
     config = require_config()

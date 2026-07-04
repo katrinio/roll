@@ -5,6 +5,7 @@ import typer
 from roll.app.workspace.roll_store import update_roll_status
 from roll.app.archive.search import find_rolls
 from roll.helpers.output import echo_list
+from roll.messages import Msg
 from roll.messages.cli import detect_locale
 
 
@@ -17,13 +18,13 @@ def process_archives(archives: list[Path]) -> int:
                 loaded_rolls.append(roll.folder)
 
     if not loaded_rolls:
-        typer.echo("No loaded rolls." if detect_locale() == "en" else "Нет loaded-роллов.")
+        typer.echo(Msg.BATCH_NO_LOADED)
         return 0
 
-    typer.echo(f"{'Will process' if detect_locale() == 'en' else 'Будет обработано'}: {len(loaded_rolls)}")
+    typer.echo(f"{Msg.BATCH_WILL_PROCESS} {len(loaded_rolls)}")
     echo_list((str(path) for path in loaded_rolls))
 
-    if not typer.confirm("Mark all as processed?" if detect_locale() == "en" else "Пометить все как processed?", default=False):
+    if not typer.confirm(Msg.BATCH_CONFIRM, default=False):
         return 0
 
     changed = 0
@@ -31,5 +32,5 @@ def process_archives(archives: list[Path]) -> int:
         update_roll_status(folder / "roll.toml", "processed")
         changed += 1
 
-    typer.echo(f"{'Processed' if detect_locale() == 'en' else 'Обработано'}: {changed}")
+    typer.echo(f"{Msg.BATCH_PROCESSED} {changed}")
     return changed

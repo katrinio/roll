@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import tomllib
 import os
-from roll.messages.cli import detect_locale
+from roll.messages import Msg
 
 from roll.app.workspace.statuses import VALID_STATUSES
 
@@ -90,7 +90,7 @@ def _load_toml(path: Path) -> dict:
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError as exc:
-        raise ValueError(f"{'Could not read roll.toml' if detect_locale() == 'en' else 'Не удалось прочитать roll.toml'}: {path}") from exc
+        raise ValueError(f"{Msg.ROLL_READ_ERROR} {path}") from exc
 
 
 def _validate_metadata(data: dict, path: Path) -> RollMetadata:
@@ -102,11 +102,11 @@ def _validate_metadata(data: dict, path: Path) -> RollMetadata:
     keywords = data.get("keywords", [])
 
     if status not in VALID_STATUSES:
-        raise ValueError(f"{'Invalid status in roll.toml' if detect_locale() == 'en' else 'Неверный status в roll.toml'}: {path}")
+        raise ValueError(f"{Msg.ROLL_STATUS_INVALID} {path}")
     if not film or not camera or not loaded_at:
-        raise ValueError(f"{'Invalid roll.toml format' if detect_locale() == 'en' else 'Неверный формат roll.toml'}: {path}")
+        raise ValueError(f"{Msg.ROLL_FORMAT_ERROR} {path}")
     if not isinstance(features, list) or not isinstance(keywords, list):
-        raise ValueError(f"{'Invalid roll.toml format' if detect_locale() == 'en' else 'Неверный формат roll.toml'}: {path}")
+        raise ValueError(f"{Msg.ROLL_FORMAT_ERROR} {path}")
 
     return RollMetadata(
         status=status,

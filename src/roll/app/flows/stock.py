@@ -23,11 +23,7 @@ from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_pro
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines
 from roll.messages import Msg
-from roll.messages.cli import detect_locale
-
-EN = detect_locale() == "en"
-
-app = typer.Typer(help="Film stock" if EN else "Запас пленки")
+app = typer.Typer(help=Msg.STOCK_HEADER)
 
 
 @app.command("add")
@@ -35,8 +31,8 @@ def add() -> None:
     archive = require_archive(require_config())
     workspace = workspace_for(archive)
 
-    film = autocomplete_prompt("Film" if EN else "Пленка", workspace.dictionary("films"))
-    quantity = typer.prompt("Quantity:" if EN else "Количество:", type=int)
+    film = autocomplete_prompt("Film", workspace.dictionary("films"))
+    quantity = typer.prompt("Quantity:", type=int)
     if quantity <= 0:
         typer.echo(Msg.INVALID_QUANTITY)
         raise typer.Exit(code=1)
@@ -50,7 +46,7 @@ def add() -> None:
 
 
 @app.command("load")
-def load(manual: bool = typer.Option(False, "--manual", help="Enter film manually from dictionary." if EN else "Вводить пленку вручную через справочник.")) -> None:
+def load(manual: bool = typer.Option(False, "--manual", help="Enter film manually from dictionary.")) -> None:
     archive = require_archive(require_config())
     workspace = workspace_for(archive)
 
@@ -67,7 +63,7 @@ def load(manual: bool = typer.Option(False, "--manual", help="Enter film manuall
             raise typer.Exit(code=1)
 
     selected = _choose_stock_item(stock) if not manual else _choose_manual_film(workspace)
-    camera = autocomplete_prompt("Camera" if EN else "Камера", workspace.dictionary("cameras"))
+    camera = autocomplete_prompt("Camera", workspace.dictionary("cameras"))
     loaded_at = _prompt_loaded_at()
     roll_folder = _create_roll_folder(archive, loaded_at)
     roll_file = roll_folder / "roll.toml"
@@ -91,18 +87,18 @@ def load(manual: bool = typer.Option(False, "--manual", help="Enter film manuall
         )
         if not manual:
             save_stock(workspace.stock_file, remove_from_stock(stock, selected.film, 1))
-        features = autocomplete_many_prompt("Features" if EN else "Особенности", workspace.dictionary("features"))
+        features = autocomplete_many_prompt("Features", workspace.dictionary("features"))
         if features:
             update_roll_features(roll_file, features)
 
-        tags = autocomplete_many_prompt("Tags" if EN else "Теги", workspace.dictionary("keywords"))
+        tags = autocomplete_many_prompt("Tags", workspace.dictionary("keywords"))
         if tags:
             update_roll_keywords(roll_file, tags)
     except Exception:
         _cleanup_failed_load(roll_folder, roll_file)
         raise
 
-    typer.echo(f"{'Loaded' if EN else 'Заряжено'}: {selected.film}")
+    typer.echo(f"Loaded: {selected.film}")
 
 
 @app.command("process")
@@ -136,7 +132,7 @@ def list_stock() -> None:
 
 
 def _prompt_loaded_at() -> str:
-    value = typer.prompt("Load date" if EN else "Дата загрузки")
+    value = typer.prompt("Load date")
     normalized = value.strip().split("T", 1)[0].split(" ", 1)[0]
     try:
         return date.fromisoformat(normalized).isoformat()
@@ -155,7 +151,7 @@ def _choose_stock_item(items: list[StockItem]) -> StockItem:
     completer = FuzzyCompleter(WordCompleter(labels, ignore_case=True, sentence=True, match_middle=True))
 
     while True:
-        value = prompt("Film: " if EN else "Пленка: ", completer=completer, complete_while_typing=True).strip()
+        value = prompt("Film: ", completer=completer, complete_while_typing=True).strip()
         if not value:
             continue
 
@@ -167,7 +163,7 @@ def _choose_stock_item(items: list[StockItem]) -> StockItem:
 
 
 def _choose_manual_film(workspace) -> StockItem:
-    film = autocomplete_prompt("Film" if EN else "Пленка", workspace.dictionary("films"))
+    film = autocomplete_prompt("Film", workspace.dictionary("films"))
     return StockItem(film=film, quantity=1)
 
 

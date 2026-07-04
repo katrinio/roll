@@ -100,6 +100,38 @@ class Msg(Headers):
     TAGS_ALREADY_NORMALIZED = Message("cli.tags_already_normalized", "Теги уже нормализованы.", "Tags are already normalized.")
     DOCTOR_FIX_HINT = Message("cli.doctor_fix_hint", "Запусти: rl doctor --fix", "Run: rl doctor --fix")
     NO_CHOICE = Message("cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll.")
+    NO_CHOICES = Message("cli.no_choices", "Нет доступных вариантов.", "No choices available.")
+    STOCK_MISSING_DICT = Message(
+        "cli.stock_missing_dict",
+        "'{value}' отсутствует в словаре.\n\nДобавить? [Y/n] ",
+        "'{value}' is missing from the dictionary.\n\nAdd it? [Y/n] ",
+    )
+    BATCH_NO_LOADED = Message("cli.batch_no_loaded", "Нет loaded-роллов.", "No loaded rolls.")
+    BATCH_WILL_PROCESS = Message("cli.batch_will_process", "Будет обработано:", "Will process:")
+    BATCH_CONFIRM = Message("cli.batch_confirm", "Пометить все как processed?", "Mark all as processed?")
+    BATCH_PROCESSED = Message("cli.batch_processed", "Обработано:", "Processed:")
+    STATS_YEAR = Message("cli.stats_year", "Год:", "Year:")
+    STATS_ROLLS = Message("cli.stats_rolls", "Роллов:", "Rolls:")
+    STATS_FILMS = Message("cli.stats_films", "Пленок в статистике:", "Films in stats:")
+    STATS_TAGS = Message("cli.stats_tags", "Тегов в статистике:", "Tags in stats:")
+    STATS_BY_STATUS = Message("cli.stats_by_status", "По статусам", "By status")
+    STATS_BY_YEAR = Message("cli.stats_by_year", "По годам", "By year")
+    STATS_BY_FILM = Message("cli.stats_by_film", "По пленкам", "By film")
+    STATS_BY_TAG = Message("cli.stats_by_tag", "По тегам", "By tag")
+    STATS_BY_CAMERA = Message("cli.stats_by_camera", "По камерам", "By camera")
+    STATS_MORE = Message("cli.stats_more", "... и еще {count}", "... and {count} more")
+    DOCTOR_CAN_FIX = Message("cli.doctor_can_fix", "Можно исправить:", "Can fix:")
+    DOCTOR_CAN_ADD = Message("cli.doctor_can_add", "Можно добавить в keywords:", "Can add to keywords:")
+    DOCTOR_FIXES_APPLIED = Message("cli.doctor_fixes_applied", "Исправления применены.", "Fixes applied.")
+    DOCTOR_KEYWORDS_APPLIED = Message("cli.doctor_keywords_applied", "Исправления keywords применены.", "Keywords fixes applied.")
+    STOCK_READ_ERROR = Message("cli.stock_read_error", "Не удалось прочитать запас пленки:", "Could not read film stock:")
+    STOCK_FORMAT_ERROR = Message("cli.stock_format_error", "Неверный формат запаса пленки:", "Invalid film stock format:")
+    STOCK_NOT_POSITIVE = Message("cli.stock_not_positive", "Количество должно быть положительным.", "Quantity must be positive.")
+    STOCK_INSUFFICIENT = Message("cli.stock_insufficient", "В запасе недостаточно пленки.", "Not enough film in stock.")
+    STOCK_MISSING = Message("cli.stock_missing", "Такой пленки нет в запасе.", "No such film in stock.")
+    ROLL_READ_ERROR = Message("cli.roll_read_error", "Не удалось прочитать roll.toml:", "Could not read roll.toml:")
+    ROLL_STATUS_INVALID = Message("cli.roll_status_invalid", "Неверный status в roll.toml:", "Invalid status in roll.toml:")
+    ROLL_FORMAT_ERROR = Message("cli.roll_format_error", "Неверный формат roll.toml:", "Invalid roll.toml format:")
 
     RUN_TO_INITIALIZE = Message("cli.run_to_initialize", "  rl init ~/your/archive/path", "  rl init ~/your/archive/path")
     UNINITIALIZED_MESSAGE = Message(

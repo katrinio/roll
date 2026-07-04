@@ -5,6 +5,7 @@ from roll.app.diagnostics.diagnostics import Doctor, run_doctor
 from roll.app.archive.normalization import apply_keyword_vocab_fixes, apply_normalization_plans, build_safe_rename_plan, collect_keyword_vocab_fixes, print_normalization_plan
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.output import echo_lines
+from roll.messages import Msg
 from roll.messages.cli import detect_locale
 
 
@@ -67,15 +68,15 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         echo_lines([""])
         from typer import echo
 
-        echo(highlight_cli_names(f"{'Can fix' if detect_locale() == 'en' else 'Можно исправить'}: {len(report.fixable)}"))
+        echo(highlight_cli_names(f"{Msg.DOCTOR_CAN_FIX} {len(report.fixable)}"))
         items = report.fixable if verbose else report.fixable[:5]
         echo_lines([f"  {item}" for item in items])
         if not verbose and len(report.fixable) > 5:
-            echo(f"  ... and {len(report.fixable) - 5} more" if detect_locale() == "en" else f"  ... и еще {len(report.fixable) - 5}")
+            echo(f"  {Msg.STATS_MORE.format(count=len(report.fixable) - 5)}")
         if fix:
             plans = [build_safe_rename_plan(archive) for archive in config.archives]
             apply_normalization_plans(plans)
-            echo("Fixes applied." if detect_locale() == "en" else "Исправления применены.")
+            echo(Msg.DOCTOR_FIXES_APPLIED)
             if verbose:
                 for plan in plans:
                     if plan.rules:
@@ -86,21 +87,20 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         echo_lines([""])
         from typer import echo
 
-        echo(highlight_cli_names(f"{'Can add to keywords' if detect_locale() == 'en' else 'Можно добавить в keywords'}: {len(report.keyword_vocab_fixes)}"))
+        echo(highlight_cli_names(f"{Msg.DOCTOR_CAN_ADD} {len(report.keyword_vocab_fixes)}"))
         items = report.keyword_vocab_fixes if verbose else report.keyword_vocab_fixes[:5]
         echo_lines([f"  {item}" for item in items])
         if not verbose and len(report.keyword_vocab_fixes) > 5:
-            echo(f"  ... and {len(report.keyword_vocab_fixes) - 5} more" if detect_locale() == "en" else f"  ... и еще {len(report.keyword_vocab_fixes) - 5}")
+            echo(f"  {Msg.STATS_MORE.format(count=len(report.keyword_vocab_fixes) - 5)}")
         if fix:
             for archive in config.archives:
                 applied = apply_keyword_vocab_fixes(archive, collect_keyword_vocab_fixes(archive))
                 if applied and verbose:
                     echo_lines([""])
                     echo(f"  {applied}")
-            echo("Keywords fixes applied." if detect_locale() == "en" else "Исправления keywords применены.")
+            echo(Msg.DOCTOR_KEYWORDS_APPLIED)
         else:
             echo_lines([""])
-            from roll.messages import Msg
 
             echo(Msg.DOCTOR_FIX_HINT)
 
