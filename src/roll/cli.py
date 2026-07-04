@@ -27,6 +27,7 @@ from roll.app.archive.stats_output import render_stats_report
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
 from roll.app.diagnostics.doctor_output import render_doctor
+from roll.app.workspace.config import set_lang
 from roll.messages import Normalize
 from roll.messages.cli import detect_locale
 
@@ -34,6 +35,8 @@ EN = detect_locale() == "en"
 
 app = typer.Typer(help="Personal film roll index" if EN else "Личный индекс пленок.")
 app.add_typer(stock_app, name="stock")
+config_app = typer.Typer(help="Global config" if EN else "Общий конфиг")
+app.add_typer(config_app, name="config")
 
 
 tags_app = typer.Typer(help="Roll tags" if EN else "Теги роллов.")
@@ -66,11 +69,29 @@ def init(archive: Path = typer.Argument(..., help="Archive path." if EN else "П
     echo_lines([f"Archive: {archive}", f"Config:  {CONFIG_FILE}"])
 
 
-@app.command("config")
+@config_app.callback(invoke_without_command=True)
 def config() -> None:
     """Show current config."""
     config = require_config()
     echo_section(Msg.CONFIG_HEADER, [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives])
+
+
+@config_app.command("lang")
+def config_lang(lang: str | None = typer.Argument(None, help="Language code: EN or RU." if EN else "Код языка: EN или RU.")) -> None:
+    """Show or set UI language."""
+    config = require_config()
+
+    if lang is None:
+        typer.echo(f"{'Language' if EN else 'Язык'}: {config.lang}")
+        return
+
+    normalized = lang.upper()
+    if normalized not in {"EN", "RU"}:
+        typer.echo("Allowed values: EN, RU." if EN else "Допустимые значения: EN, RU.")
+        raise typer.Exit(code=1)
+
+    updated = set_lang(normalized)
+    typer.echo(f"{'Language set to' if EN else 'Язык установлен'}: {updated.lang}")
 
 
 @app.command("scan")

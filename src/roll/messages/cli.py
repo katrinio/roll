@@ -3,8 +3,14 @@ from __future__ import annotations
 import os
 from typing import ClassVar
 
+from roll.app.workspace.config import load_lang
+
 
 def detect_locale() -> str:
+    config_lang = load_lang().upper()
+    if config_lang in {"EN", "RU"}:
+        return config_lang.lower()
+
     value = (
         os.environ.get("ROLL_LOCALE")
         or os.environ.get("LC_ALL")
