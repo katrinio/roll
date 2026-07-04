@@ -1,14 +1,15 @@
-from roll.messages.cli import EN as CLI_EN
-from roll.messages.cli import RU as CLI_RU
 from roll.messages.doctor import RU as DOCTOR_RU
 from roll.messages.normalize import RU as NORMALIZE_RU
-from roll.messages.cli import detect_locale
+from roll.messages.cli import Msg, detect_locale
 
 
-RU = {**CLI_RU, **DOCTOR_RU, **NORMALIZE_RU}
-EN = {**CLI_EN, **DOCTOR_RU, **NORMALIZE_RU}
+RU = {**{value.key: value.ru for value in Msg.__dict__.values() if hasattr(value, "key")}, **DOCTOR_RU, **NORMALIZE_RU}
 
 
 def text(key: str, **kwargs) -> str:
-    value = EN[key] if detect_locale() == "en" else RU[key]
-    return value.format(**kwargs) if kwargs else value
+    value = getattr(Msg, key.split(".", 1)[1].upper(), None) if key.startswith("cli.") else None
+    if value is not None:
+        resolved = str(value)
+    else:
+        resolved = DOCTOR_RU.get(key) or NORMALIZE_RU.get(key) or key
+    return resolved.format(**kwargs) if kwargs else resolved

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import tomllib
-from typing import ClassVar
 from pathlib import Path
 
 
@@ -37,15 +36,24 @@ def _load_lang_from_config_file() -> str | None:
 
 
 class Message(str):
-    locale: ClassVar[str] = detect_locale()
-
     def __new__(cls, key: str, ru: str, en: str | None = None):
-        text = en if cls.locale == "en" and en is not None else ru
-        obj = str.__new__(cls, text)
+        obj = str.__new__(cls, ru)
         obj.key = key
         obj.ru = ru
         obj.en = en or ru
         return obj
+
+    def _value(self) -> str:
+        return self.en if detect_locale() == "en" and self.en is not None else self.ru
+
+    def __str__(self) -> str:
+        return self._value()
+
+    def __repr__(self) -> str:
+        return repr(self._value())
+
+    def __format__(self, format_spec: str) -> str:
+        return format(self._value(), format_spec)
 
 
 class Headers:
