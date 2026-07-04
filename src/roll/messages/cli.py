@@ -39,6 +39,9 @@ class Headers:
     STATUS_UNINDEXED_FOLDERS = Message("cli.status_unindexed_folders", "Не проиндексированные папки:", "Unindexed folders:")
     STATUS_ROLLS = Message("cli.status_rolls", "Пленки по статусам:", "Films by status:")
     STATUS_NO_ROLL_TOML = Message("cli.status_no_roll_toml", "без roll.toml:", "without roll.toml:")
+    TREE_HEADER = Message("cli.tree_header", "Дерево архива:", "Archive tree:")
+    FILES = Message("cli.files", "Фото:", "Photos:")
+    FOLDERS = Message("cli.folders", "Папок:", "Folders:")
     SEARCH_HEADER = Message("cli.search_header", "Найдено:", "Found:")
     SEARCH_CAMERA = Message("cli.search_camera", "Камера:", "Camera:")
     SEARCH_FEATURES = Message("cli.search_features", "Особенности:", "Features:")
@@ -58,6 +61,7 @@ class Msg(Headers):
     NO_ROLLS = Message("cli.no_rolls", "Нет роллов.", "No rolls.")
     NO_LOADED_ROLLS = Message("cli.no_loaded_rolls", "Нет загруженных пленок.", "No loaded films.")
     STOCK_EMPTY = Message("cli.stock_empty", "Запас пуст.", "Stock is empty.")
+    STOCK_HEADER = Message("cli.stock_header", "Запас пленки", "Film stock")
     STOCK_EMPTY_MANUAL = Message(
         "cli.stock_empty_manual",
         "Запас пуст. Используй --manual для ручного ввода.",
@@ -66,9 +70,16 @@ class Msg(Headers):
     INVALID_DATE = Message("cli.invalid_date", "Неверная дата.", "Invalid date.")
     INVALID_QUANTITY = Message("cli.invalid_quantity", "Количество должно быть положительным.", "Quantity must be positive.")
     ROLL_EXISTS = Message("cli.roll_exists", "Roll уже существует:", "Roll already exists:")
+    CHOOSE_STOCK = Message("cli.choose_stock", "Выбери пленку из запаса.", "Choose a film from stock.")
+    SEARCH_QUERY_REQUIRED = Message(
+        "cli.search_query_required",
+        "Нужно указать строку поиска. Пример: rl search pizza",
+        "You need to provide a search query. Example: rl search pizza",
+    )
     TAGS_NORMALIZED = Message("cli.tags_normalized", "Теги нормализованы.", "Tags normalized.")
     TAGS_ALREADY_NORMALIZED = Message("cli.tags_already_normalized", "Теги уже нормализованы.", "Tags are already normalized.")
     DOCTOR_FIX_HINT = Message("cli.doctor_fix_hint", "Запусти: rl doctor --fix", "Run: rl doctor --fix")
+    NO_CHOICE = Message("cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll.")
 
     RUN_TO_INITIALIZE = Message("cli.run_to_initialize", "  rl init ~/your/archive/path", "  rl init ~/your/archive/path")
     UNINITIALIZED_MESSAGE = Message(

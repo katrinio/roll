@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import tomllib
+from roll.messages.cli import detect_locale
 
 
 @dataclass(frozen=True)
@@ -22,23 +23,23 @@ def load_stock(path: Path) -> list[StockItem]:
     try:
         data = tomllib.loads(text)
     except tomllib.TOMLDecodeError as exc:
-        raise ValueError(f"Не удалось прочитать запас пленки: {path}") from exc
+        raise ValueError(f"{'Could not read film stock' if detect_locale() == 'en' else 'Не удалось прочитать запас пленки'}: {path}") from exc
 
     raw_items = data.get("items", [])
     if not isinstance(raw_items, list):
-        raise ValueError(f"Неверный формат запаса пленки: {path}")
+        raise ValueError(f"{'Invalid film stock format' if detect_locale() == 'en' else 'Неверный формат запаса пленки'}: {path}")
 
     items: list[StockItem] = []
     for raw_item in raw_items:
         if not isinstance(raw_item, dict):
-            raise ValueError(f"Неверный формат запаса пленки: {path}")
+            raise ValueError(f"{'Invalid film stock format' if detect_locale() == 'en' else 'Неверный формат запаса пленки'}: {path}")
 
         film = raw_item.get("film")
         quantity = raw_item.get("quantity")
         if not isinstance(film, str) or not film.strip() or not isinstance(quantity, int):
-            raise ValueError(f"Неверный формат запаса пленки: {path}")
+            raise ValueError(f"{'Invalid film stock format' if detect_locale() == 'en' else 'Неверный формат запаса пленки'}: {path}")
         if quantity <= 0:
-            raise ValueError(f"Неверный формат запаса пленки: {path}")
+            raise ValueError(f"{'Invalid film stock format' if detect_locale() == 'en' else 'Неверный формат запаса пленки'}: {path}")
 
         items.append(StockItem(film=film.strip(), quantity=quantity))
 
@@ -63,7 +64,7 @@ def save_stock(path: Path, items: list[StockItem]) -> None:
 
 def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
     if quantity <= 0:
-        raise ValueError("Количество должно быть положительным.")
+        raise ValueError("Quantity must be positive." if detect_locale() == "en" else "Количество должно быть положительным.")
 
     merged = {item.film.casefold(): StockItem(item.film, item.quantity) for item in items}
     key = film.casefold()
@@ -77,7 +78,7 @@ def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[Stock
 
 def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
     if quantity <= 0:
-        raise ValueError("Количество должно быть положительным.")
+        raise ValueError("Quantity must be positive." if detect_locale() == "en" else "Количество должно быть положительным.")
 
     updated: list[StockItem] = []
     removed = False
@@ -87,7 +88,7 @@ def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[
             continue
 
         if item.quantity < quantity:
-            raise ValueError("В запасе недостаточно пленки.")
+            raise ValueError("Not enough film in stock." if detect_locale() == "en" else "В запасе недостаточно пленки.")
 
         removed = True
         remaining = item.quantity - quantity
@@ -95,7 +96,7 @@ def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[
             updated.append(StockItem(film=item.film, quantity=remaining))
 
     if not removed:
-        raise ValueError("Такой пленки нет в запасе.")
+        raise ValueError("No such film in stock." if detect_locale() == "en" else "Такой пленки нет в запасе.")
 
     return _sort_and_merge(updated)
 

@@ -1,4 +1,6 @@
 
+from roll.messages.cli import detect_locale
+
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 
@@ -34,7 +36,7 @@ def autocomplete_many_prompt(title: str, dictionary: Dictionary) -> list[str]:
 
 def choice_prompt(title: str, choices: list[str]) -> str:
     if not choices:
-        raise ValueError("No choices available.")
+        raise ValueError("No choices available." if detect_locale() == "en" else "Нет доступных вариантов.")
 
     while True:
         value = prompt(f"{title}: ", completer=_choice_completer(choices), complete_while_typing=True).strip()
@@ -75,7 +77,8 @@ def _existing_value(dictionary: Dictionary, candidate: str) -> str | None:
 
 
 def _confirm_missing(value: str) -> bool:
-    answer = prompt(f"'{value}' отсутствует в словаре.\n\nДобавить? [Y/n] ").strip().casefold()
+    question = f"'{value}' отсутствует в словаре.\n\nДобавить? [Y/n] " if detect_locale() != "en" else f"'{value}' is missing from the dictionary.\n\nAdd it? [Y/n] "
+    answer = prompt(question).strip().casefold()
     return answer in ("", "y", "yes", "д", "да")
 
 
