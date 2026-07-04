@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from roll.app.diagnostics.diagnostics import Doctor, DoctorIssue, run_doctor
 from roll.app.workspace.config import Config, load_config
-from roll.app.diagnostics.diagnostics import Doctor, run_doctor
 from roll.app.archive.normalization import (
     apply_keyword_vocab_fixes,
     apply_normalization_plans,
@@ -24,6 +26,7 @@ DOCTOR_MESSAGE_PREFIXES = (
     Doctor.VOCAB_DIR_MISSING,
     Doctor.VOCAB_FILE_MISSING,
     Doctor.ROLL_UNREADABLE,
+    Doctor.ROLL_LOADED_AT_MISMATCH,
     Doctor.REQUIRED_FIELD_MISSING,
     Doctor.FILM_NOT_IN_VOCAB,
     Doctor.CAMERA_NOT_IN_VOCAB,
@@ -49,33 +52,32 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         echo(Doctor.OK)
         return 0
 
-    workspace_issues = [issue for issue in report.issues if issue.archive is not None]
     global_issues = [issue for issue in report.issues if issue.archive is None]
-    grouped_by_archive = len({issue.archive for issue in workspace_issues}) > 1
+    workspace_issues = [issue for issue in report.issues if issue.archive is not None]
 
+    sections: list[tuple[str, list[DoctorIssue]]] = []
     if global_issues:
-        _render_issue_groups(global_issues, highlight_archives=False)
+        sections.append(("Global config", global_issues))
 
-    if workspace_issues:
-        if global_issues:
+    archives: list[Path] = []
+    for issue in workspace_issues:
+        if issue.archive not in archives:
+            archives.append(issue.archive)
+    for archive in archives:
+        sections.append(
+            (
+                f"Workspace {archive}",
+                [issue for issue in workspace_issues if issue.archive == archive],
+            )
+        )
+
+    for index, (title, issues) in enumerate(sections):
+        if index:
             echo_lines([""])
-        if grouped_by_archive:
-            archives = []
-            for issue in workspace_issues:
-                if issue.archive not in archives:
-                    archives.append(issue.archive)
-            for index, archive in enumerate(archives):
-                archive_issues = [
-                    issue for issue in workspace_issues if issue.archive == archive
-                ]
-                _render_workspace_group(archive, archive_issues)
-                if index < len(archives) - 1:
-                    echo_lines([""])
-        else:
-            _render_issue_groups(workspace_issues, highlight_archives=False)
+        _render_section(title, issues)
 
     if report.missing_rolls:
-        if global_issues or workspace_issues:
+        if sections:
             echo_lines([""])
         _echo_block(
             Doctor.ERROR_PREFIX,
@@ -141,17 +143,18 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
     )
 
 
-def _render_issue_groups(issues: list, highlight_archives: bool) -> None:
+def _render_section(title: str, issues: list) -> None:
+    from typer import echo
+
+    echo(title)
+
     error_groups: dict[str, list[str]] = {}
     warning_groups: dict[str, list[str]] = {}
     error_order: list[str] = []
     warning_order: list[str] = []
 
     for issue in issues:
-        title, item = _split_message(issue.message)
-        group_title = title
-        if highlight_archives and issue.archive is not None:
-            group_title = f"{issue.archive} {title}"
+        group_title, item = _split_message(issue.message)
         if issue.level == "error":
             _append_group(error_groups, error_order, group_title, [item])
         else:
@@ -163,13 +166,6 @@ def _render_issue_groups(issues: list, highlight_archives: bool) -> None:
         if error_order:
             echo_lines([""])
         _echo_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
-
-
-def _render_workspace_group(archive, issues: list) -> None:
-    from typer import echo
-
-    echo(str(archive))
-    _render_issue_groups(issues, highlight_archives=False)
 
 
 def _append_group(

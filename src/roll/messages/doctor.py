@@ -85,6 +85,11 @@ class Doctor:
         "Не удалось прочитать roll.toml:",
         "Could not read roll.toml:",
     )
+    ROLL_LOADED_AT_MISMATCH = Message(
+        "doctor.roll_loaded_at_mismatch",
+        "loaded_at не совпадает с именем папки:",
+        "loaded_at does not match the folder name:",
+    )
     REQUIRED_FIELD_MISSING = Message(
         "doctor.required_field_missing",
         "Нет обязательного поля",

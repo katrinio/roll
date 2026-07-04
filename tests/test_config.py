@@ -142,17 +142,21 @@ class ConfigTests(unittest.TestCase):
                 for name in ("films", "cameras", "features", "keywords"):
                     (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
                 (workspace / "config.toml").write_text("", encoding="utf-8")
-
-            save_config(Config(archives=[first, second], lang="EN"))
+            config_module.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
+            config_module.CONFIG_FILE.write_text(
+                f'archives = ["{first}", "{second}"]\n',
+                encoding="utf-8",
+            )
 
             buffer = StringIO()
             with redirect_stdout(buffer):
                 render_doctor()
 
             output = buffer.getvalue()
-            self.assertIn(str(first), output)
-            self.assertIn(str(second), output)
-            self.assertLess(output.index(str(first)), output.index(str(second)))
+            self.assertIn("Global config", output)
+            self.assertIn(f"Workspace {first}", output)
+            self.assertIn(f"Workspace {second}", output)
 
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"

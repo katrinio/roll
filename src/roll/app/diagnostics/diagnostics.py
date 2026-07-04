@@ -13,6 +13,7 @@ from roll.app.archive.normalization import (
 )
 from roll.messages import Doctor
 from roll.app.workspace.stock_store import load_stock
+from roll.app.workspace.roll_store import load_roll_metadata
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
 
@@ -323,6 +324,18 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
             )
             continue
 
+        try:
+            metadata = load_roll_metadata(index_file)
+        except ValueError as exc:
+            issues.append(
+                DoctorIssue(
+                    DoctorText.ERROR,
+                    f"{Doctor.ROLL_UNREADABLE} {index_file} ({exc})",
+                    archive,
+                )
+            )
+            continue
+
         for key in mandatory:
             if not data.get(key):
                 issues.append(
@@ -332,6 +345,16 @@ def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path
                         archive,
                     )
                 )
+
+        expected_loaded_at = f"{folder.parent.name}-{folder.name}"
+        if metadata.loaded_at != expected_loaded_at:
+            issues.append(
+                DoctorIssue(
+                    DoctorText.WARNING,
+                    f"{Doctor.ROLL_LOADED_AT_MISMATCH} {index_file} -> {metadata.loaded_at}",
+                    archive,
+                )
+            )
 
         film = data.get("film", "")
         camera = data.get("camera", "")

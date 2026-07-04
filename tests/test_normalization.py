@@ -229,6 +229,41 @@ class NormalizationTests(unittest.TestCase):
                 any("stock.toml" in issue.message for issue in report.issues)
             )
 
+    def test_doctor_flags_roll_loaded_at_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            year = archive / "2025"
+            roll = year / "10-19"
+            roll.mkdir(parents=True)
+
+            save_roll_metadata(
+                roll / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-20",
+                    features=[],
+                    keywords=[],
+                ),
+            )
+
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+            (workspace / "stock.toml").write_text("", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any("loaded_at" in issue.message for issue in report.issues)
+            )
+
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
         from roll.app.archive.stats import _count_statuses
 
