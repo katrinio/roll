@@ -3,11 +3,19 @@ from roll.messages.normalize import RU as NORMALIZE_RU
 from roll.messages.cli import Msg
 
 
-RU = {**{value.key: value.ru for value in Msg.__dict__.values() if hasattr(value, "key")}, **DOCTOR_RU, **NORMALIZE_RU}
+RU = {
+    **{value.key: value.ru for value in Msg.__dict__.values() if hasattr(value, "key")},
+    **DOCTOR_RU,
+    **NORMALIZE_RU,
+}
 
 
 def text(key: str, **kwargs) -> str:
-    value = getattr(Msg, key.split(".", 1)[1].upper(), None) if key.startswith("cli.") else None
+    value = (
+        getattr(Msg, key.split(".", 1)[1].upper(), None)
+        if key.startswith("cli.")
+        else None
+    )
     if value is not None:
         resolved = str(value)
     else:

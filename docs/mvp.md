@@ -27,7 +27,7 @@ rl search kir balcony       # half a year later — found it
 
 sync between machines · cloud · web UI · migrating old formats · image processing
 
-First thing right after MVP: localization — CLI language is stored in the global config and controlled with `rl config lang`.
+First thing right after MVP: localization — CLI language defaults to English in the global config and is controlled with `rl config lang`.
 
 ## Rule
 

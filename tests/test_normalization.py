@@ -75,7 +75,9 @@ class NormalizationTests(unittest.TestCase):
 
             report = run_doctor(Config(archives=[archive]))
 
-            self.assertTrue(any("uppercase" in issue.message for issue in report.issues))
+            self.assertTrue(
+                any("uppercase" in issue.message for issue in report.issues)
+            )
 
     def test_doctor_collects_missing_keywords_for_vocab_fix(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -116,7 +118,10 @@ class NormalizationTests(unittest.TestCase):
             path = apply_keyword_vocab_fixes(archive, ["FIRE", "EASTER"])
 
             self.assertEqual(path, vocabulary / "keywords.txt")
-            self.assertEqual((vocabulary / "keywords.txt").read_text(encoding="utf-8"), "EASTER\nFIRE\n")
+            self.assertEqual(
+                (vocabulary / "keywords.txt").read_text(encoding="utf-8"),
+                "EASTER\nFIRE\n",
+            )
 
     def test_doctor_flags_lowercase_keywords_in_vocabulary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,11 +131,15 @@ class NormalizationTests(unittest.TestCase):
             vocabulary.mkdir(parents=True)
             for name in ("films", "cameras", "features"):
                 (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
-            (vocabulary / "keywords.txt").write_text("spring\nsummer\nWALK\n", encoding="utf-8")
+            (vocabulary / "keywords.txt").write_text(
+                "spring\nsummer\nWALK\n", encoding="utf-8"
+            )
 
             report = run_doctor(Config(archives=[archive]))
 
-            self.assertTrue(any("uppercase" in issue.message for issue in report.issues))
+            self.assertTrue(
+                any("uppercase" in issue.message for issue in report.issues)
+            )
 
     def test_doctor_flags_workspace_config_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -140,11 +149,15 @@ class NormalizationTests(unittest.TestCase):
             vocabulary.mkdir(parents=True)
             for name in ("films", "cameras", "features", "keywords"):
                 (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
-            (workspace / "config.toml").write_text('archive = "/wrong/archive"\n', encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                'archive = "/wrong/archive"\n', encoding="utf-8"
+            )
 
             report = run_doctor(Config(archives=[archive]))
 
-            self.assertTrue(any("Workspace config" in issue.message for issue in report.issues))
+            self.assertTrue(
+                any("Workspace config" in issue.message for issue in report.issues)
+            )
 
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
         from roll.app.archive.stats import _count_statuses
@@ -156,7 +169,9 @@ class NormalizationTests(unittest.TestCase):
             RollIndex(Path("d"), "processed", "", "", "", [], []),
         ]
 
-        self.assertEqual(_count_statuses(rolls), {"loaded": 1, "processed": 2, "failed": 1})
+        self.assertEqual(
+            _count_statuses(rolls), {"loaded": 1, "processed": 2, "failed": 1}
+        )
 
     def test_build_archive_tree_lists_years_and_rolls(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

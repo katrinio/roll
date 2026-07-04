@@ -11,7 +11,9 @@ def render_search_results(results) -> None:
     echo_lines([Msg.SEARCH_HEADER, ""])
 
     for roll in results:
-        echo_lines([f"{roll.loaded_at} — {roll.film}", f"{Msg.SEARCH_CAMERA} {roll.camera}"])
+        echo_lines(
+            [f"{roll.loaded_at} — {roll.film}", f"{Msg.SEARCH_CAMERA} {roll.camera}"]
+        )
 
         if roll.features:
             echo(f"{Msg.SEARCH_FEATURES} {', '.join(roll.features)}")

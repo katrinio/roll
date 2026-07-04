@@ -31,11 +31,11 @@ The project has three levels: global config → archive workspace → roll.
 The global config stores the UI language and the archive list:
 
 ```toml
-lang = "RU"   # or "EN"
+lang = "EN"   # or "RU"
 archives = ["/path/to/archive"]
 ```
 
-`lang` defaults to `RU` when missing or invalid. Legacy `config.yaml` is still read when `config.toml` does not exist.
+`lang` defaults to `EN` when missing or invalid. `config.toml` is the only root config file used by the app.
 
 ## Code layout
 

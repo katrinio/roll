@@ -14,7 +14,9 @@ class ConfigTests(unittest.TestCase):
     def test_save_and_load_config_roundtrip_with_lang(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)
-            original = Config(archives=[Path("/tmp/archive-a"), Path("/tmp/archive-b")], lang="EN")
+            original = Config(
+                archives=[Path("/tmp/archive-a"), Path("/tmp/archive-b")], lang="EN"
+            )
 
             save_config(original)
 
@@ -31,7 +33,7 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(updated.lang, "EN")
             self.assertEqual(load_config().lang, "EN")
 
-    def test_load_config_defaults_to_ru_when_lang_invalid(self) -> None:
+    def test_load_config_defaults_to_en_when_lang_invalid(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)
             config_module.CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -42,19 +44,26 @@ class ConfigTests(unittest.TestCase):
 
             loaded = load_config()
 
-            self.assertEqual(loaded.lang, "RU")
+            self.assertEqual(loaded.lang, "EN")
+
+    def test_load_config_requires_toml_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+
+            with self.assertRaises(FileNotFoundError):
+                load_config()
 
     def test_message_reflects_lang_change_without_restart(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)
             self._patch_message_home(tmp)
-            save_config(Config(archives=[Path("/tmp/archive")], lang="RU"))
-
-            self.assertEqual(str(Msg.LANGUAGE), "Язык:")
-
-            set_lang("EN")
+            save_config(Config(archives=[Path("/tmp/archive")], lang="EN"))
 
             self.assertEqual(str(Msg.LANGUAGE), "Language:")
+
+            set_lang("RU")
+
+            self.assertEqual(str(Msg.LANGUAGE), "Язык:")
 
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"

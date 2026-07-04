@@ -2,7 +2,9 @@ from roll.messages import Msg
 from roll.helpers.output import echo_lines, echo_list
 
 
-def render_status_report(archive, roll_folders, unindexed_folders, status_counts) -> None:
+def render_status_report(
+    archive, roll_folders, unindexed_folders, status_counts
+) -> None:
     echo_lines(
         [
             Msg.STATUS_HEADER,

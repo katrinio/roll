@@ -2,10 +2,25 @@ from pathlib import Path
 
 import typer
 
-from roll.filesystem import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
-from roll.app.workspace.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.filesystem import (
+    build_archive_tree,
+    count_photo_files,
+    find_roll_folders,
+    find_unindexed_folders,
+)
+from roll.app.workspace.config import (
+    CONFIG_DIR,
+    CONFIG_FILE,
+    Config,
+    load_config,
+    save_config,
+)
 from roll.app.archive.batch import process_archives
-from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
+from roll.app.workspace.roll_store import (
+    load_roll_metadata,
+    update_roll_features,
+    update_roll_keywords,
+)
 from roll.app.archive.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
@@ -73,7 +88,10 @@ def config(ctx: typer.Context) -> None:
         return
 
     config = require_config()
-    echo_section(Msg.CONFIG_HEADER, [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives])
+    echo_section(
+        Msg.CONFIG_HEADER,
+        [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives],
+    )
 
 
 @config_app.command("lang")
@@ -141,7 +159,9 @@ def stats(
 
 
 @app.command("load")
-def load(manual: bool = typer.Option(False, "--manual", help=Msg.STOCK_EMPTY_MANUAL)) -> None:
+def load(
+    manual: bool = typer.Option(False, "--manual", help=Msg.STOCK_EMPTY_MANUAL),
+) -> None:
     """Load a film from stock into a new roll."""
     load_roll(manual=manual)
 
@@ -162,7 +182,9 @@ def vocab() -> None:
 
 
 @app.command("search")
-def search(query: str | None = typer.Argument(None, help=Msg.SEARCH_QUERY_REQUIRED)) -> None:
+def search(
+    query: str | None = typer.Argument(None, help=Msg.SEARCH_QUERY_REQUIRED),
+) -> None:
     """Search rolls from memory."""
     if not query:
         typer.echo(Msg.SEARCH_QUERY_REQUIRED)
@@ -195,7 +217,9 @@ def add_tags() -> None:
 
 @features_app.command("add")
 def add_features() -> None:
-    _update_roll_list_field("Features", "features", update_roll_features, "Features updated")
+    _update_roll_list_field(
+        "Features", "features", update_roll_features, "Features updated"
+    )
 
 
 def _update_roll_list_field(
@@ -205,7 +229,11 @@ def _update_roll_list_field(
     success_label: str,
 ) -> None:
     archive = require_archive(require_config())
-    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
+    rolls = [
+        folder
+        for folder in find_roll_folders(archive)
+        if (folder / "roll.toml").exists()
+    ]
 
     if not rolls:
         typer.echo(Msg.NO_ROLLS)
@@ -213,7 +241,9 @@ def _update_roll_list_field(
 
     selected = _choose_roll_folder(rolls)
     workspace = workspace_for(archive)
-    values = autocomplete_many_prompt(prompt_title, workspace.dictionary(dictionary_name))
+    values = autocomplete_many_prompt(
+        prompt_title, workspace.dictionary(dictionary_name)
+    )
     try:
         metadata = updater(selected / "roll.toml", values)
     except ValueError as exc:
@@ -257,14 +287,19 @@ def normalize(
     if all_conflicts:
         raise typer.Exit(code=1)
 
-    if not typer.confirm(str(Normalize.QUESTION).format(count=total_rules), default=False):
+    if not typer.confirm(
+        str(Normalize.QUESTION).format(count=total_rules), default=False
+    ):
         return
 
     apply_normalization_plans(plans)
 
 
 def _choose_roll_folder(rolls: list[Path]) -> Path:
-    labels = [f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})" for path in rolls]
+    labels = [
+        f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
+        for path in rolls
+    ]
     selected_label = choice_prompt("Roll", labels)
     for path in rolls:
         label = f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"

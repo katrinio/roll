@@ -16,13 +16,24 @@ from roll.app.workspace.roll_store import (
     update_roll_keywords,
     update_roll_status,
 )
-from roll.app.workspace.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
+from roll.app.workspace.stock_store import (
+    StockItem,
+    add_to_stock,
+    load_stock,
+    remove_from_stock,
+    save_stock,
+)
 from roll.app.workspace.statuses import VALID_STATUSES
 from roll.app.workspace.workspace import workspace_for
-from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_prompt, choice_prompt
+from roll.helpers.autocomplete import (
+    autocomplete_many_prompt,
+    autocomplete_prompt,
+    choice_prompt,
+)
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines
 from roll.messages import Msg
+
 app = typer.Typer(help=Msg.STOCK_HEADER)
 
 
@@ -46,7 +57,11 @@ def add() -> None:
 
 
 @app.command("load")
-def load(manual: bool = typer.Option(False, "--manual", help="Enter film manually from dictionary.")) -> None:
+def load(
+    manual: bool = typer.Option(
+        False, "--manual", help="Enter film manually from dictionary."
+    ),
+) -> None:
     archive = require_archive(require_config())
     workspace = workspace_for(archive)
 
@@ -62,7 +77,9 @@ def load(manual: bool = typer.Option(False, "--manual", help="Enter film manuall
             typer.echo(Msg.STOCK_EMPTY_MANUAL)
             raise typer.Exit(code=1)
 
-    selected = _choose_stock_item(stock) if not manual else _choose_manual_film(workspace)
+    selected = (
+        _choose_stock_item(stock) if not manual else _choose_manual_film(workspace)
+    )
     camera = autocomplete_prompt("Camera", workspace.dictionary("cameras"))
     loaded_at = _prompt_loaded_at()
     roll_folder = _create_roll_folder(archive, loaded_at)
@@ -87,7 +104,9 @@ def load(manual: bool = typer.Option(False, "--manual", help="Enter film manuall
         )
         if not manual:
             save_stock(workspace.stock_file, remove_from_stock(stock, selected.film, 1))
-        features = autocomplete_many_prompt("Features", workspace.dictionary("features"))
+        features = autocomplete_many_prompt(
+            "Features", workspace.dictionary("features")
+        )
         if features:
             update_roll_features(roll_file, features)
 
@@ -148,10 +167,14 @@ def _create_roll_folder(archive: Path, loaded_at: str) -> Path:
 
 def _choose_stock_item(items: list[StockItem]) -> StockItem:
     labels = [f"{item.film} ×{item.quantity}" for item in items]
-    completer = FuzzyCompleter(WordCompleter(labels, ignore_case=True, sentence=True, match_middle=True))
+    completer = FuzzyCompleter(
+        WordCompleter(labels, ignore_case=True, sentence=True, match_middle=True)
+    )
 
     while True:
-        value = prompt("Film: ", completer=completer, complete_while_typing=True).strip()
+        value = prompt(
+            "Film: ", completer=completer, complete_while_typing=True
+        ).strip()
         if not value:
             continue
 
@@ -170,15 +193,23 @@ def _choose_manual_film(workspace) -> StockItem:
 def _resolve_stock_choice(items: list[StockItem], candidate: str) -> StockItem | None:
     normalized = _normalize_choice(candidate)
 
-    exact_film_matches = [item for item in items if item.film.casefold() == candidate.casefold()]
+    exact_film_matches = [
+        item for item in items if item.film.casefold() == candidate.casefold()
+    ]
     if len(exact_film_matches) == 1:
         return exact_film_matches[0]
 
-    exact_label_matches = [item for item in items if f"{item.film} ×{item.quantity}".casefold() == candidate.casefold()]
+    exact_label_matches = [
+        item
+        for item in items
+        if f"{item.film} ×{item.quantity}".casefold() == candidate.casefold()
+    ]
     if len(exact_label_matches) == 1:
         return exact_label_matches[0]
 
-    fuzzy_matches = [item for item in items if normalized in _normalize_choice(item.film)]
+    fuzzy_matches = [
+        item for item in items if normalized in _normalize_choice(item.film)
+    ]
     if len(fuzzy_matches) == 1:
         return fuzzy_matches[0]
 

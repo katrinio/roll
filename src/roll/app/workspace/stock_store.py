@@ -36,7 +36,11 @@ def load_stock(path: Path) -> list[StockItem]:
 
         film = raw_item.get("film")
         quantity = raw_item.get("quantity")
-        if not isinstance(film, str) or not film.strip() or not isinstance(quantity, int):
+        if (
+            not isinstance(film, str)
+            or not film.strip()
+            or not isinstance(quantity, int)
+        ):
             raise ValueError(f"{Msg.STOCK_FORMAT_ERROR} {path}")
         if quantity <= 0:
             raise ValueError(f"{Msg.STOCK_FORMAT_ERROR} {path}")
@@ -66,7 +70,9 @@ def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[Stock
     if quantity <= 0:
         raise ValueError(Msg.STOCK_NOT_POSITIVE)
 
-    merged = {item.film.casefold(): StockItem(item.film, item.quantity) for item in items}
+    merged = {
+        item.film.casefold(): StockItem(item.film, item.quantity) for item in items
+    }
     key = film.casefold()
     if key in merged:
         current = merged[key]
@@ -76,7 +82,9 @@ def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[Stock
     return _sort_and_merge(list(merged.values()))
 
 
-def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
+def remove_from_stock(
+    items: list[StockItem], film: str, quantity: int
+) -> list[StockItem]:
     if quantity <= 0:
         raise ValueError(Msg.STOCK_NOT_POSITIVE)
 
@@ -107,7 +115,9 @@ def _sort_and_merge(items: list[StockItem]) -> list[StockItem]:
         key = item.film.casefold()
         if key in merged:
             current = merged[key]
-            merged[key] = StockItem(film=current.film, quantity=current.quantity + item.quantity)
+            merged[key] = StockItem(
+                film=current.film, quantity=current.quantity + item.quantity
+            )
         else:
             merged[key] = item
     return sorted(merged.values(), key=lambda item: item.film.casefold())

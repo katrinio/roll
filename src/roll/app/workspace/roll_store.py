@@ -122,7 +122,9 @@ def _format_array(values: list[str]) -> str:
     return "[" + ", ".join(f'"{item}"' for item in values) + "]"
 
 
-def _merge_unique(existing: list[str], new_values: list[str], normalize=lambda value: value) -> list[str]:
+def _merge_unique(
+    existing: list[str], new_values: list[str], normalize=lambda value: value
+) -> list[str]:
     merged: list[str] = []
     for value in [*existing, *new_values]:
         normalized = normalize(value)

@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from roll.app.workspace.config import Config, load_config
 from roll.app.diagnostics.diagnostics import Doctor, run_doctor
-from roll.app.archive.normalization import apply_keyword_vocab_fixes, apply_normalization_plans, build_safe_rename_plan, collect_keyword_vocab_fixes, print_normalization_plan
+from roll.app.archive.normalization import (
+    apply_keyword_vocab_fixes,
+    apply_normalization_plans,
+    build_safe_rename_plan,
+    collect_keyword_vocab_fixes,
+    print_normalization_plan,
+)
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.output import echo_lines
 from roll.messages import Msg
@@ -47,7 +53,12 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
     warning_order: list[str] = []
 
     if report.missing_rolls:
-        _append_group(error_groups, error_order, Doctor.ROLL_MISSING, [str(path) for path in report.missing_rolls])
+        _append_group(
+            error_groups,
+            error_order,
+            Doctor.ROLL_MISSING,
+            [str(path) for path in report.missing_rolls],
+        )
 
     for issue in report.issues:
         title, item = _split_message(issue.message)
@@ -86,14 +97,24 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         echo_lines([""])
         from typer import echo
 
-        echo(highlight_cli_names(f"{Msg.DOCTOR_CAN_ADD} {len(report.keyword_vocab_fixes)}"))
-        items = report.keyword_vocab_fixes if verbose else report.keyword_vocab_fixes[:5]
+        echo(
+            highlight_cli_names(
+                f"{Msg.DOCTOR_CAN_ADD} {len(report.keyword_vocab_fixes)}"
+            )
+        )
+        items = (
+            report.keyword_vocab_fixes if verbose else report.keyword_vocab_fixes[:5]
+        )
         echo_lines([f"  {item}" for item in items])
         if not verbose and len(report.keyword_vocab_fixes) > 5:
-            echo(f"  {Msg.STATS_MORE.format(count=len(report.keyword_vocab_fixes) - 5)}")
+            echo(
+                f"  {Msg.STATS_MORE.format(count=len(report.keyword_vocab_fixes) - 5)}"
+            )
         if fix:
             for archive in config.archives:
-                applied = apply_keyword_vocab_fixes(archive, collect_keyword_vocab_fixes(archive))
+                applied = apply_keyword_vocab_fixes(
+                    archive, collect_keyword_vocab_fixes(archive)
+                )
                 if applied and verbose:
                     echo_lines([""])
                     echo(f"  {applied}")

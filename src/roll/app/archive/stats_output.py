@@ -3,7 +3,9 @@ from roll.messages import Msg
 from roll.app.archive.stats import build_stats_report
 
 
-def render_stats_report(archive, year: str | None = None, verbose: bool = False) -> None:
+def render_stats_report(
+    archive, year: str | None = None, verbose: bool = False
+) -> None:
     report = build_stats_report(archive, year)
 
     if not report.roll_count:

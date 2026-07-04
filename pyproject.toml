@@ -5,13 +5,13 @@ description = "Personal film roll index"
 requires-python = ">=3.12"
 dependencies = [
     "typer==0.16.0",
-    "pyyaml==6.0.2",
     "prompt-toolkit==3.0.51",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff==0.6.9",
+    "pre-commit (>=4.6.0,<5.0.0)",
 ]
 
 [project.scripts]

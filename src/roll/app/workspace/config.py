@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import tomllib
-import yaml
 
 CONFIG_DIR = Path.home() / ".config" / "roll"
 CONFIG_FILE = CONFIG_DIR / "config.toml"
@@ -13,7 +12,7 @@ VALID_LANGS = {"RU", "EN"}
 @dataclass(frozen=True)
 class Config:
     archives: list[Path]
-    lang: str = "RU"
+    lang: str = "EN"
 
 
 def save_config(config: Config) -> None:
@@ -31,11 +30,7 @@ def read_config_data() -> dict:
         with CONFIG_FILE.open("rb") as file:
             data = tomllib.load(file)
     else:
-        legacy_file = CONFIG_DIR / "config.yaml"
-        if not legacy_file.exists():
-            raise FileNotFoundError("roll is not initialized.")
-        with legacy_file.open("r", encoding="utf-8") as file:
-            data = yaml.safe_load(file) or {}
+        raise FileNotFoundError("roll is not initialized.")
 
     if not isinstance(data, dict):
         raise ValueError(f"Invalid config format in {CONFIG_FILE}")
@@ -46,9 +41,9 @@ def read_config_data() -> dict:
 def load_config() -> Config:
     data = read_config_data()
 
-    lang = str(data.get("lang", "RU")).upper()
+    lang = str(data.get("lang", "EN")).upper()
     if lang not in VALID_LANGS:
-        lang = "RU"
+        lang = "EN"
 
     archives = data.get("archives") or []
     if not archives and data.get("archive"):
@@ -63,7 +58,7 @@ def load_lang() -> str:
     try:
         return load_config().lang
     except FileNotFoundError:
-        return "RU"
+        return "EN"
 
 
 def set_lang(lang: str) -> Config:

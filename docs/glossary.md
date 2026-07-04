@@ -94,6 +94,6 @@ The user only enters what can't be figured out automatically. Everything else co
 
 ## Language
 
-UI language stored in the global config. Use `rl config lang` to inspect it and `rl config lang EN` / `rl config lang RU` to change it. Missing or invalid values fall back to `RU`.
+UI language stored in the global config. Use `rl config lang` to inspect it and `rl config lang EN` / `rl config lang RU` to change it. Missing or invalid values fall back to `EN`.
 
 Code, tests, and CI — see [docs/development.md](development.md).

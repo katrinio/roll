@@ -1,4 +1,3 @@
-
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 
@@ -8,7 +7,9 @@ from roll.messages import Msg
 
 def autocomplete_prompt(title: str, dictionary: Dictionary) -> str:
     while True:
-        value = prompt(f"{title}: ", completer=_completer(dictionary), complete_while_typing=True).strip()
+        value = prompt(
+            f"{title}: ", completer=_completer(dictionary), complete_while_typing=True
+        ).strip()
 
         if not value:
             continue
@@ -23,7 +24,9 @@ def autocomplete_prompt(title: str, dictionary: Dictionary) -> str:
 
 def autocomplete_many_prompt(title: str, dictionary: Dictionary) -> list[str]:
     while True:
-        value = prompt(f"{title}: ", completer=_completer(dictionary), complete_while_typing=True).strip()
+        value = prompt(
+            f"{title}: ", completer=_completer(dictionary), complete_while_typing=True
+        ).strip()
 
         if not value:
             return []
@@ -38,7 +41,11 @@ def choice_prompt(title: str, choices: list[str]) -> str:
         raise ValueError(Msg.NO_CHOICES)
 
     while True:
-        value = prompt(f"{title}: ", completer=_choice_completer(choices), complete_while_typing=True).strip()
+        value = prompt(
+            f"{title}: ",
+            completer=_choice_completer(choices),
+            complete_while_typing=True,
+        ).strip()
         if not value:
             continue
 
@@ -47,10 +54,14 @@ def choice_prompt(title: str, choices: list[str]) -> str:
             return matched
 
 
-def _completer(dictionary: Dictionary, exclude: list[str] | None = None) -> FuzzyCompleter:
+def _completer(
+    dictionary: Dictionary, exclude: list[str] | None = None
+) -> FuzzyCompleter:
     excluded = {value.casefold() for value in (exclude or [])}
     choices = [value for value in dictionary.read() if value.casefold() not in excluded]
-    return FuzzyCompleter(WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True))
+    return FuzzyCompleter(
+        WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True)
+    )
 
 
 def _resolve_many(dictionary: Dictionary, value: str) -> list[str] | None:
@@ -81,7 +92,9 @@ def _confirm_missing(value: str) -> bool:
 
 
 def _choice_completer(choices: list[str]) -> FuzzyCompleter:
-    return FuzzyCompleter(WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True))
+    return FuzzyCompleter(
+        WordCompleter(choices, ignore_case=True, sentence=True, match_middle=True)
+    )
 
 
 def _match_choice(choices: list[str], candidate: str) -> str | None:
@@ -91,12 +104,16 @@ def _match_choice(choices: list[str], candidate: str) -> str | None:
     if len(matches) == 1:
         return matches[0]
 
-    substring_matches = [value for value in choices if normalized in _normalize_choice(value)]
+    substring_matches = [
+        value for value in choices if normalized in _normalize_choice(value)
+    ]
 
     if len(substring_matches) == 1:
         return substring_matches[0]
 
-    prefix_matches = [value for value in choices if _normalize_choice(value).startswith(normalized)]
+    prefix_matches = [
+        value for value in choices if _normalize_choice(value).startswith(normalized)
+    ]
     if len(prefix_matches) == 1:
         return prefix_matches[0]
 
