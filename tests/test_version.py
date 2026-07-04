@@ -12,6 +12,6 @@ class VersionTests(unittest.TestCase):
         get_version.cache_clear()
         with (
             patch("roll.version.package_version", side_effect=PackageNotFoundError),
-            patch("roll.version._git_tag", return_value="v0.4.0"),
+            patch("roll.version._git_tag", return_value="0.4.0"),
         ):
-            self.assertEqual(get_version(), "v0.4.0")
+            self.assertEqual(get_version(), "0.4.0")
