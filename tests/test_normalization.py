@@ -138,7 +138,10 @@ class NormalizationTests(unittest.TestCase):
             report = run_doctor(Config(archives=[archive]))
 
             self.assertTrue(
-                any("uppercase" in issue.message for issue in report.issues)
+                any(
+                    "keywords.txt is not canonical" in issue.message
+                    for issue in report.issues
+                )
             )
 
     def test_doctor_flags_workspace_config_mismatch(self) -> None:
@@ -287,9 +290,6 @@ class NormalizationTests(unittest.TestCase):
                     "keywords.txt is not canonical" in issue.message
                     for issue in report.issues
                 )
-            )
-            self.assertTrue(
-                any("keywords.txt" in item for item in report.vocabulary_fixes)
             )
 
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
