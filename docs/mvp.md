@@ -1,6 +1,6 @@
 # MVP
 
-> Find the right roll from memory: a person, a place, an event, a mood — months later.
+> Find the right roll from memory: a person, a place, an event, a mood - months later.
 
 ## Scenario
 

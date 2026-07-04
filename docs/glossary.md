@@ -92,4 +92,8 @@ Integrity check: global config, archives, `.roll/` and vocabularies, whether `ro
 
 The user only enters what can't be figured out automatically. Everything else comes from the filesystem or is computed.
 
+## Language
+
+UI language stored in the global config. Use `rl config lang` to inspect it and `rl config lang EN` / `rl config lang RU` to change it.
+
 Code, tests, and CI — see [docs/development.md](development.md).
