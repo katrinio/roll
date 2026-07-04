@@ -2,10 +2,25 @@ from pathlib import Path
 
 import typer
 
-from roll.filesystem import build_archive_tree, count_photo_files, find_roll_folders, find_unindexed_folders
-from roll.app.workspace.config import CONFIG_DIR, CONFIG_FILE, Config, load_config, save_config
+from roll.filesystem import (
+    build_archive_tree,
+    count_photo_files,
+    find_roll_folders,
+    find_unindexed_folders,
+)
+from roll.app.workspace.config import (
+    CONFIG_DIR,
+    CONFIG_FILE,
+    Config,
+    load_config,
+    save_config,
+)
 from roll.app.archive.batch import process_archives
-from roll.app.workspace.roll_store import load_roll_metadata, update_roll_features, update_roll_keywords
+from roll.app.workspace.roll_store import (
+    load_roll_metadata,
+    update_roll_features,
+    update_roll_keywords,
+)
 from roll.app.archive.normalization import (
     apply_normalization_plans,
     build_normalization_plan,
@@ -27,25 +42,29 @@ from roll.app.archive.stats_output import render_stats_report
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
 from roll.app.diagnostics.doctor_output import render_doctor
+from roll.app.workspace.config import set_lang
+from roll.messages import Normalize
 
-app = typer.Typer(help="Личный индекс пленок.")
+app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
+config_app = typer.Typer(help=Msg.CONFIG_HEADER)
+app.add_typer(config_app, name="config")
 
 
-tags_app = typer.Typer(help="Теги роллов.")
+tags_app = typer.Typer(help=Msg.VOCAB_KEYWORDS)
 app.add_typer(tags_app, name="tags")
 
-features_app = typer.Typer(help="Особенности роллов.")
+features_app = typer.Typer(help=Msg.VOCAB_FEATURES)
 app.add_typer(features_app, name="features")
 
-batch_app = typer.Typer(help="Пакетные операции.")
+batch_app = typer.Typer(help=Msg.BATCH_WILL_PROCESS)
 app.add_typer(batch_app, name="batch")
 
 
 @app.command("init")
-def init(archive: Path = typer.Argument(..., help="Путь к архиву пленок.")) -> None:
-    """Инициализировать roll."""
-    archive = require_directory(archive, "Папка не найдена:")
+def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
+    """Initialize roll."""
+    archive = require_directory(archive, Msg.ARCHIVE_MISSING)
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     try:
@@ -62,16 +81,40 @@ def init(archive: Path = typer.Argument(..., help="Путь к архиву пл
     echo_lines([f"Archive: {archive}", f"Config:  {CONFIG_FILE}"])
 
 
-@app.command("config")
-def config() -> None:
-    """Показать текущую конфигурацию."""
+@config_app.callback(invoke_without_command=True)
+def config(ctx: typer.Context) -> None:
+    """Show current config."""
+    if ctx.invoked_subcommand is not None:
+        return
+
     config = require_config()
-    echo_section(Msg.CONFIG_HEADER, [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives])
+    echo_section(
+        Msg.CONFIG_HEADER,
+        [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives],
+    )
+
+
+@config_app.command("lang")
+def config_lang(lang: str | None = typer.Argument(None, help=Msg.LANGUAGE)) -> None:
+    """Show or set UI language."""
+    config = require_config()
+
+    if lang is None:
+        typer.echo(f"{Msg.LANGUAGE} {config.lang}")
+        return
+
+    normalized = lang.upper()
+    if normalized not in {"EN", "RU"}:
+        typer.echo(Msg.ALLOWED_VALUES)
+        raise typer.Exit(code=1)
+
+    updated = set_lang(normalized)
+    typer.echo(f"{Msg.LANGUAGE_SET_TO} {updated.lang}")
 
 
 @app.command("scan")
 def scan() -> None:
-    """Показать папки в архиве."""
+    """Show archive folders."""
     archive = require_archive(require_config())
 
     if not archive.exists():
@@ -84,17 +127,17 @@ def scan() -> None:
     photo_count = sum(count_photo_files(folder) for folder in roll_folders)
 
     if tree:
-        typer.echo("Дерево архива:")
+        typer.echo(Msg.TREE_HEADER)
         echo_lines(tree)
         typer.echo("")
 
-    typer.echo(f"Папок: {len(roll_folders)}")
-    typer.echo(f"Фото: {photo_count}")
+    typer.echo(f"{Msg.FOLDERS} {len(roll_folders)}")
+    typer.echo(f"{Msg.FILES} {photo_count}")
 
 
 @app.command("status")
 def status() -> None:
-    """Показать состояние индекса."""
+    """Show index status."""
     archive = require_archive(require_config())
 
     roll_folders = find_roll_folders(archive)
@@ -107,23 +150,25 @@ def status() -> None:
 
 @app.command("stats")
 def stats(
-    year: str | None = typer.Argument(None, help="Год для фильтрации статистики."),
-    verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список значений."),
+    year: str | None = typer.Argument(None, help=Msg.STATS_YEAR),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help=Msg.STATS_MORE),
 ) -> None:
-    """Показать статистику по архиву."""
+    """Show archive statistics."""
     archive = require_archive(require_config())
     render_stats_report(archive, year, verbose)
 
 
 @app.command("load")
-def load(manual: bool = typer.Option(False, "--manual", help="Вводить пленку вручную через справочник.")) -> None:
-    """Загрузить пленку из запаса в новый roll."""
+def load(
+    manual: bool = typer.Option(False, "--manual", help=Msg.STOCK_EMPTY_MANUAL),
+) -> None:
+    """Load a film from stock into a new roll."""
     load_roll(manual=manual)
 
 
 @app.command("vocab")
 def vocab() -> None:
-    """Показать справочники."""
+    """Show dictionaries."""
     archive = require_archive(require_config())
     vocab = archive_vocabulary(archive)
 
@@ -137,10 +182,12 @@ def vocab() -> None:
 
 
 @app.command("search")
-def search(query: str | None = typer.Argument(None, help="Строка для поиска по памяти.")) -> None:
-    """Искать пленки по памяти."""
+def search(
+    query: str | None = typer.Argument(None, help=Msg.SEARCH_QUERY_REQUIRED),
+) -> None:
+    """Search rolls from memory."""
     if not query:
-        typer.echo("Нужно указать строку поиска. Пример: rl search pizza")
+        typer.echo(Msg.SEARCH_QUERY_REQUIRED)
         raise typer.Exit(code=1)
 
     archive = require_archive(require_config())
@@ -155,22 +202,24 @@ def search(query: str | None = typer.Argument(None, help="Строка для п
 
 @app.command("doctor")
 def doctor(
-    fix: bool = typer.Option(False, "--fix", help="Применить безопасные исправления."),
-    verbose: bool = typer.Option(False, "-v", "--verbose", help="Показать полный список безопасных исправлений."),
+    fix: bool = typer.Option(False, "--fix", help=Msg.DOCTOR_CAN_FIX),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help=Msg.DOCTOR_CAN_ADD),
 ) -> None:
-    """Проверить целостность архива и конфигурации."""
+    """Check archive and config integrity."""
     if render_doctor(fix=fix, verbose=verbose):
         raise typer.Exit(code=1)
 
 
 @tags_app.command("add")
 def add_tags() -> None:
-    _update_roll_list_field("Теги", "keywords", update_roll_keywords, "Теги обновлены")
+    _update_roll_list_field("Tags", "keywords", update_roll_keywords, "Tags updated")
 
 
 @features_app.command("add")
 def add_features() -> None:
-    _update_roll_list_field("Особенности", "features", update_roll_features, "Особенности обновлены")
+    _update_roll_list_field(
+        "Features", "features", update_roll_features, "Features updated"
+    )
 
 
 def _update_roll_list_field(
@@ -180,7 +229,11 @@ def _update_roll_list_field(
     success_label: str,
 ) -> None:
     archive = require_archive(require_config())
-    rolls = [folder for folder in find_roll_folders(archive) if (folder / "roll.toml").exists()]
+    rolls = [
+        folder
+        for folder in find_roll_folders(archive)
+        if (folder / "roll.toml").exists()
+    ]
 
     if not rolls:
         typer.echo(Msg.NO_ROLLS)
@@ -188,7 +241,9 @@ def _update_roll_list_field(
 
     selected = _choose_roll_folder(rolls)
     workspace = workspace_for(archive)
-    values = autocomplete_many_prompt(prompt_title, workspace.dictionary(dictionary_name))
+    values = autocomplete_many_prompt(
+        prompt_title, workspace.dictionary(dictionary_name)
+    )
     try:
         metadata = updater(selected / "roll.toml", values)
     except ValueError as exc:
@@ -206,9 +261,9 @@ def batch_process() -> None:
 
 @app.command("normalize")
 def normalize(
-    tags: bool = typer.Option(False, "--tags", help="Нормализовать теги в uppercase."),
+    tags: bool = typer.Option(False, "--tags", help=Msg.TAGS_NORMALIZED),
 ) -> None:
-    """Привести архив к единому виду."""
+    """Normalize archive layout."""
     config = require_config()
 
     if tags:
@@ -232,20 +287,25 @@ def normalize(
     if all_conflicts:
         raise typer.Exit(code=1)
 
-    if not typer.confirm(f"Переименовать {total_rules} папок?", default=False):
+    if not typer.confirm(
+        str(Normalize.QUESTION).format(count=total_rules), default=False
+    ):
         return
 
     apply_normalization_plans(plans)
 
 
 def _choose_roll_folder(rolls: list[Path]) -> Path:
-    labels = [f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})" for path in rolls]
+    labels = [
+        f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
+        for path in rolls
+    ]
     selected_label = choice_prompt("Roll", labels)
     for path in rolls:
         label = f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
         if label == selected_label:
             return path
-    raise ValueError("Не удалось выбрать roll.")
+    raise ValueError(Msg.NO_CHOICE)
 
 
 def _roll_status(path: Path) -> str:

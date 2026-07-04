@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import tomllib
+from roll.messages import Msg
 
 
 @dataclass(frozen=True)
@@ -22,23 +23,27 @@ def load_stock(path: Path) -> list[StockItem]:
     try:
         data = tomllib.loads(text)
     except tomllib.TOMLDecodeError as exc:
-        raise ValueError(f"Не удалось прочитать запас пленки: {path}") from exc
+        raise ValueError(f"{Msg.STOCK_READ_ERROR} {path}") from exc
 
     raw_items = data.get("items", [])
     if not isinstance(raw_items, list):
-        raise ValueError(f"Неверный формат запаса пленки: {path}")
+        raise ValueError(f"{Msg.STOCK_FORMAT_ERROR} {path}")
 
     items: list[StockItem] = []
     for raw_item in raw_items:
         if not isinstance(raw_item, dict):
-            raise ValueError(f"Неверный формат запаса пленки: {path}")
+            raise ValueError(f"{Msg.STOCK_FORMAT_ERROR} {path}")
 
         film = raw_item.get("film")
         quantity = raw_item.get("quantity")
-        if not isinstance(film, str) or not film.strip() or not isinstance(quantity, int):
-            raise ValueError(f"Неверный формат запаса пленки: {path}")
+        if (
+            not isinstance(film, str)
+            or not film.strip()
+            or not isinstance(quantity, int)
+        ):
+            raise ValueError(f"{Msg.STOCK_FORMAT_ERROR} {path}")
         if quantity <= 0:
-            raise ValueError(f"Неверный формат запаса пленки: {path}")
+            raise ValueError(f"{Msg.STOCK_FORMAT_ERROR} {path}")
 
         items.append(StockItem(film=film.strip(), quantity=quantity))
 
@@ -63,9 +68,11 @@ def save_stock(path: Path, items: list[StockItem]) -> None:
 
 def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
     if quantity <= 0:
-        raise ValueError("Количество должно быть положительным.")
+        raise ValueError(Msg.STOCK_NOT_POSITIVE)
 
-    merged = {item.film.casefold(): StockItem(item.film, item.quantity) for item in items}
+    merged = {
+        item.film.casefold(): StockItem(item.film, item.quantity) for item in items
+    }
     key = film.casefold()
     if key in merged:
         current = merged[key]
@@ -75,9 +82,11 @@ def add_to_stock(items: list[StockItem], film: str, quantity: int) -> list[Stock
     return _sort_and_merge(list(merged.values()))
 
 
-def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[StockItem]:
+def remove_from_stock(
+    items: list[StockItem], film: str, quantity: int
+) -> list[StockItem]:
     if quantity <= 0:
-        raise ValueError("Количество должно быть положительным.")
+        raise ValueError(Msg.STOCK_NOT_POSITIVE)
 
     updated: list[StockItem] = []
     removed = False
@@ -87,7 +96,7 @@ def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[
             continue
 
         if item.quantity < quantity:
-            raise ValueError("В запасе недостаточно пленки.")
+            raise ValueError(Msg.STOCK_INSUFFICIENT)
 
         removed = True
         remaining = item.quantity - quantity
@@ -95,7 +104,7 @@ def remove_from_stock(items: list[StockItem], film: str, quantity: int) -> list[
             updated.append(StockItem(film=item.film, quantity=remaining))
 
     if not removed:
-        raise ValueError("Такой пленки нет в запасе.")
+        raise ValueError(Msg.STOCK_MISSING)
 
     return _sort_and_merge(updated)
 
@@ -106,7 +115,9 @@ def _sort_and_merge(items: list[StockItem]) -> list[StockItem]:
         key = item.film.casefold()
         if key in merged:
             current = merged[key]
-            merged[key] = StockItem(film=current.film, quantity=current.quantity + item.quantity)
+            merged[key] = StockItem(
+                film=current.film, quantity=current.quantity + item.quantity
+            )
         else:
             merged[key] = item
     return sorted(merged.values(), key=lambda item: item.film.casefold())

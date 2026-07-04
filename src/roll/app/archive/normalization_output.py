@@ -9,7 +9,13 @@ def render_normalization_plans(plans) -> tuple[int, bool]:
     has_changes = any(plan.has_changes for plan in plans)
 
     for plan in plans:
-        echo_lines([f"{Msg.ARCHIVE_HEADER} {plan.archive}", *print_normalization_plan(plan), ""])
+        echo_lines(
+            [
+                f"{Msg.ARCHIVE_HEADER} {plan.archive}",
+                *print_normalization_plan(plan),
+                "",
+            ]
+        )
 
     if not has_changes:
         return total_rules, has_changes

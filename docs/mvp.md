@@ -1,6 +1,6 @@
 # MVP
 
-> Find the right roll from memory: a person, a place, an event, a mood — months later.
+> Find the right roll from memory: a person, a place, an event, a mood - months later.
 
 ## Scenario
 
@@ -27,7 +27,7 @@ rl search kir balcony       # half a year later — found it
 
 sync between machines · cloud · web UI · migrating old formats · image processing
 
-First thing right after MVP: localization — CLI strings are RU-only today, English is next.
+First thing right after MVP: localization. The CLI defaults to English in the global config and the language is controlled with `rl config lang`.
 
 ## Rule
 

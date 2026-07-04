@@ -7,7 +7,11 @@ import re
 import tomllib
 
 from roll.filesystem import find_roll_folders, get_index_file
-from roll.app.workspace.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata
+from roll.app.workspace.roll_store import (
+    RollMetadata,
+    load_roll_metadata,
+    save_roll_metadata,
+)
 from roll.app.workspace.workspace import workspace_for
 from roll.messages import Normalize
 
@@ -82,7 +86,11 @@ def build_safe_rename_plan(archive: Path) -> NormalizationPlan:
     conflicts: list[str] = []
 
     for year_dir in archive.iterdir():
-        if not year_dir.is_dir() or not year_dir.name.isdigit() or len(year_dir.name) != 4:
+        if (
+            not year_dir.is_dir()
+            or not year_dir.name.isdigit()
+            or len(year_dir.name) != 4
+        ):
             continue
         for roll_dir in year_dir.iterdir():
             if not roll_dir.is_dir():
@@ -132,7 +140,9 @@ def apply_normalization_plans(plans: list[NormalizationPlan]) -> None:
 
     renamed_to_temp: list[tuple[Path, Path, Path]] = []
     try:
-        for source, temp_path, target in sorted(all_rules, key=lambda item: len(item[0].parts), reverse=True):
+        for source, temp_path, target in sorted(
+            all_rules, key=lambda item: len(item[0].parts), reverse=True
+        ):
             os.replace(source, temp_path)
             renamed_to_temp.append((source, temp_path, target))
         for _, temp_path, target in all_rules:
@@ -150,8 +160,13 @@ def normalize_keywords_in_archive(archive: Path) -> list[Path]:
 
     keywords_file = workspace.vocabulary_file("keywords")
     if keywords_file.exists():
-        values = sorted(_normalize_keywords(keywords_file.read_text(encoding="utf-8").splitlines()), key=str.casefold)
-        keywords_file.write_text("\n".join(values) + ("\n" if values else ""), encoding="utf-8")
+        values = sorted(
+            _normalize_keywords(keywords_file.read_text(encoding="utf-8").splitlines()),
+            key=str.casefold,
+        )
+        keywords_file.write_text(
+            "\n".join(values) + ("\n" if values else ""), encoding="utf-8"
+        )
         touched.append(keywords_file)
 
     for folder in find_roll_folders(archive):
@@ -186,7 +201,9 @@ def collect_keyword_vocab_fixes(archive: Path) -> list[str]:
     workspace = workspace_for(archive)
     keywords_file = workspace.vocabulary_file("keywords")
     existing = _normalize_keywords(
-        keywords_file.read_text(encoding="utf-8").splitlines() if keywords_file.exists() else []
+        keywords_file.read_text(encoding="utf-8").splitlines()
+        if keywords_file.exists()
+        else []
     )
     existing_keys = {value.casefold() for value in existing}
 
@@ -215,10 +232,14 @@ def apply_keyword_vocab_fixes(archive: Path, keywords: list[str]) -> Path | None
     workspace = workspace_for(archive)
     keywords_file = workspace.vocabulary_file("keywords")
     existing = _normalize_keywords(
-        keywords_file.read_text(encoding="utf-8").splitlines() if keywords_file.exists() else []
+        keywords_file.read_text(encoding="utf-8").splitlines()
+        if keywords_file.exists()
+        else []
     )
     merged = sorted(_normalize_keywords([*existing, *keywords]), key=str.casefold)
-    keywords_file.write_text("\n".join(merged) + ("\n" if merged else ""), encoding="utf-8")
+    keywords_file.write_text(
+        "\n".join(merged) + ("\n" if merged else ""), encoding="utf-8"
+    )
     return keywords_file
 
 

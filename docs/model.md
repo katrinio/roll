@@ -22,11 +22,20 @@ The project has three levels: global config → archive workspace → roll.
 
 | Level | Where | Knows about |
 |---|---|---|
-| Global config | `~/.config/roll/config.toml` | list of archives |
+| Global config | `~/.config/roll/config.toml` | list of archives, UI language |
 | Workspace | `<archive>/.roll/` | config, stock, vocabularies |
 | Roll | `<archive>/YYYY/MM-DD/roll.toml` | one film roll |
 
 `stock.toml` and `vocabulary/*.txt` solve different problems: stock tracks what you physically have on hand, vocabularies hold canonical values for autocomplete.
+
+The global config stores the UI language and the archive list:
+
+```toml
+lang = "EN"   # or "RU"
+archives = ["/path/to/archive"]
+```
+
+`lang` defaults to `EN` when missing or invalid. `config.toml` is the only root config file used by the app.
 
 ## Code layout
 
@@ -37,7 +46,7 @@ The project has three levels: global config → archive workspace → roll.
 | `app/flows/` | interactive scenarios (`stock.py`: load/process/failed) |
 | `app/archive/` | search, stats, batch, normalization + rendering |
 | `app/diagnostics/` | doctor |
-| `messages/` | user-facing strings, grouped by area — RU only for now, English locale is planned |
+| `messages/` | user-facing strings, grouped by area and localized by UI language |
 
 ## Roll
 
@@ -75,6 +84,7 @@ The transition is manual and one-way: a roll never goes back to `loaded`.
 | Area | Command |
 |---|---|
 | Setup | `rl init` |
+| Config | `rl config`, `rl config lang [EN|RU]` |
 | Stock | `rl stock add`, `rl stock list` |
 | Roll | `rl load` (`--manual` — without stock), `rl stock process`, `rl stock failed` |
 | Fill in | `rl features add`, `rl tags add` |

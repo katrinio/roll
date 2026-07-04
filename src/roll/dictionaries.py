@@ -23,7 +23,9 @@ class Dictionary:
     def write(self, values: list[str]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         normalized = _sort_unique(values)
-        self.path.write_text("\n".join(normalized) + ("\n" if normalized else ""), encoding="utf-8")
+        self.path.write_text(
+            "\n".join(normalized) + ("\n" if normalized else ""), encoding="utf-8"
+        )
 
     def add(self, value: str) -> str:
         values = self.read()

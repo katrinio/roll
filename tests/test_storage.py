@@ -4,8 +4,20 @@ import tempfile
 from pathlib import Path
 import unittest
 
-from roll.app.workspace.roll_store import RollMetadata, load_roll_metadata, save_roll_metadata, update_roll_features, update_roll_keywords
-from roll.app.workspace.stock_store import StockItem, add_to_stock, load_stock, remove_from_stock, save_stock
+from roll.app.workspace.roll_store import (
+    RollMetadata,
+    load_roll_metadata,
+    save_roll_metadata,
+    update_roll_features,
+    update_roll_keywords,
+)
+from roll.app.workspace.stock_store import (
+    StockItem,
+    add_to_stock,
+    load_stock,
+    remove_from_stock,
+    save_stock,
+)
 from roll.app.archive.normalization import normalize_keywords_in_archive
 
 
@@ -17,7 +29,10 @@ class StockStoreTests(unittest.TestCase):
 
             save_stock(path, items)
 
-            self.assertEqual(load_stock(path), [StockItem("Ilford HP5 Plus", 1), StockItem("Kodak Gold 200", 3)])
+            self.assertEqual(
+                load_stock(path),
+                [StockItem("Ilford HP5 Plus", 1), StockItem("Kodak Gold 200", 3)],
+            )
 
     def test_add_to_stock_merges_case_insensitively(self) -> None:
         items = [StockItem("Kodak Gold 200", 1)]
@@ -138,4 +153,7 @@ class RollStoreTests(unittest.TestCase):
                 load_roll_metadata(roll / "roll.toml").keywords,
                 ["FRIENDS", "BAR"],
             )
-            self.assertEqual((vocabulary / "keywords.txt").read_text(encoding="utf-8"), "BAR\nFRIENDS\n")
+            self.assertEqual(
+                (vocabulary / "keywords.txt").read_text(encoding="utf-8"),
+                "BAR\nFRIENDS\n",
+            )

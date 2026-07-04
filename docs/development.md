@@ -37,6 +37,8 @@ python -m unittest discover -s tests
 ```bash
 rl --help
 rl init /path/to/archive
+rl config lang
+rl config lang EN
 rl doctor
 rl doctor --fix
 rl normalize --tags
@@ -48,6 +50,10 @@ rl stats -v
 `rl load` works off `stock.toml`, while `rl load --manual` lets you create a roll from the film dictionary without touching stock.
 
 For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
+
+`rl config lang` shows the current UI language.
+`rl config lang EN` and `rl config lang RU` update `~/.config/roll/config.toml`.
+The change applies immediately in the current process because messages resolve the language at render time.
 
 ## CI
 
