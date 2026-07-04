@@ -4,9 +4,10 @@
 
 ## Before you start
 
-- Architecture and commands — [docs/model.md](docs/model.md)
-- Terms — [docs/glossary.md](docs/glossary.md)
-- MVP scope — [docs/mvp.md](docs/mvp.md): if a feature doesn't help find a roll from memory faster, let's discuss it separately before a PR
+- Start here — [docs/index.md](docs/index.md)
+- Project scope — [docs/getting-started.md](docs/getting-started.md): if a feature doesn't help find a roll from memory faster, let's discuss it separately before a PR
+- Architecture and command effects — [docs/architecture.md](docs/architecture.md)
+- Terms and exact rules — [docs/reference.md](docs/reference.md)
 
 ## Setup
 
@@ -38,4 +39,4 @@ Both run in CI on every PR — a red CI won't get merged.
 ## PR
 
 - keep it small and focused on one thing;
-- if it changes CLI behavior or the `roll.toml` format — update `docs/model.md`/`docs/glossary.md` in the same PR.
+- if it changes CLI behavior or the `roll.toml` format — update `docs/architecture.md`/`docs/reference.md` in the same PR.

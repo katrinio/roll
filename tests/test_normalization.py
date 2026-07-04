@@ -138,7 +138,10 @@ class NormalizationTests(unittest.TestCase):
             report = run_doctor(Config(archives=[archive]))
 
             self.assertTrue(
-                any("uppercase" in issue.message for issue in report.issues)
+                any(
+                    "keywords.txt is not canonical" in issue.message
+                    for issue in report.issues
+                )
             )
 
     def test_doctor_flags_workspace_config_mismatch(self) -> None:
@@ -157,6 +160,136 @@ class NormalizationTests(unittest.TestCase):
 
             self.assertTrue(
                 any("Workspace config" in issue.message for issue in report.issues)
+            )
+
+    def test_doctor_flags_missing_archive_in_workspace_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text("", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(any("archive" in issue.message for issue in report.issues))
+
+    def test_doctor_flags_invalid_workspace_config(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text("archive = [\n", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "workspace config" in issue.message.lower()
+                    for issue in report.issues
+                )
+            )
+
+    def test_doctor_flags_missing_stock_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any("stock.toml" in issue.message for issue in report.issues)
+            )
+
+    def test_doctor_flags_invalid_stock_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+            (workspace / "stock.toml").write_text("items = [\n", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any("stock.toml" in issue.message for issue in report.issues)
+            )
+
+    def test_doctor_flags_roll_loaded_at_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            year = archive / "2025"
+            roll = year / "10-19"
+            roll.mkdir(parents=True)
+
+            save_roll_metadata(
+                roll / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-20",
+                    features=[],
+                    keywords=[],
+                ),
+            )
+
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+            (workspace / "stock.toml").write_text("", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any("loaded_at" in issue.message for issue in report.issues)
+            )
+
+    def test_doctor_flags_noncanonical_keywords_dictionary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (vocabulary / "keywords.txt").write_text(
+                "spring\nBAR\nspring\n", encoding="utf-8"
+            )
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+            (workspace / "stock.toml").write_text("", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "keywords.txt is not canonical" in issue.message
+                    for issue in report.issues
+                )
             )
 
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:

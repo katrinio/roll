@@ -1,7 +1,18 @@
 from __future__ import annotations
 
-from roll.app.workspace.config import Config, load_config
-from roll.app.diagnostics.diagnostics import Doctor, run_doctor
+from dataclasses import dataclass
+from collections.abc import Callable
+from pathlib import Path
+
+from typer import echo
+
+from roll.app.diagnostics.diagnostics import (
+    Doctor,
+    DoctorIssue,
+    DoctorReport,
+    run_doctor,
+)
+from roll.app.workspace.config import Config, load_config, set_lang
 from roll.app.archive.normalization import (
     apply_keyword_vocab_fixes,
     apply_normalization_plans,
@@ -18,10 +29,13 @@ DOCTOR_MESSAGE_PREFIXES = (
     Doctor.ARCHIVE_MISSING,
     Doctor.WORKSPACE_CONFIG_MISSING,
     Doctor.WORKSPACE_CONFIG_MISMATCH,
+    Doctor.WORKSPACE_STOCK_MISSING,
+    Doctor.WORKSPACE_STOCK_INVALID,
     Doctor.WORKSPACE_MISSING,
     Doctor.VOCAB_DIR_MISSING,
     Doctor.VOCAB_FILE_MISSING,
     Doctor.ROLL_UNREADABLE,
+    Doctor.ROLL_LOADED_AT_MISMATCH,
     Doctor.REQUIRED_FIELD_MISSING,
     Doctor.FILM_NOT_IN_VOCAB,
     Doctor.CAMERA_NOT_IN_VOCAB,
@@ -33,6 +47,12 @@ DOCTOR_MESSAGE_PREFIXES = (
 )
 
 
+@dataclass(frozen=True)
+class DoctorSection:
+    title: str
+    issues: list[DoctorIssue]
+
+
 def render_doctor(fix: bool = False, verbose: bool = False) -> int:
     try:
         config = load_config()
@@ -42,30 +62,52 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         report = run_doctor(config)
 
     if not report.issues and not report.missing_rolls:
-        from typer import echo
-
         echo(Doctor.OK)
         return 0
+
+    global_issues = [issue for issue in report.issues if issue.archive is None]
+    workspace_issues = [issue for issue in report.issues if issue.archive is not None]
+
+    sections: list[DoctorSection] = []
+    if global_issues:
+        sections.append(DoctorSection("Global config", global_issues))
+    sections.extend(_workspace_sections(workspace_issues))
+
+    _render_sections(sections)
+
+    if report.missing_rolls:
+        if sections:
+            echo_lines([""])
+        _echo_block(
+            Doctor.ERROR_PREFIX,
+            [Doctor.ROLL_MISSING],
+            {Doctor.ROLL_MISSING: [str(path) for path in report.missing_rolls]},
+        )
+
+    _render_fix_summaries(report, config.archives, fix, verbose)
+
+    return (
+        1
+        if any(issue.level == "error" for issue in report.issues)
+        or report.missing_rolls
+        else 0
+    )
+
+
+def _render_section(title: str, issues: list) -> None:
+    echo(title)
 
     error_groups: dict[str, list[str]] = {}
     warning_groups: dict[str, list[str]] = {}
     error_order: list[str] = []
     warning_order: list[str] = []
 
-    if report.missing_rolls:
-        _append_group(
-            error_groups,
-            error_order,
-            Doctor.ROLL_MISSING,
-            [str(path) for path in report.missing_rolls],
-        )
-
-    for issue in report.issues:
-        title, item = _split_message(issue.message)
+    for issue in issues:
+        group_title, item = _split_message(issue.message)
         if issue.level == "error":
-            _append_group(error_groups, error_order, title, [item])
+            _append_group(error_groups, error_order, group_title, [item])
         else:
-            _append_group(warning_groups, warning_order, title, [item])
+            _append_group(warning_groups, warning_order, group_title, [item])
 
     if error_order:
         _echo_block(Doctor.ERROR_PREFIX, error_order, error_groups)
@@ -74,57 +116,103 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
             echo_lines([""])
         _echo_block(Doctor.WARN_PREFIX, warning_order, warning_groups)
 
-    if report.fixable:
-        echo_lines([""])
-        from typer import echo
 
-        echo(highlight_cli_names(f"{Msg.DOCTOR_CAN_FIX} {len(report.fixable)}"))
-        items = report.fixable if verbose else report.fixable[:5]
-        echo_lines([f"  {item}" for item in items])
-        if not verbose and len(report.fixable) > 5:
-            echo(f"  {Msg.STATS_MORE.format(count=len(report.fixable) - 5)}")
-        if fix:
-            plans = [build_safe_rename_plan(archive) for archive in config.archives]
-            apply_normalization_plans(plans)
-            echo(Msg.DOCTOR_FIXES_APPLIED)
-            if verbose:
-                for plan in plans:
-                    if plan.rules:
-                        echo_lines([""])
-                        echo_lines(print_normalization_plan(plan))
-
-    if report.keyword_vocab_fixes:
-        echo_lines([""])
-        from typer import echo
-
-        echo(
-            highlight_cli_names(
-                f"{Msg.DOCTOR_CAN_ADD} {len(report.keyword_vocab_fixes)}"
-            )
+def _workspace_sections(issues: list[DoctorIssue]) -> list[DoctorSection]:
+    archives: list[Path] = []
+    for issue in issues:
+        if issue.archive not in archives:
+            archives.append(issue.archive)
+    return [
+        DoctorSection(
+            f"Workspace {archive}",
+            [issue for issue in issues if issue.archive == archive],
         )
-        items = (
-            report.keyword_vocab_fixes if verbose else report.keyword_vocab_fixes[:5]
-        )
-        echo_lines([f"  {item}" for item in items])
-        if not verbose and len(report.keyword_vocab_fixes) > 5:
-            echo(
-                f"  {Msg.STATS_MORE.format(count=len(report.keyword_vocab_fixes) - 5)}"
-            )
-        if fix:
-            for archive in config.archives:
-                applied = apply_keyword_vocab_fixes(
-                    archive, collect_keyword_vocab_fixes(archive)
-                )
-                if applied and verbose:
-                    echo_lines([""])
-                    echo(f"  {applied}")
-            echo(Msg.DOCTOR_KEYWORDS_APPLIED)
-        else:
+        for archive in archives
+    ]
+
+
+def _render_sections(sections: list[DoctorSection]) -> None:
+    for index, section in enumerate(sections):
+        if index:
             echo_lines([""])
+        _render_section(section.title, section.issues)
 
-            echo(Msg.DOCTOR_FIX_HINT)
 
-    return 1 if error_order else 0
+def _render_fix_summaries(
+    report: DoctorReport, archives: list[Path], fix: bool, verbose: bool
+) -> None:
+    fixers: list[tuple[str, list[str], Callable[[list[Path], bool], None]]] = []
+    if report.fixable:
+        fixers.append(
+            (Msg.DOCTOR_CAN_FIX, report.fixable, _apply_normalization_fixes, None)
+        )
+    if report.keyword_vocab_fixes:
+        fixers.append(
+            (Msg.DOCTOR_CAN_ADD, report.keyword_vocab_fixes, _apply_keyword_fixes)
+        )
+
+    if fix and any(
+        issue.message.startswith(str(Doctor.LANGUAGE_INVALID))
+        for issue in report.issues
+    ):
+        fixers.append(
+            (
+                Msg.DOCTOR_CAN_FIX,
+                [str(Doctor.LANGUAGE_INVALID)],
+                _apply_language_fix,
+                None,
+            )
+        )
+
+    if fixers:
+        echo_lines([""])
+        echo("Fixes")
+
+    for title, items, fixer in fixers:
+        _render_fix_summary(title, items, verbose, fix, fixer, archives)
+
+
+def _render_fix_summary(
+    title: str,
+    items: list[str],
+    verbose: bool,
+    fix: bool,
+    fixer,
+    archives: list[Path],
+) -> None:
+    echo(highlight_cli_names(f"{title} {len(items)}"))
+    visible = items if verbose else items[:5]
+    echo_lines([f"  {item}" for item in visible])
+    if not verbose and len(items) > 5:
+        echo(f"  {Msg.STATS_MORE.format(count=len(items) - 5)}")
+    if fix:
+        fixer(archives, verbose)
+
+
+def _apply_language_fix(archives: list[Path], verbose: bool) -> None:
+    set_lang("EN")
+
+
+def _apply_normalization_fixes(archives: list[Path], verbose: bool) -> None:
+    plans = [build_safe_rename_plan(archive) for archive in archives]
+    apply_normalization_plans(plans)
+    echo(Msg.DOCTOR_FIXES_APPLIED)
+    if verbose:
+        for plan in plans:
+            if plan.rules:
+                echo_lines([""])
+                echo_lines(print_normalization_plan(plan))
+
+
+def _apply_keyword_fixes(archives: list[Path], verbose: bool) -> None:
+    for archive in archives:
+        applied = apply_keyword_vocab_fixes(
+            archive, collect_keyword_vocab_fixes(archive)
+        )
+        if applied and verbose:
+            echo_lines([""])
+            echo(f"  {applied}")
+    echo(Msg.DOCTOR_KEYWORDS_APPLIED)
 
 
 def _append_group(
@@ -143,17 +231,20 @@ def _split_message(message: str) -> tuple[str, str]:
     for prefix in DOCTOR_MESSAGE_PREFIXES:
         if message.startswith(prefix):
             return prefix, message.removeprefix(prefix).strip()
-    return message, message
+    return "", message
 
 
 def _echo_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
-    from typer import echo
-
     total = sum(len(groups[title]) for title in order)
     echo(highlight_cli_names(f"{prefix} {total}"))
     for title in order:
         items = groups[title]
-        echo(f"  {_group_title(title)} {len(items)}")
+        if len(items) == 1 and title:
+            echo(f"  {_group_title(title)} {items[0]}")
+        elif title:
+            echo(f"  {_group_title(title)} {len(items)}")
+        else:
+            echo(f"  {items[0]}")
         echo_lines([f"    {item}" for item in items])
 
 

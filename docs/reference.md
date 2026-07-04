@@ -1,36 +1,36 @@
-# Glossary
+# Reference
 
-Project concepts. File structure, code layout, and the full command list — see [model.md](model.md).
+Project concepts and exact rules. File structure, command effects, and flows — see [docs/architecture.md](architecture.md).
 
 ---
 
 ## Archive
 
-A folder with a film archive: years of rolls + `.roll/` (workspace). `roll` doesn't store archive data in code — it only knows where the archive is.
+A folder with a film archive: years of rolls plus `.roll/` (workspace). `roll` does not store archive data in code — it only knows where the archive is.
 
 ---
 
 ## Workspace
 
-`.roll/` inside the archive: config, [[Stock]], and vocabularies. Should stay portable together with the archive.
+`.roll/` inside the archive: workspace config, [[Stock]], and vocabularies. It should stay portable together with the archive.
 
 ---
 
 ## Stock
 
-Film that hasn't been loaded into a camera yet. Stored in `stock.toml`, separate from `roll.toml`: while a film is in stock, it isn't a [[Roll]] yet and doesn't take up a folder in the archive. `rl load` decreases stock by one; `rl load --manual` creates a roll bypassing stock.
+Film that has not been loaded into a camera yet. Stored in `stock.toml`, separate from `roll.toml`: while a film is in stock, it is not a [[Roll]] yet and does not take up a folder in the archive.
 
 ---
 
 ## Roll
 
-One exposed roll of film. Fields and their requirements — see [model.md](model.md#roll). `features`/`keywords` always start empty and get filled in later by separate commands.
+One exposed roll of film. Fields and their requirements — see [docs/architecture.md](architecture.md#lifecycle). `features` and `keywords` start empty and are filled in later.
 
 ---
 
 ## Status
 
-`loaded → processed | failed`. The transition is manual and one-way, never back. See [model.md](model.md#roll-lifecycle).
+`loaded → processed | failed`. The transition is manual and one-way, never back. See [docs/architecture.md](architecture.md#lifecycle).
 
 ---
 
@@ -78,13 +78,13 @@ This is the base date that the folder name and part of normalization are built f
 
 ## Normalize
 
-Brings folder names to a consistent shape: builds a plan → asks for confirmation, doesn't touch `roll.toml`. With `--tags` — brings `keywords` to uppercase in both `roll.toml` and the vocabulary.
+Brings folder names to a consistent shape: builds a plan, asks for confirmation, and does not touch `roll.toml`. With `--tags` it brings `keywords` to uppercase in both `roll.toml` and the vocabulary.
 
 ---
 
 ## Doctor
 
-Integrity check: global config, archives, `.roll/` and vocabularies, whether `roll.toml` files are readable, mismatches with vocabularies, suspicious and unindexed folders. `--fix` only applies safe renames, `-v` shows the full list of fixes.
+Integrity check: global config, workspaces, stock, roll metadata, vocabularies, suspicious and unindexed folders. Diagnostics stay in English. `--fix` applies safe fixes; `-v` shows the full list of fixes.
 
 ---
 

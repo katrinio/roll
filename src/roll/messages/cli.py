@@ -132,9 +132,6 @@ class Msg(Headers):
         "Теги уже нормализованы.",
         "Tags are already normalized.",
     )
-    DOCTOR_FIX_HINT = Message(
-        "cli.doctor_fix_hint", "Запусти: rl doctor --fix", "Run: rl doctor --fix"
-    )
     NO_CHOICE = Message(
         "cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll."
     )
