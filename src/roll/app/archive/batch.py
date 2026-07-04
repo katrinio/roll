@@ -6,7 +6,6 @@ from roll.app.workspace.roll_store import update_roll_status
 from roll.app.archive.search import find_rolls
 from roll.helpers.output import echo_list
 from roll.messages import Msg
-from roll.messages.cli import detect_locale
 
 
 def process_archives(archives: list[Path]) -> int:

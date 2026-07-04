@@ -1,6 +1,6 @@
 from roll.messages.doctor import RU as DOCTOR_RU
 from roll.messages.normalize import RU as NORMALIZE_RU
-from roll.messages.cli import Msg, detect_locale
+from roll.messages.cli import Msg
 
 
 RU = {**{value.key: value.ru for value in Msg.__dict__.values() if hasattr(value, "key")}, **DOCTOR_RU, **NORMALIZE_RU}

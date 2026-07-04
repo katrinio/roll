@@ -6,7 +6,6 @@ from roll.app.archive.normalization import apply_keyword_vocab_fixes, apply_norm
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.output import echo_lines
 from roll.messages import Msg
-from roll.messages.cli import detect_locale
 
 
 DOCTOR_MESSAGE_PREFIXES = (

@@ -1,10 +1,8 @@
-from roll.messages.cli import detect_locale
 from roll.messages import Msg
 from roll.helpers.output import echo_lines, echo_list
 
 
 def render_status_report(archive, roll_folders, unindexed_folders, status_counts) -> None:
-    english = detect_locale() == "en"
     echo_lines(
         [
             Msg.STATUS_HEADER,

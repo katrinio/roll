@@ -3,7 +3,6 @@ from pathlib import Path
 
 import tomllib
 import yaml
-from roll.messages import Msg
 
 CONFIG_DIR = Path.home() / ".config" / "roll"
 CONFIG_FILE = CONFIG_DIR / "config.toml"
