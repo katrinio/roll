@@ -192,6 +192,43 @@ class NormalizationTests(unittest.TestCase):
                 )
             )
 
+    def test_doctor_flags_missing_stock_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any("stock.toml" in issue.message for issue in report.issues)
+            )
+
+    def test_doctor_flags_invalid_stock_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features", "keywords"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+            (workspace / "stock.toml").write_text("items = [\n", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any("stock.toml" in issue.message for issue in report.issues)
+            )
+
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
         from roll.app.archive.stats import _count_statuses
 

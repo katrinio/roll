@@ -12,6 +12,7 @@ from roll.app.archive.normalization import (
     collect_keyword_vocab_fixes,
 )
 from roll.messages import Doctor
+from roll.app.workspace.stock_store import load_stock
 from roll.app.workspace.vocabulary import archive_vocabulary
 from roll.app.workspace.workspace import workspace_for
 
@@ -203,6 +204,26 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                         workspace.archive,
                     )
                 )
+
+    if not workspace.stock_file.exists():
+        issues.append(
+            DoctorIssue(
+                DoctorText.ERROR,
+                f"{Doctor.WORKSPACE_STOCK_MISSING} {workspace.stock_file}",
+                workspace.archive,
+            )
+        )
+    else:
+        try:
+            load_stock(workspace.stock_file)
+        except ValueError as exc:
+            issues.append(
+                DoctorIssue(
+                    DoctorText.ERROR,
+                    f"{Doctor.WORKSPACE_STOCK_INVALID} {workspace.stock_file} ({exc})",
+                    workspace.archive,
+                )
+            )
 
     if not workspace.vocabulary_dir.exists():
         issues.append(

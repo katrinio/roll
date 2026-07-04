@@ -56,6 +56,16 @@ class Doctor:
         "В workspace config не задан archive.",
         "workspace config does not set archive.",
     )
+    WORKSPACE_STOCK_MISSING = Message(
+        "doctor.workspace_stock_missing",
+        "Нет файла stock.toml:",
+        "Missing stock.toml file:",
+    )
+    WORKSPACE_STOCK_INVALID = Message(
+        "doctor.workspace_stock_invalid",
+        "Не удалось прочитать stock.toml:",
+        "Could not read stock.toml:",
+    )
     VOCAB_DIR_MISSING = Message(
         "doctor.vocab_dir_missing", "Нет папки словарей:", "Missing vocabulary folder:"
     )
