@@ -51,8 +51,9 @@ rl stats -v
 
 For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
 
-`rl config lang` shows the current UI language. `rl config lang EN` and `rl config lang RU` update the global config.
-`rl config lang` reads and writes `~/.config/roll/config.toml`; the setting applies immediately in the current process because messages resolve the language at render time.
+`rl config lang` shows the current UI language.
+`rl config lang EN` and `rl config lang RU` update `~/.config/roll/config.toml`.
+The change applies immediately in the current process because messages resolve the language at render time.
 
 ## CI
 
