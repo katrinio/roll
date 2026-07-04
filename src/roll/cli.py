@@ -29,10 +29,6 @@ from roll.app.workspace.workspace import workspace_for
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace.config import set_lang
 from roll.messages import Normalize
-from roll.messages.cli import detect_locale
-
-def _en() -> bool:
-    return detect_locale() == "en"
 
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
@@ -81,21 +77,21 @@ def config(ctx: typer.Context) -> None:
 
 
 @config_app.command("lang")
-def config_lang(lang: str | None = typer.Argument(None, help=Msg.STOCK_HEADER)) -> None:
+def config_lang(lang: str | None = typer.Argument(None, help=Msg.LANGUAGE)) -> None:
     """Show or set UI language."""
     config = require_config()
 
     if lang is None:
-        typer.echo(f"{'Language' if _en() else 'Язык'}: {config.lang}")
+        typer.echo(f"{Msg.LANGUAGE} {config.lang}")
         return
 
     normalized = lang.upper()
     if normalized not in {"EN", "RU"}:
-        typer.echo("Allowed values: EN, RU." if _en() else "Допустимые значения: EN, RU.")
+        typer.echo(Msg.ALLOWED_VALUES)
         raise typer.Exit(code=1)
 
     updated = set_lang(normalized)
-    typer.echo(f"{'Language set to' if _en() else 'Язык установлен'}: {updated.lang}")
+    typer.echo(f"{Msg.LANGUAGE_SET_TO} {updated.lang}")
 
 
 @app.command("scan")

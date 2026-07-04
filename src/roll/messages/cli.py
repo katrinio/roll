@@ -140,6 +140,9 @@ class Msg(Headers):
     ROLL_READ_ERROR = Message("cli.roll_read_error", "Не удалось прочитать roll.toml:", "Could not read roll.toml:")
     ROLL_STATUS_INVALID = Message("cli.roll_status_invalid", "Неверный status в roll.toml:", "Invalid status in roll.toml:")
     ROLL_FORMAT_ERROR = Message("cli.roll_format_error", "Неверный формат roll.toml:", "Invalid roll.toml format:")
+    LANGUAGE = Message("cli.language", "Язык:", "Language:")
+    LANGUAGE_SET_TO = Message("cli.language_set_to", "Язык установлен:", "Language set to:")
+    ALLOWED_VALUES = Message("cli.allowed_values", "Допустимые значения: EN, RU.", "Allowed values: EN, RU.")
 
     RUN_TO_INITIALIZE = Message("cli.run_to_initialize", "  rl init ~/your/archive/path", "  rl init ~/your/archive/path")
     UNINITIALIZED_MESSAGE = Message(

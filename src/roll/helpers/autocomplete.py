@@ -4,7 +4,6 @@ from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 
 from roll.dictionaries import Dictionary
 from roll.messages import Msg
-from roll.messages.cli import detect_locale
 
 
 def autocomplete_prompt(title: str, dictionary: Dictionary) -> str:
