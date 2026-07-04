@@ -91,6 +91,27 @@ class ConfigTests(unittest.TestCase):
                 )
             )
 
+    def test_doctor_reports_invalid_language_value(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.mkdir()
+            config_module.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
+            config_module.CONFIG_FILE.write_text(
+                f'lang = "ENщ"\narchives = ["{archive}"]\n',
+                encoding="utf-8",
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    issue.message.startswith("Invalid global config language:")
+                    for issue in report.issues
+                )
+            )
+
     def test_doctor_warns_on_duplicate_archives_in_global_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from roll.app.diagnostics.diagnostics import Doctor, DoctorIssue, run_doctor
-from roll.app.workspace.config import Config, load_config
+from roll.app.workspace.config import Config, load_config, set_lang
 from roll.app.archive.normalization import (
     apply_keyword_vocab_fixes,
     apply_normalization_plans,
@@ -135,6 +135,15 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
 
             echo(Msg.DOCTOR_FIX_HINT)
 
+    if fix and any(
+        issue.message.startswith(str(Doctor.LANGUAGE_INVALID))
+        for issue in report.issues
+    ):
+        set_lang("EN")
+        from typer import echo
+
+        echo(Msg.DOCTOR_FIXES_APPLIED)
+
     return (
         1
         if any(issue.level == "error" for issue in report.issues)
@@ -184,7 +193,7 @@ def _split_message(message: str) -> tuple[str, str]:
     for prefix in DOCTOR_MESSAGE_PREFIXES:
         if message.startswith(prefix):
             return prefix, message.removeprefix(prefix).strip()
-    return message, message
+    return "", message
 
 
 def _echo_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
@@ -194,7 +203,12 @@ def _echo_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> 
     echo(highlight_cli_names(f"{prefix} {total}"))
     for title in order:
         items = groups[title]
-        echo(f"  {_group_title(title)} {len(items)}")
+        if len(items) == 1 and title:
+            echo(f"  {_group_title(title)} {items[0]}")
+        elif title:
+            echo(f"  {_group_title(title)} {len(items)}")
+        else:
+            echo(f"  {items[0]}")
         echo_lines([f"    {item}" for item in items])
 
 

@@ -27,8 +27,8 @@ class Doctor:
     )
     LANGUAGE_INVALID = Message(
         "doctor.language_invalid",
-        "Неверный язык в глобальной конфигурации, используется EN.",
-        "Invalid language in global config; using EN.",
+        "Неверный язык в глобальной конфигурации:",
+        "Invalid global config language:",
     )
     GLOBAL_CONFIG_DUPLICATE_ARCHIVES = Message(
         "doctor.global_config_duplicate_archives",

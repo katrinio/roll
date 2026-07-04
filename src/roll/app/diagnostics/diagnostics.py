@@ -123,7 +123,12 @@ def _check_global_config() -> list[DoctorIssue]:
     else:
         lang = str(data.get("lang", "")).upper()
         if lang not in {"EN", "RU"}:
-            issues.append(DoctorIssue(DoctorText.WARNING, str(Doctor.LANGUAGE_INVALID)))
+            issues.append(
+                DoctorIssue(
+                    DoctorText.WARNING,
+                    f"{Doctor.LANGUAGE_INVALID} {lang or data.get('lang', '')}",
+                )
+            )
 
     archives = data.get("archives") or []
     seen: set[str] = set()
