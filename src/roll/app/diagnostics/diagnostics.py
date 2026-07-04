@@ -40,6 +40,7 @@ class DoctorReport:
     missing_rolls: list[Path]
     missing_roll_count: int
     unindexed_folders: list[Path]
+    vocabulary_fixes: list[str]
 
     @property
     def has_errors(self) -> bool:
@@ -50,6 +51,7 @@ def run_doctor(config: Config) -> DoctorReport:
     issues: list[DoctorIssue] = []
     fixable: list[str] = []
     keyword_vocab_fixes: list[str] = []
+    vocabulary_fixes: list[str] = []
     missing_rolls: list[Path] = []
     unindexed_folders: list[Path] = []
     missing_roll_count = 0
@@ -70,6 +72,7 @@ def run_doctor(config: Config) -> DoctorReport:
             missing_rolls=missing_rolls,
             missing_roll_count=missing_roll_count,
             unindexed_folders=unindexed_folders,
+            vocabulary_fixes=vocabulary_fixes,
         )
 
     for archive in config.archives:
@@ -86,6 +89,9 @@ def run_doctor(config: Config) -> DoctorReport:
             for rule in plan.rules
         )
         keyword_vocab_fixes.extend(collect_keyword_vocab_fixes(archive))
+        vocab_issue, vocab_fix = _check_keywords_vocab(archive)
+        issues.extend(vocab_issue)
+        vocabulary_fixes.extend(vocab_fix)
 
     return DoctorReport(
         issues=issues,
@@ -94,6 +100,7 @@ def run_doctor(config: Config) -> DoctorReport:
         missing_rolls=missing_rolls,
         missing_roll_count=missing_roll_count,
         unindexed_folders=unindexed_folders,
+        vocabulary_fixes=vocabulary_fixes,
     )
 
 
@@ -298,6 +305,29 @@ def _check_workspace(workspace) -> list[DoctorIssue]:
                     )
 
     return issues
+
+
+def _check_keywords_vocab(archive: Path) -> tuple[list[DoctorIssue], list[str]]:
+    workspace = workspace_for(archive)
+    keywords_file = workspace.vocabulary_file("keywords")
+    if not keywords_file.exists():
+        return [], []
+
+    raw = [
+        line.strip()
+        for line in keywords_file.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    canonical = sorted({value.upper() for value in raw}, key=str.casefold)
+    if raw == canonical:
+        return [], []
+
+    issue = DoctorIssue(
+        DoctorText.WARNING,
+        f"{Doctor.VOCAB_KEYWORDS_NOT_CANONICAL} {keywords_file}",
+        archive,
+    )
+    return [issue], [f"{keywords_file} -> normalize"]
 
 
 def _check_rolls(archive: Path, workspace) -> tuple[list[DoctorIssue], list[Path]]:

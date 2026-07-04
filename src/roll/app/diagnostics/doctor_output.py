@@ -9,6 +9,7 @@ from roll.app.archive.normalization import (
     apply_normalization_plans,
     build_safe_rename_plan,
     collect_keyword_vocab_fixes,
+    normalize_keywords_in_archive,
     print_normalization_plan,
 )
 from roll.helpers.formatting import highlight_cli_names
@@ -134,6 +135,20 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
             echo_lines([""])
 
             echo(Msg.DOCTOR_FIX_HINT)
+
+    if report.vocabulary_fixes:
+        echo_lines([""])
+        from typer import echo
+
+        echo(highlight_cli_names(f"Can fix vocabulary: {len(report.vocabulary_fixes)}"))
+        items = report.vocabulary_fixes if verbose else report.vocabulary_fixes[:5]
+        echo_lines([f"  {item}" for item in items])
+        if not verbose and len(report.vocabulary_fixes) > 5:
+            echo(f"  {Msg.STATS_MORE.format(count=len(report.vocabulary_fixes) - 5)}")
+        if fix:
+            for archive in config.archives:
+                normalize_keywords_in_archive(archive)
+            echo(Msg.DOCTOR_FIXES_APPLIED)
 
     if fix and any(
         issue.message.startswith(str(Doctor.LANGUAGE_INVALID))

@@ -264,6 +264,34 @@ class NormalizationTests(unittest.TestCase):
                 any("loaded_at" in issue.message for issue in report.issues)
             )
 
+    def test_doctor_flags_noncanonical_keywords_dictionary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            workspace = archive / ".roll"
+            vocabulary = workspace / "vocabulary"
+            vocabulary.mkdir(parents=True)
+            for name in ("films", "cameras", "features"):
+                (vocabulary / f"{name}.txt").write_text("", encoding="utf-8")
+            (vocabulary / "keywords.txt").write_text(
+                "spring\nBAR\nspring\n", encoding="utf-8"
+            )
+            (workspace / "config.toml").write_text(
+                f'archive = "{archive}"\n', encoding="utf-8"
+            )
+            (workspace / "stock.toml").write_text("", encoding="utf-8")
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "keywords.txt is not canonical" in issue.message
+                    for issue in report.issues
+                )
+            )
+            self.assertTrue(
+                any("keywords.txt" in item for item in report.vocabulary_fixes)
+            )
+
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
         from roll.app.archive.stats import _count_statuses
 

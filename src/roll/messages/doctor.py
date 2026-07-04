@@ -71,6 +71,11 @@ class Doctor:
         "Не удалось прочитать stock.toml:",
         "Could not read stock.toml:",
     )
+    VOCAB_KEYWORDS_NOT_CANONICAL = Message(
+        "doctor.vocab_keywords_not_canonical",
+        "keywords.txt не каноничен:",
+        "keywords.txt is not canonical:",
+    )
     VOCAB_DIR_MISSING = Message(
         "doctor.vocab_dir_missing", "Нет папки словарей:", "Missing vocabulary folder:"
     )
