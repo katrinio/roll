@@ -28,12 +28,14 @@ The project has three levels: global config → archive workspace → roll.
 
 `stock.toml` and `vocabulary/*.txt` solve different problems: stock tracks what you physically have on hand, vocabularies hold canonical values for autocomplete.
 
-The global config also stores the UI language:
+The global config stores the UI language and the archive list:
 
 ```toml
 lang = "RU"   # or "EN"
 archives = ["/path/to/archive"]
 ```
+
+`lang` defaults to `RU` when missing or invalid. Legacy `config.yaml` is still read when `config.toml` does not exist.
 
 ## Code layout
 
