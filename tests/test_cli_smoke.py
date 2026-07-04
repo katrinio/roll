@@ -41,6 +41,29 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("Год", self._output(result))
 
+    def test_config_lang_shows_current_language(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            env = os.environ.copy()
+            env["HOME"] = home
+            config_dir = Path(home) / ".config" / "roll"
+            config_dir.mkdir(parents=True)
+            (config_dir / "config.toml").write_text(
+                'lang = "EN"\narchives = ["/tmp/archive"]\n',
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [PYTHON, "-c", CLI_ENTRY, "config", "lang"],
+                cwd=ROOT,
+                env=env,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("EN", self._output(result))
+
     def _run(self, *args: str) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         with tempfile.TemporaryDirectory() as home:

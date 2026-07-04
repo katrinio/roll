@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import os
+import tomllib
 from typing import ClassVar
-
-from roll.app.workspace.config import load_lang
+from pathlib import Path
 
 
 def detect_locale() -> str:
-    config_lang = load_lang().upper()
+    config_lang = _load_lang_from_config_file()
     if config_lang in {"EN", "RU"}:
         return config_lang.lower()
 
@@ -20,6 +20,20 @@ def detect_locale() -> str:
     )
     value = value.split(".", 1)[0].split("_", 1)[0].lower()
     return "en" if value.startswith("en") else "ru"
+
+
+def _load_lang_from_config_file() -> str | None:
+    config_file = Path.home() / ".config" / "roll" / "config.toml"
+    if not config_file.exists():
+        return None
+
+    try:
+        data = tomllib.loads(config_file.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+    value = data.get("lang")
+    return str(value).upper() if isinstance(value, str) else None
 
 
 class Message(str):
