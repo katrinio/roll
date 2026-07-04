@@ -1,6 +1,6 @@
-# Glossary
+# Reference
 
-Project concepts. File structure, command effects, and flows — see [model.md](model.md).
+Project concepts and exact rules. File structure, command effects, and flows — see [docs/architecture.md](architecture.md).
 
 ---
 
@@ -24,13 +24,13 @@ Film that has not been loaded into a camera yet. Stored in `stock.toml`, separat
 
 ## Roll
 
-One exposed roll of film. Fields and their requirements — see [model.md](model.md#roll). `features` and `keywords` start empty and are filled in later.
+One exposed roll of film. Fields and their requirements — see [docs/architecture.md](architecture.md#lifecycle). `features` and `keywords` start empty and are filled in later.
 
 ---
 
 ## Status
 
-`loaded → processed | failed`. The transition is manual and one-way, never back. See [model.md](model.md#lifecycle).
+`loaded → processed | failed`. The transition is manual and one-way, never back. See [docs/architecture.md](architecture.md#lifecycle).
 
 ---
 
@@ -84,7 +84,7 @@ Brings folder names to a consistent shape: builds a plan, asks for confirmation,
 
 ## Doctor
 
-Integrity check: global config, workspaces, stock, roll metadata, vocabularies, suspicious and unindexed folders. `--fix` applies safe fixes; `-v` shows the full list of fixes.
+Integrity check: global config, workspaces, stock, roll metadata, vocabularies, suspicious and unindexed folders. Diagnostics stay in English. `--fix` applies safe fixes; `-v` shows the full list of fixes.
 
 ---
 

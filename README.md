@@ -96,6 +96,8 @@ Everything lives inside the archive. The application can be removed or reinstall
 
 ## Documentation
 
-- `docs/model.md` — architecture
-- `docs/glossary.md` — terminology
-- `docs/mvp.md` — project scope
+- `docs/index.md` — start here
+- `docs/getting-started.md` — project scope and first flows
+- `docs/architecture.md` — file map and command effects
+- `docs/reference.md` — terminology and exact rules
+- `docs/development.md` — setup and checks

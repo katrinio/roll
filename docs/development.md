@@ -1,6 +1,6 @@
 # Development
 
-A working guide for local development. Architecture and effects of commands — see [model.md](model.md), terms — see [glossary.md](glossary.md).
+A working guide for local development. Architecture and command effects — see [docs/architecture.md](architecture.md), terms and exact rules — see [docs/reference.md](reference.md), quick start — see [docs/getting-started.md](getting-started.md).
 
 ## Setup
 
@@ -49,8 +49,8 @@ python -m unittest discover -s tests
 
 `rl load --manual` creates a roll from the film dictionary without changing stock.
 For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
-`rl config lang` applies immediately in the current process because messages resolve the language at render time.
-`rl doctor` checks the global config, workspace config, stock, roll metadata, and vocabularies.
+`rl config lang` applies immediately in the current process because user-facing messages resolve the language at render time.
+`rl doctor` checks the global config, workspace config, stock, roll metadata, and vocabularies. Its diagnostics stay in English; only the user-facing UI is localized.
 
 ## CI
 

@@ -1,4 +1,4 @@
-# Model
+# Architecture
 
 This is a file-first tool. The main question is always: which files are read, which are written, and what can be fixed automatically.
 
@@ -42,7 +42,7 @@ archives = ["/path/to/archive"]
 | Command | Reads | Writes | Auto-fix | Scope |
 |---|---|---|---|---|
 | `rl init` | filesystem | global config, workspace | no | setup |
-| `rl config lang` | global config | global config | yes, with `--fix` in `doctor` | config |
+| `rl config lang` | global config | global config | yes, with `rl doctor --fix` | config |
 | `rl stock add` | global config, workspace, vocabulary, stock | stock | no | workspace |
 | `rl load` | global config, stock, vocabulary | stock, roll | no | roll creation |
 | `rl load --manual` | global config, vocabulary | roll | no | roll creation |
@@ -120,6 +120,7 @@ rl doctor --fix
 - user edits only what the filesystem cannot infer;
 - normalization and doctor fixes build a plan before changing anything;
 - vocabularies stay plain text and grow automatically;
+- dev-facing diagnostics stay in English; only user-facing UI is localized;
 - English is the default UI language.
 
-Environment setup and CI — see [docs/development.md](development.md).
+Quick start — see [docs/getting-started.md](getting-started.md). Environment setup and CI — see [docs/development.md](development.md). Terms and exact command behavior — see [docs/reference.md](reference.md).

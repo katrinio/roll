@@ -86,7 +86,7 @@ class ConfigTests(unittest.TestCase):
 
             self.assertTrue(
                 any(
-                    "Language is not set explicitly" in issue.message
+                    "Language not set explicitly; using EN." in issue.message
                     for issue in report.issues
                 )
             )
@@ -141,8 +141,7 @@ class ConfigTests(unittest.TestCase):
 
             self.assertTrue(
                 any(
-                    "Missing global config file" in issue.message
-                    for issue in report.issues
+                    "Missing global config:" in issue.message for issue in report.issues
                 )
             )
 

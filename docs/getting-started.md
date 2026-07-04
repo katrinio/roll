@@ -1,4 +1,4 @@
-# MVP
+# Getting Started
 
 > Find the right roll from memory: a person, a place, an event, a mood - months later.
 
@@ -12,7 +12,7 @@ rl stock process            # or: rl stock failed
 rl search kir balcony       # half a year later — found it
 ```
 
-## What MVP Covers
+## What This Covers
 
 | Flow | Command |
 |---|---|
@@ -25,12 +25,14 @@ rl search kir balcony       # half a year later — found it
 | Integrity | `rl doctor`, `rl doctor --fix`, `rl normalize --tags` |
 | Batch | `rl batch process` |
 
-## Out of MVP scope
+## Out of Scope
 
 sync between machines · cloud · web UI · migrating old formats · image processing
 
-First thing right after MVP: localization. The CLI defaults to English in the global config and the language is controlled with `rl config lang`.
+The CLI defaults to English in the global config and `rl config lang` changes it.
 
 ## Rule
 
-If it doesn't help find a roll from memory faster — it's out of MVP.
+If it doesn't help find a roll from memory faster — it's out of scope.
+
+Architecture and exact behavior — see [docs/architecture.md](architecture.md). Terms and exact rules — see [docs/reference.md](reference.md). Development setup — see [docs/development.md](development.md).

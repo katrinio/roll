@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections.abc import Callable
 from pathlib import Path
+
+from typer import echo
 
 from roll.app.diagnostics.diagnostics import (
     Doctor,
@@ -59,8 +62,6 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         report = run_doctor(config)
 
     if not report.issues and not report.missing_rolls:
-        from typer import echo
-
         echo(Doctor.OK)
         return 0
 
@@ -94,8 +95,6 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
 
 
 def _render_section(title: str, issues: list) -> None:
-    from typer import echo
-
     echo(title)
 
     error_groups: dict[str, list[str]] = {}
@@ -142,35 +141,35 @@ def _render_sections(sections: list[DoctorSection]) -> None:
 def _render_fix_summaries(
     report: DoctorReport, archives: list[Path], fix: bool, verbose: bool
 ) -> None:
+    fixers: list[tuple[str, list[str], Callable[[list[Path], bool], None]]] = []
     if report.fixable:
-        _render_fix_summary(
-            Msg.DOCTOR_CAN_FIX,
-            report.fixable,
-            verbose,
-            fix,
-            _apply_normalization_fixes,
-            archives,
+        fixers.append(
+            (Msg.DOCTOR_CAN_FIX, report.fixable, _apply_normalization_fixes, None)
         )
-
     if report.keyword_vocab_fixes:
-        _render_fix_summary(
-            Msg.DOCTOR_CAN_ADD,
-            report.keyword_vocab_fixes,
-            verbose,
-            fix,
-            _apply_keyword_fixes,
-            archives,
-            hint=Msg.DOCTOR_FIX_HINT,
+        fixers.append(
+            (Msg.DOCTOR_CAN_ADD, report.keyword_vocab_fixes, _apply_keyword_fixes)
         )
 
     if fix and any(
         issue.message.startswith(str(Doctor.LANGUAGE_INVALID))
         for issue in report.issues
     ):
-        set_lang("EN")
-        from typer import echo
+        fixers.append(
+            (
+                Msg.DOCTOR_CAN_FIX,
+                [str(Doctor.LANGUAGE_INVALID)],
+                _apply_language_fix,
+                None,
+            )
+        )
 
-        echo(Msg.DOCTOR_FIXES_APPLIED)
+    if fixers:
+        echo_lines([""])
+        echo("Fixes")
+
+    for title, items, fixer in fixers:
+        _render_fix_summary(title, items, verbose, fix, fixer, archives)
 
 
 def _render_fix_summary(
@@ -180,11 +179,7 @@ def _render_fix_summary(
     fix: bool,
     fixer,
     archives: list[Path],
-    hint: str | None = None,
 ) -> None:
-    echo_lines([""])
-    from typer import echo
-
     echo(highlight_cli_names(f"{title} {len(items)}"))
     visible = items if verbose else items[:5]
     echo_lines([f"  {item}" for item in visible])
@@ -192,14 +187,13 @@ def _render_fix_summary(
         echo(f"  {Msg.STATS_MORE.format(count=len(items) - 5)}")
     if fix:
         fixer(archives, verbose)
-    elif hint is not None:
-        echo_lines([""])
-        echo(hint)
+
+
+def _apply_language_fix(archives: list[Path], verbose: bool) -> None:
+    set_lang("EN")
 
 
 def _apply_normalization_fixes(archives: list[Path], verbose: bool) -> None:
-    from typer import echo
-
     plans = [build_safe_rename_plan(archive) for archive in archives]
     apply_normalization_plans(plans)
     echo(Msg.DOCTOR_FIXES_APPLIED)
@@ -211,8 +205,6 @@ def _apply_normalization_fixes(archives: list[Path], verbose: bool) -> None:
 
 
 def _apply_keyword_fixes(archives: list[Path], verbose: bool) -> None:
-    from typer import echo
-
     for archive in archives:
         applied = apply_keyword_vocab_fixes(
             archive, collect_keyword_vocab_fixes(archive)
@@ -243,8 +235,6 @@ def _split_message(message: str) -> tuple[str, str]:
 
 
 def _echo_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> None:
-    from typer import echo
-
     total = sum(len(groups[title]) for title in order)
     echo(highlight_cli_names(f"{prefix} {total}"))
     for title in order:
