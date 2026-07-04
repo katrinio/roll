@@ -41,6 +41,7 @@ archives = ["/path/to/archive"]
 
 | Command | Reads | Writes | Auto-fix | Scope |
 |---|---|---|---|---|
+| `rl version` | package metadata, git tag | no | no | meta |
 | `rl init` | filesystem | global config, workspace | no | setup |
 | `rl config lang` | global config | global config | yes, with `rl doctor --fix` | config |
 | `rl stock add` | global config, workspace, vocabulary, stock | stock | no | workspace |

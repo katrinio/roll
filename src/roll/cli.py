@@ -44,6 +44,7 @@ from roll.app.workspace.workspace import workspace_for
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace.config import set_lang
 from roll.messages import Normalize
+from roll.version import get_version
 
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
@@ -59,6 +60,20 @@ app.add_typer(features_app, name="features")
 
 batch_app = typer.Typer(help=Msg.BATCH_WILL_PROCESS)
 app.add_typer(batch_app, name="batch")
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False, "--version", help="Show version and exit.", is_eager=True
+    ),
+) -> None:
+    if version:
+        typer.echo(get_version())
+        raise typer.Exit()
+    if ctx.invoked_subcommand is not None:
+        return
 
 
 @app.command("init")
