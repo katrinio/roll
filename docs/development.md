@@ -51,6 +51,7 @@ python -m unittest discover -s tests
 For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
 `rl config lang` applies immediately in the current process because user-facing messages resolve the language at render time.
 `rl doctor` checks the global config, workspace config, stock, roll metadata, and vocabularies. Its diagnostics stay in English; only the user-facing UI is localized.
+Package version comes from git tags at build time. In a source checkout, `rl --version` falls back to the current tag if package metadata is not installed.
 
 ## CI
 
