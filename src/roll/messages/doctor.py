@@ -10,6 +10,26 @@ class Doctor:
         "В глобальной конфигурации нет архивов.",
         "There are no archives in the global config.",
     )
+    GLOBAL_CONFIG_MISSING = Message(
+        "doctor.global_config_missing",
+        "Нет файла глобальной конфигурации:",
+        "Missing global config file:",
+    )
+    GLOBAL_CONFIG_INVALID = Message(
+        "doctor.global_config_invalid",
+        "Не удалось прочитать глобальную конфигурацию:",
+        "Could not read global config:",
+    )
+    LANGUAGE_NOT_EXPLICIT = Message(
+        "doctor.language_not_explicit",
+        "Язык не задан явно, используется EN.",
+        "Language is not set explicitly; using EN.",
+    )
+    LANGUAGE_INVALID = Message(
+        "doctor.language_invalid",
+        "Неверный язык в глобальной конфигурации, используется EN.",
+        "Invalid language in global config; using EN.",
+    )
     ARCHIVE_MISSING = Message(
         "doctor.archive_missing", "Архив не найден:", "Archive not found:"
     )

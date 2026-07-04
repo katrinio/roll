@@ -6,7 +6,7 @@ import re
 import tomllib
 
 from roll.filesystem import find_roll_folders, get_index_file, find_unindexed_folders
-from roll.app.workspace.config import Config
+from roll.app.workspace.config import CONFIG_FILE, Config
 from roll.app.archive.normalization import (
     build_safe_rename_plan,
     collect_keyword_vocab_fixes,
@@ -51,6 +51,18 @@ def run_doctor(config: Config) -> DoctorReport:
     unindexed_folders: list[Path] = []
     missing_roll_count = 0
 
+    global_issues = _check_global_config()
+    issues.extend(global_issues)
+    if any(issue.level == DoctorText.ERROR for issue in global_issues):
+        return DoctorReport(
+            issues=issues,
+            fixable=fixable,
+            keyword_vocab_fixes=keyword_vocab_fixes,
+            missing_rolls=missing_rolls,
+            missing_roll_count=missing_roll_count,
+            unindexed_folders=unindexed_folders,
+        )
+
     if not config.archives:
         issues.append(DoctorIssue(DoctorText.ERROR, Doctor.NO_ARCHIVES))
         return DoctorReport(
@@ -85,6 +97,37 @@ def run_doctor(config: Config) -> DoctorReport:
         missing_roll_count=missing_roll_count,
         unindexed_folders=unindexed_folders,
     )
+
+
+def _check_global_config() -> list[DoctorIssue]:
+    if not CONFIG_FILE.exists():
+        return [
+            DoctorIssue(
+                DoctorText.ERROR, f"{Doctor.GLOBAL_CONFIG_MISSING} {CONFIG_FILE}"
+            )
+        ]
+
+    try:
+        data = tomllib.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return [
+            DoctorIssue(
+                DoctorText.ERROR,
+                f"{Doctor.GLOBAL_CONFIG_INVALID} {CONFIG_FILE} ({exc})",
+            )
+        ]
+
+    issues: list[DoctorIssue] = []
+    if "lang" not in data:
+        issues.append(
+            DoctorIssue(DoctorText.WARNING, str(Doctor.LANGUAGE_NOT_EXPLICIT))
+        )
+    else:
+        lang = str(data.get("lang", "")).upper()
+        if lang not in {"EN", "RU"}:
+            issues.append(DoctorIssue(DoctorText.WARNING, str(Doctor.LANGUAGE_INVALID)))
+
+    return issues
 
 
 def _check_archive(archive: Path) -> tuple[list[DoctorIssue], list[Path], list[Path]]:

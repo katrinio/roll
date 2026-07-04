@@ -5,6 +5,8 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
+from roll.app.diagnostics.diagnostics import run_doctor
+from roll.app.diagnostics import diagnostics as diagnostics_module
 from roll.app.workspace import config as config_module
 from roll.app.workspace.config import Config, load_config, save_config, set_lang
 from roll.messages import Msg
@@ -65,9 +67,44 @@ class ConfigTests(unittest.TestCase):
 
             self.assertEqual(str(Msg.LANGUAGE), "Язык:")
 
+    def test_doctor_warns_when_language_is_not_set_explicitly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.mkdir()
+            config_module.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
+            config_module.CONFIG_FILE.write_text(
+                f'archives = ["{archive}"]\n',
+                encoding="utf-8",
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "Language is not set explicitly" in issue.message
+                    for issue in report.issues
+                )
+            )
+
+    def test_doctor_errors_when_global_config_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+
+            report = run_doctor(Config(archives=[]))
+
+            self.assertTrue(
+                any(
+                    "Missing global config file" in issue.message
+                    for issue in report.issues
+                )
+            )
+
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"
         config_module.CONFIG_FILE = config_module.CONFIG_DIR / "config.toml"
+        diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
 
     def _patch_message_home(self, tmp: str) -> None:
         patcher = patch("roll.messages.cli.Path.home", return_value=Path(tmp))

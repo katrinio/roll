@@ -55,6 +55,8 @@ For `rl features add` and `rl tags add` you can enter several values separated b
 `rl config lang EN` and `rl config lang RU` update `~/.config/roll/config.toml`.
 The change applies immediately in the current process because messages resolve the language at render time.
 
+`rl doctor` checks the global config, including whether the UI language is set explicitly or falls back to `EN`.
+
 ## CI
 
 GitHub Actions runs:
