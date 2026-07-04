@@ -71,8 +71,11 @@ def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
 
 
 @config_app.callback(invoke_without_command=True)
-def config() -> None:
+def config(ctx: typer.Context) -> None:
     """Show current config."""
+    if ctx.invoked_subcommand is not None:
+        return
+
     config = require_config()
     echo_section(Msg.CONFIG_HEADER, [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives])
 
