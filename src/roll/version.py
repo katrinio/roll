@@ -21,6 +21,9 @@ def get_version() -> str:
 
 
 def get_latest_version() -> str:
+    remote_version = _remote_tag()
+    if remote_version:
+        return remote_version
     return _git_tag()
 
 
@@ -49,6 +52,29 @@ def _git_tag() -> str:
     return result.stdout.strip().removeprefix("v")
 
 
+def _remote_tag() -> str:
+    repo = _find_git_root(Path.cwd())
+    if repo is None:
+        repo = Path(__file__).resolve().parents[2]
+    try:
+        result = subprocess.run(
+            ["git", "ls-remote", "--tags", "--refs", "origin", "v*"],
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=repo,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return ""
+
+    versions = [
+        line.rsplit("/", 1)[-1].removeprefix("v")
+        for line in result.stdout.splitlines()
+        if line.strip()
+    ]
+    return _max_version(versions)
+
+
 def _find_git_root(path: Path) -> Path | None:
     for candidate in (path, *path.parents):
         if (candidate / ".git").exists():
@@ -61,3 +87,11 @@ def _version_tuple(value: str) -> tuple[int, ...]:
     if not match:
         return ()
     return tuple(int(part) for part in match.group(1).split("."))
+
+
+def _max_version(values: list[str]) -> str:
+    parsed = [(_version_tuple(value), value) for value in values]
+    parsed = [item for item in parsed if item[0]]
+    if not parsed:
+        return ""
+    return max(parsed, key=lambda item: item[0])[1]

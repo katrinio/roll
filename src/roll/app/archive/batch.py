@@ -8,7 +8,7 @@ from roll.app.workspace.roll_store import (
     load_roll_metadata,
     save_roll_metadata,
 )
-from roll.app.archive.search import find_rolls
+from roll.app.archive.search import RollIndex, find_rolls
 from roll.helpers.output import echo_list
 from roll.messages import Msg
 
@@ -71,8 +71,8 @@ def _select_rolls(
     films: list[str] | None,
     cameras: list[str] | None,
     statuses: list[str] | None,
-) -> list:
-    selected = []
+) -> list[RollIndex]:
+    selected: list[RollIndex] = []
     film_set = _normalize_set(films)
     camera_set = _normalize_set(cameras)
     status_set = _normalize_set(statuses)
@@ -93,7 +93,7 @@ def _select_rolls(
 
 
 def _apply_changes(
-    roll,
+    roll: RollIndex,
     *,
     status: str | None,
     set_camera: str | None,

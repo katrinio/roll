@@ -425,7 +425,7 @@ def _prompt_choice_panel(
     echo_lines(prompt_lines)
 
     while True:
-        value = prompt("Select [number / enter to keep]: ").strip()
+        value = prompt(f"{Msg.ROLL_EDIT_SELECT_HINT}: ").strip()
         if not value:
             return current
         if value.isdigit():

@@ -297,26 +297,20 @@ def _update_roll_list_field(
 @batch_app.callback(invoke_without_command=True)
 def batch(
     ctx: typer.Context,
-    year: str | None = typer.Option(None, "--year", help="Filter by year."),
-    film: str | None = typer.Option(None, "--film", help="Comma-separated film names."),
-    camera: str | None = typer.Option(
-        None, "--camera", help="Comma-separated camera names."
-    ),
-    status: str | None = typer.Option(
-        None, "--status", help="Comma-separated statuses."
-    ),
+    year: str | None = typer.Option(None, "--year", help=Msg.BATCH_FILTER_YEAR),
+    film: str | None = typer.Option(None, "--film", help=Msg.BATCH_FILTER_FILM),
+    camera: str | None = typer.Option(None, "--camera", help=Msg.BATCH_FILTER_CAMERA),
+    status: str | None = typer.Option(None, "--status", help=Msg.BATCH_FILTER_STATUS),
     set_status: str | None = typer.Option(
-        None, "--set-status", help="Set the status on selected rolls."
+        None, "--set-status", help=Msg.BATCH_SET_STATUS
     ),
     set_camera: str | None = typer.Option(
-        None, "--set-camera", help="Set the camera on selected rolls."
+        None, "--set-camera", help=Msg.BATCH_SET_CAMERA
     ),
     add_feature: str | None = typer.Option(
-        None, "--add-feature", help="Comma-separated features to append."
+        None, "--add-feature", help=Msg.BATCH_ADD_FEATURE
     ),
-    add_tag: str | None = typer.Option(
-        None, "--add-tag", help="Comma-separated tags to append."
-    ),
+    add_tag: str | None = typer.Option(None, "--add-tag", help=Msg.BATCH_ADD_TAG),
 ) -> None:
     """Batch edit rolls."""
     if ctx.invoked_subcommand is not None:

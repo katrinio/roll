@@ -143,6 +143,11 @@ class Msg(Headers):
         "Состояние оригинала",
         "Original status",
     )
+    ROLL_EDIT_SELECT_HINT = Message(
+        "cli.roll_edit_select_hint",
+        "Выбери номер или нажми Enter, чтобы оставить текущее значение.",
+        "Choose a number or press Enter to keep the current value.",
+    )
     ROLL_EDIT_UPDATED = Message(
         "cli.roll_edit_updated", "Ролл обновлен.", "Roll updated."
     )
@@ -231,6 +236,47 @@ class Msg(Headers):
         "cli.batch_needs_filters",
         "Нужно указать хотя бы один фильтр и одно изменение.",
         "You need at least one filter and one change.",
+    )
+    BATCH_FILTER_YEAR = Message(
+        "cli.batch_filter_year", "Фильтр по году.", "Filter by year."
+    )
+    BATCH_FILTER_FILM = Message(
+        "cli.batch_filter_film",
+        "Фильтр по пленкам через запятую.",
+        "Comma-separated film names.",
+    )
+    BATCH_FILTER_CAMERA = Message(
+        "cli.batch_filter_camera",
+        "Фильтр по камерам через запятую.",
+        "Comma-separated camera names.",
+    )
+    BATCH_FILTER_STATUS = Message(
+        "cli.batch_filter_status",
+        "Фильтр по статусам через запятую.",
+        "Comma-separated statuses.",
+    )
+    BATCH_SET_STATUS = Message(
+        "cli.batch_set_status",
+        "Установить статус у выбранных роллов.",
+        "Set the status on selected rolls.",
+    )
+    BATCH_SET_CAMERA = Message(
+        "cli.batch_set_camera",
+        "Установить камеру у выбранных роллов.",
+        "Set the camera on selected rolls.",
+    )
+    BATCH_ADD_FEATURE = Message(
+        "cli.batch_add_feature",
+        "Добавить особенности через запятую.",
+        "Comma-separated features to append.",
+    )
+    BATCH_ADD_TAG = Message(
+        "cli.batch_add_tag",
+        "Добавить теги через запятую.",
+        "Comma-separated tags to append.",
+    )
+    BATCH_TITLE = Message(
+        "cli.batch_title", "Массовое редактирование роллов", "Batch edit rolls"
     )
     STATS_YEAR = Message("cli.stats_year", "Год:", "Year:")
     STATS_ROLLS = Message("cli.stats_rolls", "Роллов:", "Rolls:")
