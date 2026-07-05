@@ -37,6 +37,7 @@ class DoctorReport:
     issues: list[DoctorIssue]
     fixable: list[str]
     keyword_vocab_fixes: list[str]
+    keyword_vocab_normalize: list[Path]
     missing_rolls: list[Path]
     missing_roll_count: int
     unindexed_folders: list[Path]
@@ -50,6 +51,7 @@ def run_doctor(config: Config) -> DoctorReport:
     issues: list[DoctorIssue] = []
     fixable: list[str] = []
     keyword_vocab_fixes: list[str] = []
+    keyword_vocab_normalize: list[Path] = []
     missing_rolls: list[Path] = []
     unindexed_folders: list[Path] = []
     missing_roll_count = 0
@@ -67,6 +69,7 @@ def run_doctor(config: Config) -> DoctorReport:
             issues=issues,
             fixable=fixable,
             keyword_vocab_fixes=keyword_vocab_fixes,
+            keyword_vocab_normalize=keyword_vocab_normalize,
             missing_rolls=missing_rolls,
             missing_roll_count=missing_roll_count,
             unindexed_folders=unindexed_folders,
@@ -95,12 +98,16 @@ def run_doctor(config: Config) -> DoctorReport:
             for rule in plan.rules
         )
         keyword_vocab_fixes.extend(collect_keyword_vocab_fixes(archive))
-        issues.extend(_check_keywords_vocab(archive))
+        keyword_issues = _check_keywords_vocab(archive)
+        if keyword_issues:
+            keyword_vocab_normalize.append(archive)
+            issues.extend(keyword_issues)
 
     return DoctorReport(
         issues=issues,
         fixable=fixable,
         keyword_vocab_fixes=keyword_vocab_fixes,
+        keyword_vocab_normalize=keyword_vocab_normalize,
         missing_rolls=missing_rolls,
         missing_roll_count=missing_roll_count,
         unindexed_folders=unindexed_folders,

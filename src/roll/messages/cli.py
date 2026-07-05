@@ -154,6 +154,11 @@ class Msg(Headers):
         "Месяцы вручную?",
         "Manual months?",
     )
+    NORMALIZE_PHOTOS_PREVIEW = Message(
+        "cli.normalize_photos_preview",
+        "План фото:",
+        "Photo plan:",
+    )
     NO_CHOICE = Message(
         "cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll."
     )

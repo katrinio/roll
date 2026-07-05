@@ -25,6 +25,7 @@ from roll.app.workspace.stock_store import (
 )
 from roll.app.workspace.statuses import VALID_STATUSES
 from roll.app.workspace.workspace import workspace_for
+from roll.app.archive.normalization import apply_keyword_vocab_fixes
 from roll.helpers.autocomplete import (
     autocomplete_many_prompt,
     autocomplete_prompt,
@@ -113,6 +114,7 @@ def load(
         tags = autocomplete_many_prompt("Tags", workspace.dictionary("keywords"))
         if tags:
             update_roll_keywords(roll_file, tags)
+            apply_keyword_vocab_fixes(archive, tags)
     except Exception:
         _cleanup_failed_load(roll_folder, roll_file)
         raise

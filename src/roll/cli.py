@@ -25,6 +25,7 @@ from roll.app.workspace.roll_store import (
 )
 from roll.app.archive.normalization import (
     apply_normalization_plans,
+    apply_keyword_vocab_fixes,
     build_normalization_plan,
     normalize_keywords_in_archive,
 )
@@ -284,6 +285,8 @@ def _update_roll_list_field(
     )
     try:
         metadata = updater(selected / "roll.toml", values)
+        if dictionary_name == "keywords":
+            apply_keyword_vocab_fixes(archive, metadata.keywords)
     except ValueError as exc:
         typer.echo(str(exc))
         raise typer.Exit(code=1)
@@ -425,7 +428,7 @@ def _echo_photo_plan_preview(plans) -> None:
             )
 
     if lines:
-        typer.echo("Planned photo layout:")
+        typer.echo(Msg.NORMALIZE_PHOTOS_PREVIEW)
         for line in lines:
             typer.echo(f"  {line}")
 

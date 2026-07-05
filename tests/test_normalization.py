@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 import os
 
 from roll.app.workspace.config import Config
@@ -18,10 +19,12 @@ from roll.app.archive.normalization import (
     NormalizationPlan,
     RenameRule,
 )
+from roll.app.diagnostics.doctor_output import _echo_block
 from roll.app.archive.photo_dates import guess_archive_month
 from roll.app.archive.search import RollIndex
 from roll.filesystem import build_archive_tree, count_photo_files
 from roll.app.workspace.roll_store import RollMetadata, save_roll_metadata
+from roll.cli import _build_photo_normalization_plans
 
 
 class NormalizationTests(unittest.TestCase):
@@ -182,6 +185,42 @@ class NormalizationTests(unittest.TestCase):
 
             self.assertTrue((archive / "2023").exists())
             self.assertTrue((archive / "2023" / "09-01").exists())
+
+    def test_photo_normalize_prompts_are_localized_and_clean(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            folders = [archive / "4770", archive / "4771"]
+            for folder in folders:
+                folder.mkdir()
+
+            prompts: list[str] = []
+            confirms: list[str] = []
+
+            def record_prompt(text: str, *args, **kwargs):
+                prompts.append(text)
+                if "Month" in text or "Месяц" in text:
+                    return "09" if "4770" in text else "03"
+                if "Year" in text or "Год" in text:
+                    return "2023"
+                return "y"
+
+            def record_confirm(text: str, *args, **kwargs):
+                confirms.append(text)
+                return len(confirms) > 1
+
+            with (
+                patch("roll.cli.guess_archive_year", return_value=2023),
+                patch("roll.cli._photo_folders", return_value=folders),
+                patch("roll.cli.typer.confirm", side_effect=record_confirm),
+                patch("roll.cli.typer.prompt", side_effect=record_prompt),
+            ):
+                _build_photo_normalization_plans(archive)
+
+            self.assertTrue(any("Year 2023 correct" in item for item in confirms))
+            self.assertTrue(any("Month for 4770 [01-12]" in item for item in prompts))
+            self.assertTrue(any("Month for 4771 [01-12]" in item for item in prompts))
+            self.assertTrue(all("::" not in item for item in prompts))
+            self.assertTrue(all("::" not in item for item in confirms))
 
     def test_doctor_flags_lowercase_keywords_in_vocabulary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -351,6 +390,29 @@ class NormalizationTests(unittest.TestCase):
                     for issue in report.issues
                 )
             )
+
+    def test_doctor_renders_single_warning_once(self) -> None:
+        with (
+            patch("roll.app.diagnostics.doctor_output.echo") as echo_mock,
+            patch(
+                "roll.app.diagnostics.doctor_output.highlight_cli_names",
+                side_effect=lambda value: value,
+            ),
+        ):
+            _echo_block(
+                "WARN:",
+                ["keywords.txt is not canonical:"],
+                {"keywords.txt is not canonical:": ["/tmp/keywords.txt"]},
+            )
+
+        rendered = [call.args[0] for call in echo_mock.call_args_list]
+        self.assertEqual(
+            rendered,
+            [
+                "WARN: 1",
+                "  keywords.txt is not canonical: /tmp/keywords.txt",
+            ],
+        )
 
     def test_count_roll_statuses_groups_loaded_processed_failed(self) -> None:
         from roll.app.archive.stats import _count_statuses

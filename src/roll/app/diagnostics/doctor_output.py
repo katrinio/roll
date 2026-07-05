@@ -18,6 +18,7 @@ from roll.app.archive.normalization import (
     apply_normalization_plans,
     build_safe_rename_plan,
     collect_keyword_vocab_fixes,
+    normalize_keywords_in_archive,
     print_normalization_plan,
 )
 from roll.helpers.formatting import highlight_cli_names
@@ -148,6 +149,14 @@ def _render_fix_summaries(
         fixers.append(
             (Msg.DOCTOR_CAN_ADD, report.keyword_vocab_fixes, _apply_keyword_fixes)
         )
+    if report.keyword_vocab_normalize:
+        fixers.append(
+            (
+                Msg.DOCTOR_CAN_FIX,
+                [str(path) for path in report.keyword_vocab_normalize],
+                _apply_keyword_normalization,
+            )
+        )
 
     if fix and any(
         issue.message.startswith(str(Doctor.LANGUAGE_INVALID))
@@ -189,7 +198,7 @@ def _apply_language_fix(archives: list[Path], verbose: bool) -> None:
 def _apply_normalization_fixes(archives: list[Path], verbose: bool) -> None:
     plans = [build_safe_rename_plan(archive) for archive in archives]
     apply_normalization_plans(plans)
-    echo(Msg.DOCTOR_FIXES_APPLIED)
+    echo("Fixes applied.")
     if verbose:
         for plan in plans:
             if plan.rules:
@@ -205,7 +214,17 @@ def _apply_keyword_fixes(archives: list[Path], verbose: bool) -> None:
         if applied and verbose:
             echo_lines([""])
             echo(f"  {applied}")
-    echo(Msg.DOCTOR_KEYWORDS_APPLIED)
+    echo("Keywords fixes applied.")
+
+
+def _apply_keyword_normalization(archives: list[Path], verbose: bool) -> None:
+    for archive in archives:
+        touched = normalize_keywords_in_archive(archive)
+        if verbose and touched:
+            echo_lines([""])
+            for path in touched:
+                echo(f"  {path}")
+    echo("Fixes applied.")
 
 
 def _append_group(
@@ -238,7 +257,8 @@ def _echo_block(prefix: str, order: list[str], groups: dict[str, list[str]]) -> 
             echo(f"  {_group_title(title)} {len(items)}")
         else:
             echo(f"  {items[0]}")
-        echo_lines([f"    {item}" for item in items])
+        if len(items) > 1:
+            echo_lines([f"    {item}" for item in items])
 
 
 def _group_title(title: str) -> str:
