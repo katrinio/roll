@@ -90,7 +90,9 @@ class Msg(Headers):
         "cli.uninitialized", "roll не инициализирован.", "roll is not initialized."
     )
     CLI_INITIALIZED = Message(
-        "cli.initialized", "roll инициализирован.", "roll initialized."
+        "cli.initialized",
+        "Архив и workspace инициализированы.",
+        "Archive and workspace initialized.",
     )
     NO_RESULTS = Message("cli.no_results", "Ничего не найдено.", "Nothing found.")
     NO_STATS_DATA = Message(
@@ -106,6 +108,53 @@ class Msg(Headers):
         "cli.stock_empty_manual",
         "Запас пуст. Используй --manual для ручного ввода.",
         "Stock is empty. Use --manual for manual entry.",
+    )
+    ROLL_EDIT_HEADER = Message(
+        "cli.roll_edit_header", "Редактирование ролла", "Edit roll"
+    )
+    ROLL_EDIT_SELECT = Message("cli.roll_edit_select", "Выбери ролл", "Select a roll")
+    ROLL_EDIT_AVAILABLE = Message(
+        "cli.roll_edit_available",
+        "Доступные роллы:",
+        "Available rolls:",
+    )
+    ROLL_EDIT_FILM = Message("cli.roll_edit_film", "Пленка", "Film")
+    ROLL_EDIT_CAMERA = Message("cli.roll_edit_camera", "Камера", "Camera")
+    ROLL_EDIT_STATUS = Message("cli.roll_edit_status", "Статус", "Status")
+    ROLL_EDIT_FEATURES = Message("cli.roll_edit_features", "Особенности", "Features")
+    ROLL_EDIT_KEYWORDS = Message("cli.roll_edit_keywords", "Ключевые слова", "Keywords")
+    ROLL_EDIT_ROLL_LABEL = Message(
+        "cli.roll_edit_roll_label",
+        "{path} | {film} | {camera} | {status}",
+        "{path} | {film} | {camera} | {status}",
+    )
+    ROLL_EDIT_ORIGINAL_SOURCE = Message(
+        "cli.roll_edit_original_source",
+        "Исходник",
+        "Original source",
+    )
+    ROLL_EDIT_DIGITAL_COPY = Message(
+        "cli.roll_edit_digital_copy",
+        "Цифровая копия",
+        "Digital copy",
+    )
+    ROLL_EDIT_ORIGINAL_STATUS = Message(
+        "cli.roll_edit_original_status",
+        "Состояние оригинала",
+        "Original status",
+    )
+    ROLL_EDIT_UPDATED = Message(
+        "cli.roll_edit_updated", "Ролл обновлен.", "Roll updated."
+    )
+    PROMPT_QUANTITY = Message("cli.prompt_quantity", "Количество:", "Quantity:")
+    PROMPT_FILM = Message("cli.prompt_film", "Пленка:", "Film:")
+    PROMPT_CAMERA = Message("cli.prompt_camera", "Камера:", "Camera:")
+    PROMPT_LOAD_DATE = Message("cli.prompt_load_date", "Дата загрузки", "Load date")
+    PROMPT_MANUAL_FILM = Message("cli.prompt_manual_film", "Пленка: ", "Film: ")
+    LOAD_SUCCESS = Message("cli.load_success", "Загружено:", "Loaded:")
+    PROCESS_SUCCESS = Message("cli.process_success", "Обработано:", "Processed:")
+    FAILED_SUCCESS = Message(
+        "cli.failed_success", "Помечено как failed:", "Marked as failed:"
     )
     INVALID_DATE = Message("cli.invalid_date", "Неверная дата.", "Invalid date.")
     INVALID_QUANTITY = Message(
@@ -131,6 +180,31 @@ class Msg(Headers):
         "cli.tags_already_normalized",
         "Теги уже нормализованы.",
         "Tags are already normalized.",
+    )
+    NORMALIZE_PHOTOS_CONFIRM_YEAR = Message(
+        "cli.normalize_photos_confirm_year",
+        "Год {year} верен",
+        "Year {year} correct",
+    )
+    NORMALIZE_PHOTOS_YEAR = Message(
+        "cli.normalize_photos_year",
+        "Год для {folder}",
+        "Year for {folder}",
+    )
+    NORMALIZE_PHOTOS_MONTH = Message(
+        "cli.normalize_photos_month",
+        "Месяц для {folder} [01-12]",
+        "Month for {folder} [01-12]",
+    )
+    NORMALIZE_PHOTOS_MANUAL = Message(
+        "cli.normalize_photos_manual",
+        "Месяцы вручную?",
+        "Manual months?",
+    )
+    NORMALIZE_PHOTOS_PREVIEW = Message(
+        "cli.normalize_photos_preview",
+        "План фото:",
+        "Photo plan:",
     )
     NO_CHOICE = Message(
         "cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll."

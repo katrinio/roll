@@ -11,7 +11,7 @@ def render_stats_report(
     if not report.roll_count:
         from typer import echo
 
-        echo(Msg.NO_STATS_DATA)
+        echo(str(Msg.NO_STATS_DATA))
         return
 
     from typer import echo

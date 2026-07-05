@@ -17,7 +17,7 @@ def process_archives(archives: list[Path]) -> int:
                 loaded_rolls.append(roll.folder)
 
     if not loaded_rolls:
-        typer.echo(Msg.BATCH_NO_LOADED)
+        typer.echo(str(Msg.BATCH_NO_LOADED))
         return 0
 
     typer.echo(f"{Msg.BATCH_WILL_PROCESS} {len(loaded_rolls)}")

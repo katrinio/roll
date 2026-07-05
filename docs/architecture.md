@@ -51,7 +51,8 @@ archives = ["/path/to/archive"]
 | `rl features add` / `rl tags add` | global config, workspace, vocabulary, roll | roll, vocabulary | no | roll editing |
 | `rl search` / `rl scan` / `rl status` / `rl stats` / `rl vocab` | global config, workspace, roll, vocabulary | no | no | read-only |
 | `rl doctor` | global config, workspace, stock, roll, vocabulary | no | yes with `--fix` | integrity |
-| `rl normalize` | workspace, roll, vocabulary | roll, vocabulary | yes | normalization |
+| `rl normalize` | current archive workspace, roll, vocabulary | roll, vocabulary | yes | normalization |
+| `rl normalize --photos` | photo folders in current archive workspace | archive folders | yes | photo import |
 | `rl batch process` | global config, workspace, roll | roll | no | batch update |
 
 ## Lifecycle
@@ -120,6 +121,7 @@ rl doctor --fix
 - the archive is self-contained;
 - user edits only what the filesystem cannot infer;
 - normalization and doctor fixes build a plan before changing anything;
+- `doctor` reports issues first and lists safe fixes in a separate block;
 - vocabularies stay plain text and grow automatically;
 - dev-facing diagnostics stay in English; only user-facing UI is localized;
 - English is the default UI language.

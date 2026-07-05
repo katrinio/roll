@@ -14,6 +14,7 @@ class Doctor:
     LANGUAGE_NOT_EXPLICIT = "Language not set explicitly; using EN."
     LANGUAGE_INVALID = "Invalid global config language:"
     GLOBAL_CONFIG_DUPLICATE_ARCHIVES = "Duplicate archives in global config:"
+    ARCHIVE_NOT_DIRECTORY = "Archive is not a directory:"
 
     # archive and workspace
     ARCHIVE_MISSING = "Archive not found:"

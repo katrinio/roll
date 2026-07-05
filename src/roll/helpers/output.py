@@ -5,11 +5,11 @@ import typer
 
 def echo_lines(lines: Iterable[str]) -> None:
     for line in lines:
-        typer.echo(line)
+        typer.echo(str(line))
 
 
 def echo_section(title: str, body: Iterable[str] = ()) -> None:
-    typer.echo(title)
+    typer.echo(str(title))
     typer.echo("")
     echo_lines(body)
 

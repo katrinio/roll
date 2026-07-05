@@ -7,11 +7,14 @@ from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import patch
 
+import typer
+
 from roll.app.diagnostics.diagnostics import run_doctor
 from roll.app.diagnostics import diagnostics as diagnostics_module
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace import config as config_module
 from roll.app.workspace.config import Config, load_config, save_config, set_lang
+from roll.helpers.guards import require_archive, require_current_archive
 from roll.messages import Msg
 
 
@@ -133,6 +136,27 @@ class ConfigTests(unittest.TestCase):
                 )
             )
 
+    def test_doctor_errors_when_archive_path_is_a_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.write_text("not a directory", encoding="utf-8")
+            config_module.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
+            config_module.CONFIG_FILE.write_text(
+                f'archives = ["{archive}"]\n',
+                encoding="utf-8",
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "Archive is not a directory:" in issue.message
+                    for issue in report.issues
+                )
+            )
+
     def test_doctor_errors_when_global_config_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)
@@ -177,6 +201,37 @@ class ConfigTests(unittest.TestCase):
             self.assertIn("Global config", output)
             self.assertIn(f"Workspace {first}", output)
             self.assertIn(f"Workspace {second}", output)
+
+    def test_require_archive_prefers_current_worktree_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            first = Path(tmp) / "archive-a"
+            second = Path(tmp) / "archive-b"
+            first.mkdir()
+            second.mkdir()
+            save_config(Config(archives=[first, second], lang="EN"))
+
+            cwd = second / "nested"
+            cwd.mkdir()
+            patcher = patch("roll.helpers.guards.Path.cwd", return_value=cwd)
+            self.addCleanup(patcher.stop)
+            patcher.start()
+
+            self.assertEqual(require_archive(load_config()), second)
+
+    def test_require_current_archive_requires_current_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.mkdir()
+            save_config(Config(archives=[archive], lang="EN"))
+
+            patcher = patch("roll.helpers.guards.Path.cwd", return_value=Path(tmp))
+            self.addCleanup(patcher.stop)
+            patcher.start()
+
+            with self.assertRaises(typer.Exit):
+                require_current_archive(load_config())
 
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"
