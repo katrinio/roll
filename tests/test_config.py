@@ -7,12 +7,14 @@ from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import patch
 
+import typer
+
 from roll.app.diagnostics.diagnostics import run_doctor
 from roll.app.diagnostics import diagnostics as diagnostics_module
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace import config as config_module
 from roll.app.workspace.config import Config, load_config, save_config, set_lang
-from roll.helpers.guards import require_archive
+from roll.helpers.guards import require_archive, require_current_archive
 from roll.messages import Msg
 
 
@@ -216,6 +218,20 @@ class ConfigTests(unittest.TestCase):
             patcher.start()
 
             self.assertEqual(require_archive(load_config()), second)
+
+    def test_require_current_archive_requires_current_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.mkdir()
+            save_config(Config(archives=[archive], lang="EN"))
+
+            patcher = patch("roll.helpers.guards.Path.cwd", return_value=Path(tmp))
+            self.addCleanup(patcher.stop)
+            patcher.start()
+
+            with self.assertRaises(typer.Exit):
+                require_current_archive(load_config())
 
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"

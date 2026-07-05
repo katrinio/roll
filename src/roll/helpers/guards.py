@@ -37,3 +37,20 @@ def require_archive(config: Config) -> Path:
             continue
         return archive
     return config.archives[0]
+
+
+def require_current_archive(config: Config) -> Path:
+    if not config.archives:
+        typer.echo(highlight_cli_names(Msg.UNINITIALIZED_NOTICE))
+        raise typer.Exit(code=1)
+
+    current = Path.cwd().resolve()
+    for archive in config.archives:
+        try:
+            current.relative_to(archive.resolve())
+        except ValueError:
+            continue
+        return archive
+
+    typer.echo(highlight_cli_names(Msg.UNINITIALIZED_NOTICE))
+    raise typer.Exit(code=1)

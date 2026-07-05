@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 import unittest
+import os
 
 from roll.app.workspace.config import Config
 from roll.app.diagnostics.diagnostics import run_doctor
@@ -10,9 +11,14 @@ from roll.app.archive.normalization import (
     NamingStrategy,
     apply_keyword_vocab_fixes,
     apply_normalization_plan,
+    apply_normalization_plans,
     build_safe_rename_plan,
+    build_photo_normalization_plan,
     collect_keyword_vocab_fixes,
+    NormalizationPlan,
+    RenameRule,
 )
+from roll.app.archive.photo_dates import guess_archive_month
 from roll.app.archive.search import RollIndex
 from roll.filesystem import build_archive_tree, count_photo_files
 from roll.app.workspace.roll_store import RollMetadata, save_roll_metadata
@@ -47,6 +53,24 @@ class NormalizationTests(unittest.TestCase):
 
     def test_naming_strategy_builds_folder_name_from_loaded_at(self) -> None:
         self.assertEqual(NamingStrategy.build_folder_name("2025-10-19"), "10-19")
+
+    def test_guess_archive_month_uses_most_common_photo_month(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            for name, timestamp in (
+                ("a.jpg", 1711929600),
+                ("b.jpg", 1711929600),
+                ("c.jpg", 1709251200),
+            ):
+                path = folder / name
+                path.write_bytes(b"")
+                os.utime(path, (timestamp, timestamp))
+
+            guess = guess_archive_month(folder)
+
+            self.assertIsNotNone(guess)
+            self.assertEqual(guess.month_key, "2024-04")
+            self.assertEqual(guess.confidence, 2)
 
     def test_doctor_flags_non_uppercase_keywords(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -122,6 +146,42 @@ class NormalizationTests(unittest.TestCase):
                 (vocabulary / "keywords.txt").read_text(encoding="utf-8"),
                 "EASTER\nFIRE\n",
             )
+
+    def test_build_photo_normalization_plan_uses_photo_month(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            folder = archive / "Фото"
+            folder.mkdir()
+            for name, timestamp in (
+                ("a.jpg", 1711929600),
+                ("b.jpg", 1711929600),
+                ("c.jpg", 1709251200),
+            ):
+                path = folder / name
+                path.write_bytes(b"")
+                os.utime(path, (timestamp, timestamp))
+
+            plan = build_photo_normalization_plan(archive)
+
+            self.assertEqual(len(plan.rules), 1)
+            self.assertEqual(plan.rules[0].folder, folder)
+            self.assertEqual(plan.rules[0].target, archive / "2024" / "04-01")
+
+    def test_apply_normalization_plans_creates_target_parent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            source = archive / "Фото"
+            source.mkdir()
+            plan = NormalizationPlan(
+                archive=archive,
+                rules=[RenameRule(folder=source, target=archive / "2023" / "09-01")],
+                conflicts=[],
+            )
+
+            apply_normalization_plans([plan])
+
+            self.assertTrue((archive / "2023").exists())
+            self.assertTrue((archive / "2023" / "09-01").exists())
 
     def test_doctor_flags_lowercase_keywords_in_vocabulary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

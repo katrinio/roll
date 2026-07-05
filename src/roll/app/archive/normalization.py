@@ -13,6 +13,7 @@ from roll.app.workspace.roll_store import (
     save_roll_metadata,
 )
 from roll.app.workspace.workspace import workspace_for
+from roll.app.archive.photo_dates import guess_archive_month
 from roll.messages import Normalize
 
 
@@ -100,9 +101,32 @@ def build_safe_rename_plan(archive: Path) -> NormalizationPlan:
                 continue
             target = roll_dir.with_name(target_name)
             if target.exists():
-                conflicts.append(f"Target already exists: {target}")
+                conflicts.append(f"{Normalize.TARGET_ALREADY_EXISTS} {target}")
                 continue
             rules.append(RenameRule(folder=roll_dir, target=target))
+
+    conflicts.extend(_detect_conflicts(rules))
+    return NormalizationPlan(archive=archive, rules=rules, conflicts=conflicts)
+
+
+def build_photo_normalization_plan(archive: Path) -> NormalizationPlan:
+    rules: list[RenameRule] = []
+    conflicts: list[str] = []
+
+    for folder in sorted(
+        (path for path in archive.iterdir() if path.is_dir() and path.name != ".roll"),
+        key=lambda path: path.name.casefold(),
+    ):
+        guess = guess_archive_month(folder)
+        if guess is None:
+            continue
+
+        target = archive / f"{guess.year:04d}" / f"{guess.month:02d}-01"
+        if target.exists():
+            conflicts.append(f"{Normalize.TARGET_ALREADY_EXISTS} {target}")
+            continue
+
+        rules.append(RenameRule(folder=folder, target=target))
 
     conflicts.extend(_detect_conflicts(rules))
     return NormalizationPlan(archive=archive, rules=rules, conflicts=conflicts)
@@ -145,6 +169,8 @@ def apply_normalization_plans(plans: list[NormalizationPlan]) -> None:
         ):
             os.replace(source, temp_path)
             renamed_to_temp.append((source, temp_path, target))
+        for _, _, target in all_rules:
+            target.parent.mkdir(parents=True, exist_ok=True)
         for _, temp_path, target in all_rules:
             os.replace(temp_path, target)
     except Exception:
@@ -250,11 +276,11 @@ def _detect_conflicts(rules: list[RenameRule]) -> list[str]:
 
     for rule in rules:
         if rule.target.exists() and rule.target != rule.folder:
-            conflicts.append(f"Target already exists: {rule.target}")
+            conflicts.append(f"{Normalize.TARGET_ALREADY_EXISTS} {rule.target}")
         if rule.target in sources and rule.target != rule.folder:
-            conflicts.append(f"Target collides with source: {rule.target}")
+            conflicts.append(f"{Normalize.TARGET_COLLIDES_WITH_SOURCE} {rule.target}")
         if rule.target in targets and targets[rule.target] != rule.folder:
-            conflicts.append(f"Duplicate target: {rule.target}")
+            conflicts.append(f"{Normalize.DUPLICATE_TARGET} {rule.target}")
         targets[rule.target] = rule.folder
 
     return conflicts

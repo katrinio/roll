@@ -134,6 +134,26 @@ class Msg(Headers):
         "Теги уже нормализованы.",
         "Tags are already normalized.",
     )
+    NORMALIZE_PHOTOS_CONFIRM_YEAR = Message(
+        "cli.normalize_photos_confirm_year",
+        "Год {year} верен",
+        "Year {year} correct",
+    )
+    NORMALIZE_PHOTOS_YEAR = Message(
+        "cli.normalize_photos_year",
+        "Год для {folder}",
+        "Year for {folder}",
+    )
+    NORMALIZE_PHOTOS_MONTH = Message(
+        "cli.normalize_photos_month",
+        "Месяц для {folder} [01-12]",
+        "Month for {folder} [01-12]",
+    )
+    NORMALIZE_PHOTOS_MANUAL = Message(
+        "cli.normalize_photos_manual",
+        "Месяцы вручную?",
+        "Manual months?",
+    )
     NO_CHOICE = Message(
         "cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll."
     )
