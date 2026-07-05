@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 
 from roll.app.archive.commands import (
@@ -10,6 +12,7 @@ from roll.app.archive.commands import (
     status as archive_status,
     vocab as archive_vocab,
 )
+from roll.app.archive.batch import process_archives
 from roll.app.root_commands import config as root_config
 from roll.app.root_commands import config_lang as root_config_lang
 from roll.app.root_commands import init as root_init
@@ -17,6 +20,7 @@ from roll.app.root_commands import update as root_update
 from roll.app.root_commands import version as root_version
 from roll.app.flows.stock import app as stock_app
 from roll.app.flows.stock import edit_batch, edit_list_field, load as load_roll
+from roll.helpers.guards import require_config
 from roll.messages import Msg, Normalize
 
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
@@ -49,7 +53,7 @@ def main(
 
 
 @app.command("init")
-def init(archive: typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
+def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
     root_init(archive)
 
 
@@ -152,6 +156,11 @@ def batch(
         return
 
     edit_batch(year, film, camera, status, set_status, set_camera, add_feature, add_tag)
+
+
+@batch_app.command("process")
+def batch_process() -> None:
+    process_archives(require_config().archives)
 
 
 @app.command("normalize")
