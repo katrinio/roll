@@ -52,7 +52,7 @@ class Headers:
     ARCHIVE_MISSING = Message(
         "cli.archive_missing", "Архив не найден:", "Archive not found:"
     )
-    STATUS_HEADER = Message("cli.status_header", "Состояние индекса", "Index status")
+    STATUS_HEADER = Message("cli.status_header", "Состояние", "Status")
     STATUS_ARCHIVE_FOLDERS = Message(
         "cli.status_archive_folders", "Папок в архиве:", "Folders in archive:"
     )
@@ -65,9 +65,7 @@ class Headers:
         "Не проиндексированные папки:",
         "Unindexed folders:",
     )
-    STATUS_ROLLS = Message(
-        "cli.status_rolls", "Пленки по статусам:", "Films by status:"
-    )
+    STATUS_ROLLS = Message("cli.status_rolls", "По статусам:", "By status:")
     STATUS_NO_ROLL_TOML = Message(
         "cli.status_no_roll_toml", "без roll.toml:", "without roll.toml:"
     )
@@ -87,12 +85,10 @@ class Headers:
 
 class Msg(Headers):
     CLI_UNINITIALIZED = Message(
-        "cli.uninitialized", "roll не инициализирован.", "roll is not initialized."
+        "cli.uninitialized", "Архив не инициализирован.", "Archive not initialized."
     )
     CLI_INITIALIZED = Message(
-        "cli.initialized",
-        "Архив и workspace инициализированы.",
-        "Archive and workspace initialized.",
+        "cli.initialized", "Инициализация завершена.", "Initialized."
     )
     NO_RESULTS = Message("cli.no_results", "Ничего не найдено.", "Nothing found.")
     NO_STATS_DATA = Message(
@@ -103,20 +99,16 @@ class Msg(Headers):
         "cli.no_loaded_rolls", "Нет загруженных пленок.", "No loaded films."
     )
     STOCK_EMPTY = Message("cli.stock_empty", "Запас пуст.", "Stock is empty.")
-    STOCK_HEADER = Message("cli.stock_header", "Запас пленки", "Film stock")
+    STOCK_HEADER = Message("cli.stock_header", "Запас", "Stock")
     STOCK_EMPTY_MANUAL = Message(
         "cli.stock_empty_manual",
-        "Запас пуст. Используй --manual для ручного ввода.",
-        "Stock is empty. Use --manual for manual entry.",
+        "Запас пуст. Используй --manual.",
+        "Stock is empty. Use --manual.",
     )
-    ROLL_EDIT_HEADER = Message(
-        "cli.roll_edit_header", "Редактирование ролла", "Edit roll"
-    )
-    ROLL_EDIT_SELECT = Message("cli.roll_edit_select", "Выбери ролл", "Select a roll")
+    ROLL_EDIT_HEADER = Message("cli.roll_edit_header", "Редактирование", "Editing")
+    ROLL_EDIT_SELECT = Message("cli.roll_edit_select", "Выберите ролл", "Select roll")
     ROLL_EDIT_AVAILABLE = Message(
-        "cli.roll_edit_available",
-        "Доступные роллы:",
-        "Available rolls:",
+        "cli.roll_edit_available", "Доступные роллы:", "Available rolls:"
     )
     ROLL_EDIT_FILM = Message("cli.roll_edit_film", "Пленка", "Film")
     ROLL_EDIT_CAMERA = Message("cli.roll_edit_camera", "Камера", "Camera")
@@ -129,28 +121,18 @@ class Msg(Headers):
         "{path} | {film} | {camera} | {status}",
     )
     ROLL_EDIT_ORIGINAL_SOURCE = Message(
-        "cli.roll_edit_original_source",
-        "Исходник",
-        "Original source",
+        "cli.roll_edit_original_source", "Исходник", "Original source"
     )
     ROLL_EDIT_DIGITAL_COPY = Message(
-        "cli.roll_edit_digital_copy",
-        "Цифровая копия",
-        "Digital copy",
+        "cli.roll_edit_digital_copy", "Цифровая копия", "Digital copy"
     )
     ROLL_EDIT_ORIGINAL_STATUS = Message(
-        "cli.roll_edit_original_status",
-        "Состояние оригинала",
-        "Original status",
+        "cli.roll_edit_original_status", "Состояние оригинала", "Original status"
     )
     ROLL_EDIT_SELECT_HINT = Message(
-        "cli.roll_edit_select_hint",
-        "Выбери номер или нажми Enter, чтобы оставить текущее значение.",
-        "Choose a number or press Enter to keep the current value.",
+        "cli.roll_edit_select_hint", "Номер или Enter", "Number or Enter"
     )
-    ROLL_EDIT_UPDATED = Message(
-        "cli.roll_edit_updated", "Ролл обновлен.", "Roll updated."
-    )
+    ROLL_EDIT_UPDATED = Message("cli.roll_edit_updated", "Обновлено.", "Updated.")
     PROMPT_QUANTITY = Message("cli.prompt_quantity", "Количество:", "Quantity:")
     PROMPT_FILM = Message("cli.prompt_film", "Пленка:", "Film:")
     PROMPT_CAMERA = Message("cli.prompt_camera", "Камера:", "Camera:")
@@ -170,18 +152,16 @@ class Msg(Headers):
     ROLL_EXISTS = Message(
         "cli.roll_exists", "Roll уже существует:", "Roll already exists:"
     )
-    CHOOSE_STOCK = Message(
-        "cli.choose_stock", "Выбери пленку из запаса.", "Choose a film from stock."
-    )
+    CHOOSE_STOCK = Message("cli.choose_stock", "Выберите пленку.", "Select film.")
     SEARCH_QUERY_REQUIRED = Message(
         "cli.search_query_required",
-        "Нужно указать строку поиска. Пример: rl search pizza",
-        "You need to provide a search query. Example: rl search pizza",
+        "Нужен запрос. Пример: rl search pizza",
+        "Query required. Example: rl search pizza",
     )
     SEARCH_NEEDS_QUERY_OR_FILTERS = Message(
         "cli.search_needs_query_or_filters",
-        "Нужно указать строку поиска или хотя бы один фильтр.",
-        "You need to provide a search query or at least one filter.",
+        "Нужен запрос или фильтр.",
+        "Query or filter required.",
     )
     TAGS_NORMALIZED = Message(
         "cli.tags_normalized", "Теги нормализованы.", "Tags normalized."
@@ -197,9 +177,7 @@ class Msg(Headers):
         "Year {year} correct",
     )
     NORMALIZE_PHOTOS_YEAR = Message(
-        "cli.normalize_photos_year",
-        "Год для {folder}",
-        "Year for {folder}",
+        "cli.normalize_photos_year", "Год для {folder}", "Year for {folder}"
     )
     NORMALIZE_PHOTOS_MONTH = Message(
         "cli.normalize_photos_month",
@@ -207,14 +185,10 @@ class Msg(Headers):
         "Month for {folder} [01-12]",
     )
     NORMALIZE_PHOTOS_MANUAL = Message(
-        "cli.normalize_photos_manual",
-        "Месяцы вручную?",
-        "Manual months?",
+        "cli.normalize_photos_manual", "Месяцы вручную?", "Manual months?"
     )
     NORMALIZE_PHOTOS_PREVIEW = Message(
-        "cli.normalize_photos_preview",
-        "План фото:",
-        "Photo plan:",
+        "cli.normalize_photos_preview", "План фото:", "Photo plan:"
     )
     NO_CHOICE = Message(
         "cli.no_choice", "Не удалось выбрать roll.", "Could not select a roll."
@@ -236,54 +210,44 @@ class Msg(Headers):
     BATCH_PROCESSED = Message("cli.batch_processed", "Обработано:", "Processed:")
     BATCH_NEEDS_FILTERS = Message(
         "cli.batch_needs_filters",
-        "Нужно указать хотя бы один фильтр и одно изменение.",
-        "You need at least one filter and one change.",
+        "Нужен фильтр и изменение.",
+        "Filter and change required.",
     )
-    BATCH_FILTER_YEAR = Message(
-        "cli.batch_filter_year", "Фильтр по году.", "Filter by year."
-    )
+    BATCH_FILTER_YEAR = Message("cli.batch_filter_year", "Год.", "Year.")
     BATCH_FILTER_FILM = Message(
         "cli.batch_filter_film",
-        "Фильтр по пленкам через запятую.",
-        "Comma-separated film names.",
+        "Пленки через запятую.",
+        "Films, comma-separated.",
     )
     BATCH_FILTER_CAMERA = Message(
         "cli.batch_filter_camera",
-        "Фильтр по камерам через запятую.",
-        "Comma-separated camera names.",
+        "Камеры через запятую.",
+        "Cameras, comma-separated.",
     )
     BATCH_FILTER_STATUS = Message(
         "cli.batch_filter_status",
-        "Фильтр по статусам через запятую.",
-        "Comma-separated statuses.",
+        "Статусы через запятую.",
+        "Statuses, comma-separated.",
     )
     BATCH_SET_STATUS = Message(
-        "cli.batch_set_status",
-        "Установить статус у выбранных роллов.",
-        "Set the status on selected rolls.",
+        "cli.batch_set_status", "Статус для выбранных роллов.", "Set status."
     )
     BATCH_SET_CAMERA = Message(
-        "cli.batch_set_camera",
-        "Установить камеру у выбранных роллов.",
-        "Set the camera on selected rolls.",
+        "cli.batch_set_camera", "Камера для выбранных роллов.", "Set camera."
     )
     BATCH_ADD_FEATURE = Message(
         "cli.batch_add_feature",
-        "Добавить особенности через запятую.",
-        "Comma-separated features to append.",
+        "Особенности через запятую.",
+        "Features, comma-separated.",
     )
     BATCH_ADD_TAG = Message(
-        "cli.batch_add_tag",
-        "Добавить теги через запятую.",
-        "Comma-separated tags to append.",
+        "cli.batch_add_tag", "Теги через запятую.", "Tags, comma-separated."
     )
-    BATCH_TITLE = Message(
-        "cli.batch_title", "Массовое редактирование роллов", "Batch edit rolls"
-    )
+    BATCH_TITLE = Message("cli.batch_title", "Массовое редактирование", "Batch editing")
     STATS_YEAR = Message("cli.stats_year", "Год:", "Year:")
     STATS_ROLLS = Message("cli.stats_rolls", "Роллов:", "Rolls:")
-    STATS_FILMS = Message("cli.stats_films", "Пленок в статистике:", "Films in stats:")
-    STATS_TAGS = Message("cli.stats_tags", "Тегов в статистике:", "Tags in stats:")
+    STATS_FILMS = Message("cli.stats_films", "Пленок:", "Films:")
+    STATS_TAGS = Message("cli.stats_tags", "Тегов:", "Tags:")
     STATS_BY_STATUS = Message("cli.stats_by_status", "По статусам", "By status")
     STATS_BY_YEAR = Message("cli.stats_by_year", "По годам", "By year")
     STATS_BY_FILM = Message("cli.stats_by_film", "По пленкам", "By film")
@@ -341,11 +305,9 @@ class Msg(Headers):
         "Invalid roll.toml format:",
     )
     LANGUAGE = Message("cli.language", "Язык:", "Language:")
-    LANGUAGE_SET_TO = Message(
-        "cli.language_set_to", "Язык установлен:", "Language set to:"
-    )
+    LANGUAGE_SET_TO = Message("cli.language_set_to", "Язык:", "Language:")
     ALLOWED_VALUES = Message(
-        "cli.allowed_values", "Допустимые значения: EN, RU.", "Allowed values: EN, RU."
+        "cli.allowed_values", "Допустимые: EN, RU.", "Allowed: EN, RU."
     )
 
     RUN_TO_INITIALIZE = Message(
@@ -355,8 +317,8 @@ class Msg(Headers):
     )
     UNINITIALIZED_MESSAGE = Message(
         "cli.uninitialized_message",
-        "roll не инициализирован.\nЗапусти: rl init ~/your/archive/path",
-        "roll is not initialized.\nRun: rl init ~/your/archive/path",
+        "Архив не инициализирован.\nЗапусти: rl init ~/your/archive/path",
+        "Archive not initialized.\nRun: rl init ~/your/archive/path",
     )
     UNINITIALIZED_NOTICE = Message(
         "cli.uninitialized_notice",
