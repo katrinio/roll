@@ -28,6 +28,7 @@ from roll.app.workspace.statuses import VALID_STATUSES
 from roll.app.workspace.workspace import workspace_for
 from roll.app.archive.normalization import apply_keyword_vocab_fixes
 from roll.app.archive.batch import batch_rolls
+from roll.app.archive.selection import split_csv
 from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_prompt
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines
@@ -532,6 +533,4 @@ def _cleanup_failed_load(roll_folder: Path, roll_file: Path) -> None:
 
 
 def _split_csv(value: str | None) -> list[str]:
-    if not value:
-        return []
-    return [item.strip() for item in value.split(",") if item.strip()]
+    return split_csv(value)

@@ -3,12 +3,13 @@ from pathlib import Path
 
 import typer
 
+from roll.app.archive.search import RollIndex
+from roll.app.archive.selection import select_rolls
 from roll.app.workspace.roll_store import (
     RollMetadata,
     load_roll_metadata,
     save_roll_metadata,
 )
-from roll.app.archive.search import RollIndex, find_rolls
 from roll.helpers.output import echo_list
 from roll.messages import Msg
 
@@ -29,7 +30,7 @@ def batch_rolls(
     add_features: list[str] | None = None,
     add_tags: list[str] | None = None,
 ) -> int:
-    rolls = _select_rolls(
+    rolls = select_rolls(
         archives,
         year=year,
         films=films,
@@ -64,34 +65,6 @@ def batch_rolls(
     return changed
 
 
-def _select_rolls(
-    archives: list[Path],
-    *,
-    year: str | None,
-    films: list[str] | None,
-    cameras: list[str] | None,
-    statuses: list[str] | None,
-) -> list[RollIndex]:
-    selected: list[RollIndex] = []
-    film_set = _normalize_set(films)
-    camera_set = _normalize_set(cameras)
-    status_set = _normalize_set(statuses)
-
-    for archive in archives:
-        for roll in find_rolls(archive):
-            if year is not None and roll.loaded_at[:4] != year:
-                continue
-            if film_set and roll.film.casefold() not in film_set:
-                continue
-            if camera_set and roll.camera.casefold() not in camera_set:
-                continue
-            if status_set and roll.status.casefold() not in status_set:
-                continue
-            selected.append(roll)
-
-    return selected
-
-
 def _apply_changes(
     roll: RollIndex,
     *,
@@ -119,10 +92,6 @@ def _apply_changes(
             ),
         )
     return updated
-
-
-def _normalize_set(values: list[str] | None) -> set[str]:
-    return {value.casefold() for value in values or [] if value}
 
 
 def _merge_unique(existing: list[str], new_values: list[str]) -> list[str]:
