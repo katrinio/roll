@@ -27,6 +27,7 @@ from roll.app.workspace.stock_store import (
 from roll.app.workspace.statuses import VALID_STATUSES
 from roll.app.workspace.workspace import workspace_for
 from roll.app.archive.normalization import apply_keyword_vocab_fixes
+from roll.app.archive.batch import batch_rolls
 from roll.helpers.autocomplete import autocomplete_many_prompt, autocomplete_prompt
 from roll.helpers.guards import require_archive, require_config
 from roll.helpers.output import echo_lines
@@ -168,6 +169,70 @@ def edit() -> None:
     typer.echo(f"{Msg.ROLL_EDIT_UPDATED} {updated.loaded_at}")
 
 
+def edit_list_field(
+    prompt_title: str, dictionary_name: str, success_label: str
+) -> None:
+    archive = require_archive(require_config())
+    rolls = _rolls(archive)
+    if not rolls:
+        typer.echo(str(Msg.NO_ROLLS))
+        raise typer.Exit(code=1)
+
+    selected = _choose_roll_folder(rolls)
+    workspace = workspace_for(archive)
+    values = autocomplete_many_prompt(
+        prompt_title, workspace.dictionary(dictionary_name)
+    )
+    try:
+        metadata = (
+            update_roll_keywords(selected / "roll.toml", values)
+            if dictionary_name == "keywords"
+            else update_roll_features(selected / "roll.toml", values)
+        )
+        if dictionary_name == "keywords":
+            apply_keyword_vocab_fixes(archive, metadata.keywords)
+    except ValueError as exc:
+        typer.echo(str(exc))
+        raise typer.Exit(code=1)
+
+    typer.echo(f"{success_label}: {metadata.film}")
+
+
+def edit_batch(
+    year: str | None,
+    film: str | None,
+    camera: str | None,
+    status: str | None,
+    set_status: str | None,
+    set_camera: str | None,
+    add_feature: str | None,
+    add_tag: str | None,
+) -> None:
+    config = require_config()
+    filters = {"year": year, "film": film, "camera": camera, "status": status}
+    changes = {
+        "set_status": set_status,
+        "set_camera": set_camera,
+        "add_feature": add_feature,
+        "add_tag": add_tag,
+    }
+    if not any(filters.values()) or not any(changes.values()):
+        typer.echo(str(Msg.BATCH_NEEDS_FILTERS))
+        raise typer.Exit(code=1)
+
+    batch_rolls(
+        config.archives,
+        year=year,
+        films=_split_csv(film),
+        cameras=_split_csv(camera),
+        statuses=_split_csv(status),
+        status=set_status,
+        set_camera=set_camera,
+        add_features=_split_csv(add_feature),
+        add_tags=_split_csv(add_tag),
+    )
+
+
 def _prompt_loaded_at() -> str:
     value = typer.prompt(str(Msg.PROMPT_LOAD_DATE))
     normalized = value.strip().split("T", 1)[0].split(" ", 1)[0]
@@ -288,6 +353,26 @@ def _choose_roll(rolls: list[Path]) -> Path:
         if selected_label == _format_roll_label(path):
             return path
     raise ValueError(Msg.NO_CHOICE)
+
+
+def _choose_roll_folder(rolls: list[Path]) -> Path:
+    labels = [
+        f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
+        for path in rolls
+    ]
+    selected_label = _prompt_choice("Roll", labels)
+    for path in rolls:
+        label = f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
+        if label == selected_label:
+            return path
+    raise ValueError(Msg.NO_CHOICE)
+
+
+def _roll_status(path: Path) -> str:
+    try:
+        return load_roll_metadata(path / "roll.toml").status
+    except ValueError:
+        return "unknown"
 
 
 def _format_roll_label(path: Path) -> str:
@@ -444,3 +529,9 @@ def _cleanup_failed_load(roll_folder: Path, roll_file: Path) -> None:
             roll_folder.rmdir()
         except OSError:
             pass
+
+
+def _split_csv(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]

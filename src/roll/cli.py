@@ -1,36 +1,44 @@
+from __future__ import annotations
+
 from pathlib import Path
 import subprocess
 import sys
 
 import typer
 
-from roll.filesystem import (
-    build_archive_tree,
-    count_photo_files,
-    find_roll_folders,
-    find_unindexed_folders,
+from roll.app.archive.normalize_cli import (
+    build_photo_normalization_plans as _build_photo_normalization_plans_impl,
+    echo_photo_plan_preview as _echo_photo_plan_preview_impl,
 )
+from roll.app.archive.normalization import (
+    apply_normalization_plans,
+    build_normalization_plan,
+    normalize_keywords_in_archive,
+)
+from roll.app.archive.photo_dates import guess_archive_year
+from roll.app.archive.normalization_output import render_normalization_plans
+from roll.app.archive.search import search_rolls
+from roll.app.archive.search_output import render_search_results
+from roll.app.archive.stats_output import render_stats_report
+from roll.app.archive.status_output import render_status_report
+from roll.app.diagnostics.doctor_output import render_doctor
+from roll.app.flows.stock import app as stock_app
+from roll.app.flows.stock import edit_batch, edit_list_field, load as load_roll
 from roll.app.workspace.config import (
     CONFIG_DIR,
     CONFIG_FILE,
     Config,
     load_config,
     save_config,
+    set_lang,
 )
-from roll.app.archive.batch import batch_rolls
-from roll.app.workspace.roll_store import (
-    load_roll_metadata,
-    update_roll_features,
-    update_roll_keywords,
+from roll.app.workspace.vocabulary import archive_vocabulary
+from roll.filesystem import (
+    build_archive_tree,
+    count_photo_files,
+    find_roll_folders,
+    find_unindexed_folders,
 )
-from roll.app.archive.normalization import (
-    apply_normalization_plans,
-    apply_keyword_vocab_fixes,
-    build_normalization_plan,
-    normalize_keywords_in_archive,
-)
-from roll.app.archive.photo_dates import guess_archive_year
-from roll.helpers.autocomplete import autocomplete_many_prompt, choice_prompt
 from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import (
     require_archive,
@@ -39,27 +47,14 @@ from roll.helpers.guards import (
     require_directory,
 )
 from roll.helpers.output import echo_lines, echo_section
-from roll.app.flows.stock import app as stock_app
-from roll.app.flows.stock import load as load_roll
-from roll.messages import Msg
-from roll.app.archive.status_output import render_status_report
-from roll.app.archive.search import find_rolls, search_rolls
-from roll.app.archive.search_output import render_search_results
-from roll.app.archive.normalization_output import render_normalization_plans
-from roll.app.archive.stats import _count_statuses
-from roll.app.archive.stats_output import render_stats_report
-from roll.app.workspace.vocabulary import archive_vocabulary
-from roll.app.workspace.workspace import workspace_for
-from roll.app.diagnostics.doctor_output import render_doctor
-from roll.app.workspace.config import set_lang
-from roll.messages import Normalize
+from roll.messages import Msg, Normalize
 from roll.version import get_latest_version, get_version, is_outdated
 
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
+
 config_app = typer.Typer(help=Msg.CONFIG_HEADER)
 app.add_typer(config_app, name="config")
-
 
 tags_app = typer.Typer(help=Msg.VOCAB_KEYWORDS)
 app.add_typer(tags_app, name="tags")
@@ -91,7 +86,6 @@ def main(
 
 @app.command("init")
 def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
-    """Initialize the archive workspace."""
     archive = require_directory(archive, Msg.ARCHIVE_MISSING)
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -102,8 +96,10 @@ def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
         archives = [archive]
     save_config(Config(archives=archives))
 
-    workspace = workspace_for(archive)
-    workspace.ensure_structure()
+    workspace = archive  # preserved for behavior-free local setup
+    from roll.app.workspace.workspace import workspace_for
+
+    workspace_for(workspace).ensure_structure()
 
     typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
     echo_lines([f"Archive: {archive}", f"Config:  {CONFIG_FILE}"])
@@ -111,7 +107,6 @@ def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
 
 @app.command("update")
 def update() -> None:
-    """Update the installed app from the GitHub repository."""
     result = subprocess.run(
         [
             sys.executable,
@@ -130,7 +125,6 @@ def update() -> None:
 
 @config_app.callback(invoke_without_command=True)
 def config(ctx: typer.Context) -> None:
-    """Show current config."""
     if ctx.invoked_subcommand is not None:
         return
 
@@ -143,7 +137,6 @@ def config(ctx: typer.Context) -> None:
 
 @config_app.command("lang")
 def config_lang(lang: str | None = typer.Argument(None, help=Msg.LANGUAGE)) -> None:
-    """Show or set UI language."""
     config = require_config()
 
     if lang is None:
@@ -161,7 +154,6 @@ def config_lang(lang: str | None = typer.Argument(None, help=Msg.LANGUAGE)) -> N
 
 @app.command("scan")
 def scan() -> None:
-    """Show archive folders."""
     archive = require_archive(require_config())
 
     if not archive.exists():
@@ -184,8 +176,10 @@ def scan() -> None:
 
 @app.command("status")
 def status() -> None:
-    """Show index status."""
     archive = require_archive(require_config())
+
+    from roll.app.archive.search import find_rolls
+    from roll.app.archive.stats import _count_statuses
 
     roll_folders = find_roll_folders(archive)
     unindexed_folders = find_unindexed_folders(archive)
@@ -200,7 +194,6 @@ def stats(
     year: str | None = typer.Argument(None, help=Msg.STATS_YEAR),
     verbose: bool = typer.Option(False, "-v", "--verbose", help=Msg.STATS_MORE),
 ) -> None:
-    """Show archive statistics."""
     archive = require_archive(require_config())
     render_stats_report(archive, year, verbose)
 
@@ -209,13 +202,11 @@ def stats(
 def load(
     manual: bool = typer.Option(False, "--manual", help=Msg.STOCK_EMPTY_MANUAL),
 ) -> None:
-    """Load a film from stock into a new roll."""
     load_roll(manual=manual)
 
 
 @app.command("vocab")
 def vocab() -> None:
-    """Show dictionaries."""
     archive = require_archive(require_config())
     vocab = archive_vocabulary(archive)
 
@@ -232,7 +223,6 @@ def vocab() -> None:
 def search(
     query: str | None = typer.Argument(None, help=Msg.SEARCH_QUERY_REQUIRED),
 ) -> None:
-    """Search rolls from memory."""
     if not query:
         typer.echo(str(Msg.SEARCH_QUERY_REQUIRED))
         raise typer.Exit(code=1)
@@ -252,54 +242,18 @@ def doctor(
     fix: bool = typer.Option(False, "--fix", help=Msg.DOCTOR_CAN_FIX),
     verbose: bool = typer.Option(False, "-v", "--verbose", help=Msg.DOCTOR_CAN_ADD),
 ) -> None:
-    """Check archive and config integrity."""
     if render_doctor(fix=fix, verbose=verbose):
         raise typer.Exit(code=1)
 
 
 @tags_app.command("add")
 def add_tags() -> None:
-    _update_roll_list_field("Tags", "keywords", update_roll_keywords, "Tags updated")
+    edit_list_field("Tags", "keywords", "Tags updated")
 
 
 @features_app.command("add")
 def add_features() -> None:
-    _update_roll_list_field(
-        "Features", "features", update_roll_features, "Features updated"
-    )
-
-
-def _update_roll_list_field(
-    prompt_title: str,
-    dictionary_name: str,
-    updater,
-    success_label: str,
-) -> None:
-    archive = require_archive(require_config())
-    rolls = [
-        folder
-        for folder in find_roll_folders(archive)
-        if (folder / "roll.toml").exists()
-    ]
-
-    if not rolls:
-        typer.echo(str(Msg.NO_ROLLS))
-        raise typer.Exit(code=1)
-
-    selected = _choose_roll_folder(rolls)
-    workspace = workspace_for(archive)
-    values = autocomplete_many_prompt(
-        prompt_title, workspace.dictionary(dictionary_name)
-    )
-    try:
-        metadata = updater(selected / "roll.toml", values)
-        if dictionary_name == "keywords":
-            apply_keyword_vocab_fixes(archive, metadata.keywords)
-    except ValueError as exc:
-        typer.echo(str(exc))
-        raise typer.Exit(code=1)
-
-    typer.echo(f"{success_label}: {metadata.film}")
+    edit_list_field("Features", "features", "Features updated")
 
 
 @batch_app.callback(invoke_without_command=True)
@@ -320,38 +274,10 @@ def batch(
     ),
     add_tag: str | None = typer.Option(None, "--add-tag", help=Msg.BATCH_ADD_TAG),
 ) -> None:
-    """Batch edit rolls."""
     if ctx.invoked_subcommand is not None:
         return
 
-    config = require_config()
-    filters = {
-        "year": year,
-        "film": film,
-        "camera": camera,
-        "status": status,
-    }
-    changes = {
-        "set_status": set_status,
-        "set_camera": set_camera,
-        "add_feature": add_feature,
-        "add_tag": add_tag,
-    }
-    if not any(filters.values()) or not any(changes.values()):
-        typer.echo(str(Msg.BATCH_NEEDS_FILTERS))
-        raise typer.Exit(code=1)
-
-    batch_rolls(
-        config.archives,
-        year=year,
-        films=_split_csv(film),
-        cameras=_split_csv(camera),
-        statuses=_split_csv(status),
-        status=set_status,
-        set_camera=set_camera,
-        add_features=_split_csv(add_feature),
-        add_tags=_split_csv(add_tag),
-    )
+    edit_batch(year, film, camera, status, set_status, set_camera, add_feature, add_tag)
 
 
 @app.command("normalize")
@@ -359,7 +285,6 @@ def normalize(
     tags: bool = typer.Option(False, "--tags", help=Msg.TAGS_NORMALIZED),
     photos: bool = typer.Option(False, "--photos", help=Normalize.HEADER),
 ) -> None:
-    """Normalize archive layout."""
     config = require_config()
     archive = require_current_archive(config)
 
@@ -374,7 +299,7 @@ def normalize(
         return
 
     if photos:
-        plans = _build_photo_normalization_plans(archive)
+        plans = _build_photo_normalization_plans_impl(archive)
         total_rules, has_changes = render_normalization_plans(plans)
         if not has_changes:
             return
@@ -383,7 +308,7 @@ def normalize(
         if all_conflicts:
             raise typer.Exit(code=1)
 
-        _echo_photo_plan_preview(plans)
+        _echo_photo_plan_preview_impl(plans)
         if not typer.confirm(
             str(Normalize.QUESTION).format(count=total_rules), default=False
         ):
@@ -407,19 +332,6 @@ def normalize(
         return
 
     apply_normalization_plans(plans)
-
-
-def _choose_roll_folder(rolls: list[Path]) -> Path:
-    labels = [
-        f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
-        for path in rolls
-    ]
-    selected_label = choice_prompt("Roll", labels)
-    for path in rolls:
-        label = f"{str(path.relative_to(path.parents[1]))} ({_roll_status(path)})"
-        if label == selected_label:
-            return path
-    raise ValueError(Msg.NO_CHOICE)
 
 
 def _build_photo_normalization_plans(archive: Path):
@@ -446,16 +358,18 @@ def _build_photo_normalization_plans(archive: Path):
     ]
 
 
+def _photo_folders(archive: Path) -> list[Path]:
+    return [
+        path for path in archive.iterdir() if path.is_dir() and path.name != ".roll"
+    ]
+
+
 def _build_photo_plan_for_folder(
     folder: Path, archive: Path, year: int, manual_months: bool
 ):
     from roll.app.archive.normalization import NormalizationPlan, RenameRule
 
-    month = None
-    if manual_months:
-        month = _prompt_month(folder)
-    else:
-        month = _guess_month(folder)
+    month = _prompt_month(folder) if manual_months else _guess_month(folder)
 
     if month is None:
         return NormalizationPlan(archive=archive, rules=[], conflicts=[])
@@ -471,26 +385,6 @@ def _build_photo_plan_for_folder(
     return NormalizationPlan(
         archive=archive, rules=[RenameRule(folder=folder, target=target)], conflicts=[]
     )
-
-
-def _echo_photo_plan_preview(plans) -> None:
-    lines = []
-    for plan in plans:
-        for rule in plan.rules:
-            lines.append(
-                f"{rule.folder.name} -> {rule.target.relative_to(plan.archive)}"
-            )
-
-    if lines:
-        typer.echo(str(Msg.NORMALIZE_PHOTOS_PREVIEW))
-        for line in lines:
-            typer.echo(f"  {line}")
-
-
-def _photo_folders(archive: Path) -> list[Path]:
-    return [
-        path for path in archive.iterdir() if path.is_dir() and path.name != ".roll"
-    ]
 
 
 def _prompt_month(folder: Path) -> int:
@@ -522,16 +416,3 @@ def _parse_month(value: str) -> int | None:
     if len(month) == 2 and month.isdigit() and 1 <= int(month) <= 12:
         return int(month)
     return None
-
-
-def _split_csv(value: str | None) -> list[str]:
-    if not value:
-        return []
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def _roll_status(path: Path) -> str:
-    try:
-        return load_roll_metadata(path / "roll.toml").status
-    except ValueError:
-        return "unknown"
