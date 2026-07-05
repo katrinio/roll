@@ -90,7 +90,9 @@ class Msg(Headers):
         "cli.uninitialized", "roll не инициализирован.", "roll is not initialized."
     )
     CLI_INITIALIZED = Message(
-        "cli.initialized", "roll инициализирован.", "roll initialized."
+        "cli.initialized",
+        "Архив и workspace инициализированы.",
+        "Archive and workspace initialized.",
     )
     NO_RESULTS = Message("cli.no_results", "Ничего не найдено.", "Nothing found.")
     NO_STATS_DATA = Message(

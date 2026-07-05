@@ -12,6 +12,7 @@ from roll.app.diagnostics import diagnostics as diagnostics_module
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace import config as config_module
 from roll.app.workspace.config import Config, load_config, save_config, set_lang
+from roll.helpers.guards import require_archive
 from roll.messages import Msg
 
 
@@ -198,6 +199,23 @@ class ConfigTests(unittest.TestCase):
             self.assertIn("Global config", output)
             self.assertIn(f"Workspace {first}", output)
             self.assertIn(f"Workspace {second}", output)
+
+    def test_require_archive_prefers_current_worktree_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            first = Path(tmp) / "archive-a"
+            second = Path(tmp) / "archive-b"
+            first.mkdir()
+            second.mkdir()
+            save_config(Config(archives=[first, second], lang="EN"))
+
+            cwd = second / "nested"
+            cwd.mkdir()
+            patcher = patch("roll.helpers.guards.Path.cwd", return_value=cwd)
+            self.addCleanup(patcher.stop)
+            patcher.start()
+
+            self.assertEqual(require_archive(load_config()), second)
 
     def _patch_config_paths(self, tmp: str) -> None:
         config_module.CONFIG_DIR = Path(tmp) / ".config" / "roll"

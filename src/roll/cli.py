@@ -86,7 +86,7 @@ def main(
 
 @app.command("init")
 def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
-    """Initialize roll."""
+    """Initialize the archive workspace."""
     archive = require_directory(archive, Msg.ARCHIVE_MISSING)
 
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
