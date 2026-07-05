@@ -11,7 +11,7 @@ class Doctor:
     NO_ARCHIVES = "No archives."
     GLOBAL_CONFIG_MISSING = "Missing global config:"
     GLOBAL_CONFIG_INVALID = "Invalid global config:"
-    LANGUAGE_NOT_EXPLICIT = "Language not set; using EN."
+    LANGUAGE_NOT_EXPLICIT = "Language not set explicitly; using EN."
     LANGUAGE_INVALID = "Invalid global config language:"
     GLOBAL_CONFIG_DUPLICATE_ARCHIVES = "Duplicate archives in global config:"
     ARCHIVE_NOT_DIRECTORY = "Archive is not a directory:"
