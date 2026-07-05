@@ -118,6 +118,11 @@ class Msg(Headers):
         "Доступные роллы:",
         "Available rolls:",
     )
+    ROLL_EDIT_FILM = Message("cli.roll_edit_film", "Пленка", "Film")
+    ROLL_EDIT_CAMERA = Message("cli.roll_edit_camera", "Камера", "Camera")
+    ROLL_EDIT_STATUS = Message("cli.roll_edit_status", "Статус", "Status")
+    ROLL_EDIT_FEATURES = Message("cli.roll_edit_features", "Особенности", "Features")
+    ROLL_EDIT_KEYWORDS = Message("cli.roll_edit_keywords", "Ключевые слова", "Keywords")
     ROLL_EDIT_ROLL_LABEL = Message(
         "cli.roll_edit_roll_label",
         "{path} | {film} | {camera} | {status}",
