@@ -222,9 +222,6 @@ class Msg(Headers):
         "'{value}' отсутствует в словаре.\n\nДобавить? [Y/n] ",
         "'{value}' is missing from the dictionary.\n\nAdd it? [Y/n] ",
     )
-    BATCH_NO_LOADED = Message(
-        "cli.batch_no_loaded", "Нет loaded-роллов.", "No loaded rolls."
-    )
     BATCH_WILL_PROCESS = Message(
         "cli.batch_will_process", "Будет обработано:", "Will process:"
     )

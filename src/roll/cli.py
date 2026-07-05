@@ -17,7 +17,7 @@ from roll.app.workspace.config import (
     load_config,
     save_config,
 )
-from roll.app.archive.batch import batch_rolls, process_archives
+from roll.app.archive.batch import batch_rolls
 from roll.app.workspace.roll_store import (
     load_roll_metadata,
     update_roll_features,
@@ -352,12 +352,6 @@ def batch(
         add_features=_split_csv(add_feature),
         add_tags=_split_csv(add_tag),
     )
-
-
-@batch_app.command("process", hidden=True)
-def batch_process() -> None:
-    config = require_config()
-    process_archives(config.archives)
 
 
 @app.command("normalize")
