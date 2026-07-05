@@ -21,6 +21,7 @@ from roll.app.workspace.stock_store import (
 )
 from roll.app.archive.normalization import normalize_keywords_in_archive
 from roll.app.flows.stock import _format_roll_label, _rolls, _prompt_roll_metadata
+from roll.app.archive.batch import batch_rolls
 from roll.app.workspace.workspace import workspace_for
 
 
@@ -281,3 +282,55 @@ class RollStoreTests(unittest.TestCase):
             self.assertEqual(updated.original_source, "slide")
             self.assertEqual(updated.digital_copy, "photo")
             self.assertEqual(updated.original_status, "present")
+
+    def test_batch_rolls_filters_by_year_and_film(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            first = archive / "2025" / "10-19"
+            second = archive / "2025" / "10-20"
+            third = archive / "2024" / "09-01"
+            for folder, film in (
+                (first, "Kodak Gold 200"),
+                (second, "Ilford HP5 Plus"),
+                (third, "Kodak Gold 200"),
+            ):
+                folder.mkdir(parents=True)
+                loaded_at = (
+                    "2025-10-19"
+                    if folder == first
+                    else "2025-10-20"
+                    if folder == second
+                    else "2024-09-01"
+                )
+                save_roll_metadata(
+                    folder / "roll.toml",
+                    RollMetadata(
+                        status="loaded",
+                        film=film,
+                        camera="Pentax Espio 150SL",
+                        loaded_at=loaded_at,
+                        features=[],
+                        keywords=[],
+                    ),
+                )
+
+            with patch("roll.app.archive.batch.typer.confirm", return_value=True):
+                changed = batch_rolls(
+                    [archive],
+                    year="2025",
+                    films=["Kodak Gold 200"],
+                    set_camera="Pentax K1000",
+                )
+
+            self.assertEqual(changed, 1)
+            self.assertEqual(
+                load_roll_metadata(first / "roll.toml").camera, "Pentax K1000"
+            )
+            self.assertEqual(
+                load_roll_metadata(second / "roll.toml").camera,
+                "Pentax Espio 150SL",
+            )
+            self.assertEqual(
+                load_roll_metadata(third / "roll.toml").camera,
+                "Pentax Espio 150SL",
+            )

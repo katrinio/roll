@@ -227,6 +227,11 @@ class Msg(Headers):
         "cli.batch_confirm", "Пометить все как processed?", "Mark all as processed?"
     )
     BATCH_PROCESSED = Message("cli.batch_processed", "Обработано:", "Processed:")
+    BATCH_NEEDS_FILTERS = Message(
+        "cli.batch_needs_filters",
+        "Нужно указать хотя бы один фильтр и одно изменение.",
+        "You need at least one filter and one change.",
+    )
     STATS_YEAR = Message("cli.stats_year", "Год:", "Year:")
     STATS_ROLLS = Message("cli.stats_rolls", "Роллов:", "Rolls:")
     STATS_FILMS = Message("cli.stats_films", "Пленок в статистике:", "Films in stats:")

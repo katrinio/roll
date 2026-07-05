@@ -17,7 +17,7 @@ from roll.app.workspace.config import (
     load_config,
     save_config,
 )
-from roll.app.archive.batch import process_archives
+from roll.app.archive.batch import batch_rolls, process_archives
 from roll.app.workspace.roll_store import (
     load_roll_metadata,
     update_roll_features,
@@ -294,7 +294,65 @@ def _update_roll_list_field(
     typer.echo(f"{success_label}: {metadata.film}")
 
 
-@batch_app.command("process")
+@batch_app.callback(invoke_without_command=True)
+def batch(
+    ctx: typer.Context,
+    year: str | None = typer.Option(None, "--year", help="Filter by year."),
+    film: str | None = typer.Option(None, "--film", help="Comma-separated film names."),
+    camera: str | None = typer.Option(
+        None, "--camera", help="Comma-separated camera names."
+    ),
+    status: str | None = typer.Option(
+        None, "--status", help="Comma-separated statuses."
+    ),
+    set_status: str | None = typer.Option(
+        None, "--set-status", help="Set the status on selected rolls."
+    ),
+    set_camera: str | None = typer.Option(
+        None, "--set-camera", help="Set the camera on selected rolls."
+    ),
+    add_feature: str | None = typer.Option(
+        None, "--add-feature", help="Comma-separated features to append."
+    ),
+    add_tag: str | None = typer.Option(
+        None, "--add-tag", help="Comma-separated tags to append."
+    ),
+) -> None:
+    """Batch edit rolls."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    config = require_config()
+    filters = {
+        "year": year,
+        "film": film,
+        "camera": camera,
+        "status": status,
+    }
+    changes = {
+        "set_status": set_status,
+        "set_camera": set_camera,
+        "add_feature": add_feature,
+        "add_tag": add_tag,
+    }
+    if not any(filters.values()) or not any(changes.values()):
+        typer.echo(str(Msg.BATCH_NEEDS_FILTERS))
+        raise typer.Exit(code=1)
+
+    batch_rolls(
+        config.archives,
+        year=year,
+        films=_split_csv(film),
+        cameras=_split_csv(camera),
+        statuses=_split_csv(status),
+        status=set_status,
+        set_camera=set_camera,
+        add_features=_split_csv(add_feature),
+        add_tags=_split_csv(add_tag),
+    )
+
+
+@batch_app.command("process", hidden=True)
 def batch_process() -> None:
     config = require_config()
     process_archives(config.archives)
@@ -468,6 +526,12 @@ def _parse_month(value: str) -> int | None:
     if len(month) == 2 and month.isdigit() and 1 <= int(month) <= 12:
         return int(month)
     return None
+
+
+def _split_csv(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def _roll_status(path: Path) -> str:
