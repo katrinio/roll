@@ -84,7 +84,7 @@ Brings folder names to a consistent shape: builds a plan, asks for confirmation,
 
 ## Doctor
 
-Integrity check: global config, workspaces, stock, roll metadata, vocabularies, suspicious and unindexed folders. Diagnostics stay in English. `--fix` applies safe fixes; `-v` shows the full list of fixes.
+Integrity check: global config, workspaces, stock, roll metadata, vocabularies, suspicious and unindexed folders. Diagnostics stay in English. `--fix` applies safe fixes and prints them in a separate block; `-v` shows the full list of fixes.
 
 ---
 

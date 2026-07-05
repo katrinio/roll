@@ -133,6 +133,27 @@ class ConfigTests(unittest.TestCase):
                 )
             )
 
+    def test_doctor_errors_when_archive_path_is_a_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self._patch_config_paths(tmp)
+            archive = Path(tmp) / "archive"
+            archive.write_text("not a directory", encoding="utf-8")
+            config_module.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            diagnostics_module.CONFIG_FILE = config_module.CONFIG_FILE
+            config_module.CONFIG_FILE.write_text(
+                f'archives = ["{archive}"]\n',
+                encoding="utf-8",
+            )
+
+            report = run_doctor(Config(archives=[archive]))
+
+            self.assertTrue(
+                any(
+                    "Archive is not a directory:" in issue.message
+                    for issue in report.issues
+                )
+            )
+
     def test_doctor_errors_when_global_config_is_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self._patch_config_paths(tmp)

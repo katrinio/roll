@@ -73,6 +73,15 @@ def run_doctor(config: Config) -> DoctorReport:
         )
 
     for archive in config.archives:
+        if archive.exists() and not archive.is_dir():
+            issues.append(
+                DoctorIssue(
+                    DoctorText.ERROR,
+                    f"{Doctor.ARCHIVE_NOT_DIRECTORY} {archive}",
+                    archive,
+                )
+            )
+            continue
         archive_issues, archive_missing_rolls, archive_unindexed = _check_archive(
             archive
         )

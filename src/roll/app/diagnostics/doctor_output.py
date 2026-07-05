@@ -143,9 +143,7 @@ def _render_fix_summaries(
 ) -> None:
     fixers: list[tuple[str, list[str], Callable[[list[Path], bool], None]]] = []
     if report.fixable:
-        fixers.append(
-            (Msg.DOCTOR_CAN_FIX, report.fixable, _apply_normalization_fixes, None)
-        )
+        fixers.append((Msg.DOCTOR_CAN_FIX, report.fixable, _apply_normalization_fixes))
     if report.keyword_vocab_fixes:
         fixers.append(
             (Msg.DOCTOR_CAN_ADD, report.keyword_vocab_fixes, _apply_keyword_fixes)
@@ -156,12 +154,7 @@ def _render_fix_summaries(
         for issue in report.issues
     ):
         fixers.append(
-            (
-                Msg.DOCTOR_CAN_FIX,
-                [str(Doctor.LANGUAGE_INVALID)],
-                _apply_language_fix,
-                None,
-            )
+            (Msg.DOCTOR_CAN_FIX, [str(Doctor.LANGUAGE_INVALID)], _apply_language_fix)
         )
 
     if fixers:

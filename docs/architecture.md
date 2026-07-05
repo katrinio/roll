@@ -120,6 +120,7 @@ rl doctor --fix
 - the archive is self-contained;
 - user edits only what the filesystem cannot infer;
 - normalization and doctor fixes build a plan before changing anything;
+- `doctor` reports issues first and lists safe fixes in a separate block;
 - vocabularies stay plain text and grow automatically;
 - dev-facing diagnostics stay in English; only user-facing UI is localized;
 - English is the default UI language.
