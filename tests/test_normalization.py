@@ -3,6 +3,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest.mock import patch
 import os
 
@@ -25,6 +27,8 @@ from roll.app.archive.search import RollIndex
 from roll.filesystem import build_archive_tree, count_photo_files
 from roll.app.workspace.roll_store import RollMetadata, save_roll_metadata
 from roll.cli import _build_photo_normalization_plans
+from roll.helpers.output import echo_lines
+from roll.messages import Normalize
 
 
 class NormalizationTests(unittest.TestCase):
@@ -221,6 +225,13 @@ class NormalizationTests(unittest.TestCase):
             self.assertTrue(any("Month for 4771 [01-12]" in item for item in prompts))
             self.assertTrue(all("::" not in item for item in prompts))
             self.assertTrue(all("::" not in item for item in confirms))
+
+    def test_echo_lines_renders_message_locale(self) -> None:
+        buffer = StringIO()
+        with redirect_stdout(buffer):
+            echo_lines([Normalize.HEADER])
+
+        self.assertEqual(buffer.getvalue().strip(), "Archive normalization")
 
     def test_doctor_flags_lowercase_keywords_in_vocabulary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

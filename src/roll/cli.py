@@ -144,7 +144,7 @@ def config_lang(lang: str | None = typer.Argument(None, help=Msg.LANGUAGE)) -> N
 
     normalized = lang.upper()
     if normalized not in {"EN", "RU"}:
-        typer.echo(Msg.ALLOWED_VALUES)
+        typer.echo(str(Msg.ALLOWED_VALUES))
         raise typer.Exit(code=1)
 
     updated = set_lang(normalized)
@@ -166,7 +166,7 @@ def scan() -> None:
     photo_count = sum(count_photo_files(folder) for folder in roll_folders)
 
     if tree:
-        typer.echo(Msg.TREE_HEADER)
+        typer.echo(str(Msg.TREE_HEADER))
         echo_lines(tree)
         typer.echo("")
 
@@ -226,14 +226,14 @@ def search(
 ) -> None:
     """Search rolls from memory."""
     if not query:
-        typer.echo(Msg.SEARCH_QUERY_REQUIRED)
+        typer.echo(str(Msg.SEARCH_QUERY_REQUIRED))
         raise typer.Exit(code=1)
 
     archive = require_archive(require_config())
     results = search_rolls(archive, query)
 
     if not results:
-        typer.echo(Msg.NO_RESULTS)
+        typer.echo(str(Msg.NO_RESULTS))
         return
 
     render_search_results(results)
@@ -275,7 +275,7 @@ def _update_roll_list_field(
     ]
 
     if not rolls:
-        typer.echo(Msg.NO_ROLLS)
+        typer.echo(str(Msg.NO_ROLLS))
         raise typer.Exit(code=1)
 
     selected = _choose_roll_folder(rolls)
@@ -312,11 +312,11 @@ def normalize(
     if tags:
         touched = normalize_keywords_in_archive(archive)
         if touched:
-            typer.echo(Msg.TAGS_NORMALIZED)
+            typer.echo(str(Msg.TAGS_NORMALIZED))
             for path in touched:
                 typer.echo(f"  {path}")
         else:
-            typer.echo(Msg.TAGS_ALREADY_NORMALIZED)
+            typer.echo(str(Msg.TAGS_ALREADY_NORMALIZED))
         return
 
     if photos:
@@ -372,7 +372,7 @@ def _build_photo_normalization_plans(archive: Path):
     folders = _photo_folders(archive)
     year = guess_archive_year(archive)
     if year is None:
-        typer.echo(Msg.CLI_UNINITIALIZED)
+        typer.echo(str(Msg.CLI_UNINITIALIZED))
         raise typer.Exit(code=1)
 
     if not typer.confirm(
@@ -428,7 +428,7 @@ def _echo_photo_plan_preview(plans) -> None:
             )
 
     if lines:
-        typer.echo(Msg.NORMALIZE_PHOTOS_PREVIEW)
+        typer.echo(str(Msg.NORMALIZE_PHOTOS_PREVIEW))
         for line in lines:
             typer.echo(f"  {line}")
 

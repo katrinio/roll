@@ -63,7 +63,7 @@ def render_doctor(fix: bool = False, verbose: bool = False) -> int:
         report = run_doctor(config)
 
     if not report.issues and not report.missing_rolls:
-        echo(Doctor.OK)
+        echo(str(Doctor.OK))
         return 0
 
     global_issues = [issue for issue in report.issues if issue.archive is None]

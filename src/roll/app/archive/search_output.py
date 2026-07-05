@@ -16,9 +16,9 @@ def render_search_results(results) -> None:
         )
 
         if roll.features:
-            echo(f"{Msg.SEARCH_FEATURES} {', '.join(roll.features)}")
+            echo(f"{str(Msg.SEARCH_FEATURES)} {', '.join(roll.features)}")
 
         if roll.keywords:
-            echo(f"{Msg.SEARCH_TAGS} {', '.join(roll.keywords)}")
+            echo(f"{str(Msg.SEARCH_TAGS)} {', '.join(roll.keywords)}")
 
         echo_lines([f"{Msg.SEARCH_FOLDER} {roll.folder}", ""])

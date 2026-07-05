@@ -44,7 +44,7 @@ def add() -> None:
     film = autocomplete_prompt(str(Msg.PROMPT_FILM), workspace.dictionary("films"))
     quantity = typer.prompt(str(Msg.PROMPT_QUANTITY), type=int)
     if quantity <= 0:
-        typer.echo(Msg.INVALID_QUANTITY)
+        typer.echo(str(Msg.INVALID_QUANTITY))
         raise typer.Exit(code=1)
 
     try:
@@ -73,7 +73,7 @@ def load(
             raise typer.Exit(code=1)
 
         if not stock:
-            typer.echo(Msg.STOCK_EMPTY_MANUAL)
+            typer.echo(str(Msg.STOCK_EMPTY_MANUAL))
             raise typer.Exit(code=1)
 
     selected = (
@@ -146,7 +146,7 @@ def list_stock() -> None:
         raise typer.Exit(code=1)
 
     if not items:
-        typer.echo(Msg.STOCK_EMPTY)
+        typer.echo(str(Msg.STOCK_EMPTY))
         return
 
     echo_lines([Msg.STOCK_HEADER])
@@ -159,7 +159,7 @@ def edit() -> None:
     archive = require_archive(require_config())
     loaded_rolls = _loaded_rolls(archive)
     if not loaded_rolls:
-        typer.echo(Msg.NO_LOADED_ROLLS)
+        typer.echo(str(Msg.NO_LOADED_ROLLS))
         raise typer.Exit(code=1)
 
     echo_section(
@@ -204,7 +204,7 @@ def _prompt_loaded_at() -> str:
     try:
         return date.fromisoformat(normalized).isoformat()
     except ValueError as exc:
-        typer.echo(Msg.INVALID_DATE)
+        typer.echo(str(Msg.INVALID_DATE))
         raise typer.Exit(code=1) from exc
 
 
@@ -232,7 +232,7 @@ def _choose_stock_item(items: list[StockItem]) -> StockItem:
         if selected is not None:
             return selected
 
-        typer.echo(Msg.CHOOSE_STOCK)
+        typer.echo(str(Msg.CHOOSE_STOCK))
 
 
 def _choose_manual_film(workspace) -> StockItem:
@@ -295,7 +295,7 @@ def _finish_roll(status: str, label: str) -> None:
     archive = require_archive(require_config())
     loaded_rolls = _loaded_rolls(archive)
     if not loaded_rolls:
-        typer.echo(Msg.NO_LOADED_ROLLS)
+        typer.echo(str(Msg.NO_LOADED_ROLLS))
         raise typer.Exit(code=1)
 
     selected = _choose_roll(loaded_rolls)
