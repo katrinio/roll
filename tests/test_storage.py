@@ -21,7 +21,8 @@ from roll.app.workspace.stock_store import (
 )
 from roll.app.archive.normalization import normalize_keywords_in_archive
 from roll.app.archive.search import search_rolls_by_filters
-from roll.app.flows.stock import _format_roll_label, _rolls, _prompt_roll_metadata
+from roll.app.flows.stock import _format_roll_label, _rolls
+from roll.app.flows.stock_edit import _prompt_roll_metadata
 from roll.app.archive.batch import batch_rolls
 from roll.app.workspace.workspace import workspace_for
 
@@ -298,7 +299,7 @@ class RollStoreTests(unittest.TestCase):
                 return next(prompts)
 
             with (
-                patch("roll.app.flows.stock.prompt", side_effect=fake_prompt),
+                patch("roll.app.flows.stock_edit.prompt", side_effect=fake_prompt),
             ):
                 updated = _prompt_roll_metadata(
                     archive, archive / "2025/10-19/roll.toml", metadata

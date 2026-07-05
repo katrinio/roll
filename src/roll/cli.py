@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-import subprocess
-import sys
-
 import typer
 
 from roll.app.archive.commands import (
@@ -14,21 +10,14 @@ from roll.app.archive.commands import (
     status as archive_status,
     vocab as archive_vocab,
 )
+from roll.app.root_commands import config as root_config
+from roll.app.root_commands import config_lang as root_config_lang
+from roll.app.root_commands import init as root_init
+from roll.app.root_commands import update as root_update
+from roll.app.root_commands import version as root_version
 from roll.app.flows.stock import app as stock_app
 from roll.app.flows.stock import edit_batch, edit_list_field, load as load_roll
-from roll.app.workspace.config import (
-    CONFIG_DIR,
-    CONFIG_FILE,
-    Config,
-    load_config,
-    save_config,
-    set_lang,
-)
-from roll.helpers.formatting import highlight_cli_names
-from roll.helpers.guards import require_config, require_directory
-from roll.helpers.output import echo_lines, echo_section
 from roll.messages import Msg, Normalize
-from roll.version import get_latest_version, get_version, is_outdated
 
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
@@ -54,53 +43,19 @@ def main(
     ),
 ) -> None:
     if version:
-        current = get_version()
-        typer.echo(current)
-        latest = get_latest_version()
-        if latest and is_outdated(current=current, latest=latest):
-            typer.echo(f"New version available: {latest}. Run `rl update`.")
-        raise typer.Exit()
+        root_version()
     if ctx.invoked_subcommand is not None:
         return
 
 
 @app.command("init")
-def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
-    archive = require_directory(archive, Msg.ARCHIVE_MISSING)
-
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    try:
-        config = load_config()
-        archives = list(dict.fromkeys([*config.archives, archive]))
-    except FileNotFoundError:
-        archives = [archive]
-    save_config(Config(archives=archives))
-
-    workspace = archive  # preserved for behavior-free local setup
-    from roll.app.workspace.workspace import workspace_for
-
-    workspace_for(workspace).ensure_structure()
-
-    typer.echo(highlight_cli_names(Msg.CLI_INITIALIZED))
-    echo_lines([f"Archive: {archive}", f"Config:  {CONFIG_FILE}"])
+def init(archive: typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
+    root_init(archive)
 
 
 @app.command("update")
 def update() -> None:
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--no-input",
-            "--upgrade",
-            "--force-reinstall",
-            "git+https://github.com/katrinio/roll.git@main",
-        ],
-        check=False,
-    )
-    raise typer.Exit(code=result.returncode)
+    root_update()
 
 
 @config_app.callback(invoke_without_command=True)
@@ -108,28 +63,12 @@ def config(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is not None:
         return
 
-    config = require_config()
-    echo_section(
-        Msg.CONFIG_HEADER,
-        [f"{Msg.ARCHIVE_HEADER} {archive}" for archive in config.archives],
-    )
+    root_config()
 
 
 @config_app.command("lang")
 def config_lang(lang: str | None = typer.Argument(None, help=Msg.LANGUAGE)) -> None:
-    config = require_config()
-
-    if lang is None:
-        typer.echo(f"{Msg.LANGUAGE} {config.lang}")
-        return
-
-    normalized = lang.upper()
-    if normalized not in {"EN", "RU"}:
-        typer.echo(str(Msg.ALLOWED_VALUES))
-        raise typer.Exit(code=1)
-
-    updated = set_lang(normalized)
-    typer.echo(f"{Msg.LANGUAGE_SET_TO} {updated.lang}")
+    root_config_lang(lang)
 
 
 @app.command("scan")

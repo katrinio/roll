@@ -51,26 +51,7 @@ def search_rolls(archive: Path, query: str | None) -> list[RollIndex]:
     if not query:
         return []
 
-    normalized_query = normalize_text(query)
-    results: list[RollIndex] = []
-
-    for roll in find_rolls(archive):
-        searchable_text = normalize_text(
-            " ".join(
-                [
-                    roll.film,
-                    roll.camera,
-                    roll.loaded_at,
-                    *roll.features,
-                    *roll.keywords,
-                ]
-            )
-        )
-
-        if normalized_query in searchable_text:
-            results.append(roll)
-
-    return results
+    return _filter_by_query(find_rolls(archive), query)
 
 
 def search_rolls_by_filters(
@@ -83,30 +64,25 @@ def search_rolls_by_filters(
     query: str | None = None,
 ) -> list[RollIndex]:
     rolls = select_rolls(
-        archives,
-        year=year,
-        films=films,
-        cameras=cameras,
-        statuses=statuses,
+        archives, year=year, films=films, cameras=cameras, statuses=statuses
     )
+    return rolls if not query else _filter_by_query(rolls, query)
 
-    if not query:
-        return rolls
 
+def _filter_by_query(rolls: list[RollIndex], query: str) -> list[RollIndex]:
     normalized_query = normalize_text(query)
-    return [
-        roll
-        for roll in rolls
-        if normalized_query
-        in normalize_text(
-            " ".join(
-                [
-                    roll.film,
-                    roll.camera,
-                    roll.loaded_at,
-                    *roll.features,
-                    *roll.keywords,
-                ]
-            )
+    return [roll for roll in rolls if normalized_query in _searchable_text(roll)]
+
+
+def _searchable_text(roll: RollIndex) -> str:
+    return normalize_text(
+        " ".join(
+            [
+                roll.film,
+                roll.camera,
+                roll.loaded_at,
+                *roll.features,
+                *roll.keywords,
+            ]
         )
-    ]
+    )
