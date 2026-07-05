@@ -45,7 +45,7 @@ python -m unittest discover -s tests
 | Read-only | `rl search`, `rl scan`, `rl status`, `rl stats`, `rl vocab` | global config, workspace, roll, vocab | no | no |
 | Integrity | `rl doctor`, `rl doctor --fix` | global config, workspace, stock, roll, vocab | no | yes |
 | Normalization | `rl normalize --tags` | workspace, roll, vocab | roll, vocab | yes |
-| Batch | `rl batch process` | workspace, roll | roll | no |
+| Batch | `rl batch` | workspace, roll | roll | no |
 
 `rl load --manual` creates a roll from the film dictionary without changing stock.
 For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
