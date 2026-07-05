@@ -7,6 +7,15 @@
 
 They solve different problems and should stay separate.
 
+## Boundaries
+
+| Command | Scope | Typical use |
+|---|---|---|
+| `rl stock edit` | one roll | manual correction, field-by-field judgment |
+| `rl batch` | many rolls | repeated update across a filtered set |
+| `rl normalize` | archive structure | folder shape, keywords normalization, photo import |
+| `rl doctor` | integrity | report problems, safe fixes only |
+
 ---
 
 ## `rl stock edit`

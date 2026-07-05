@@ -56,6 +56,13 @@ archives = ["/path/to/archive"]
 | `rl stock edit` | global config, workspace, roll, vocabulary | roll, vocabulary | no | single-roll editing |
 | `rl batch` | global config, workspace, roll | roll | no | batch update |
 
+These scopes are deliberate:
+
+- `rl stock edit` is the manual, one-roll editor;
+- `rl batch` is the bulk editor;
+- `rl normalize` is for structural cleanup and normalization;
+- `rl doctor` is for diagnostics and safe repair.
+
 ## Lifecycle
 
 ```
