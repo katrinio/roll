@@ -6,14 +6,12 @@ class Normalize:
     ALREADY_NORMALIZED = Message(
         "normalize.already_normalized",
         "Архив уже нормализован.",
-        "Archive is already normalized.",
+        "Archive already normalized.",
     )
     QUESTION = Message(
         "normalize.question", "Переименовать {count} папок?", "Rename {count} folders?"
     )
-    CONFLICTS_HEADER = Message(
-        "normalize.conflicts_header", "Обнаружены конфликты:", "Conflicts detected:"
-    )
+    CONFLICTS_HEADER = Message("normalize.conflicts_header", "Конфликты:", "Conflicts:")
     TARGET_ALREADY_EXISTS = Message(
         "normalize.target_already_exists",
         "Целевая папка уже существует:",
@@ -22,12 +20,10 @@ class Normalize:
     TARGET_COLLIDES_WITH_SOURCE = Message(
         "normalize.target_collides_with_source",
         "Цель совпадает с источником:",
-        "Target collides with source:",
+        "Target matches source:",
     )
     DUPLICATE_TARGET = Message(
-        "normalize.duplicate_target",
-        "Дублирующаяся цель:",
-        "Duplicate target:",
+        "normalize.duplicate_target", "Дублирующаяся цель:", "Duplicate target:"
     )
 
 

@@ -8,7 +8,7 @@ class Doctor:
     WARN_PREFIX = "WARN:"
 
     # global config
-    NO_ARCHIVES = "No archives configured."
+    NO_ARCHIVES = "No archives."
     GLOBAL_CONFIG_MISSING = "Missing global config:"
     GLOBAL_CONFIG_INVALID = "Invalid global config:"
     LANGUAGE_NOT_EXPLICIT = "Language not set explicitly; using EN."
@@ -22,7 +22,7 @@ class Doctor:
     WORKSPACE_CONFIG_MISSING = "Missing workspace config:"
     WORKSPACE_CONFIG_INVALID = "Invalid workspace config:"
     WORKSPACE_CONFIG_MISMATCH = "Workspace config does not match archive:"
-    WORKSPACE_CONFIG_ARCHIVE_MISSING = "workspace config does not set archive."
+    WORKSPACE_CONFIG_ARCHIVE_MISSING = "Workspace config missing archive."
     WORKSPACE_STOCK_MISSING = "Missing stock.toml:"
     WORKSPACE_STOCK_INVALID = "Invalid stock.toml:"
 
@@ -35,14 +35,14 @@ class Doctor:
     ROLL_MISSING = "Missing roll.toml:"
     ROLL_UNREADABLE = "Invalid roll.toml:"
     ROLL_LOADED_AT_MISMATCH = "loaded_at does not match folder name:"
-    REQUIRED_FIELD_MISSING = "Missing required field"
+    REQUIRED_FIELD_MISSING = "Missing required field:"
 
     # roll content
     FILM_NOT_IN_VOCAB = "Film not in vocabulary:"
     CAMERA_NOT_IN_VOCAB = "Camera not in vocabulary:"
     FEATURE_NOT_IN_VOCAB = "Feature not in vocabulary:"
     KEYWORD_NOT_IN_VOCAB = "Keyword not in vocabulary:"
-    KEYWORD_NOT_NORMALIZED = "Keyword is not uppercase:"
+    KEYWORD_NOT_NORMALIZED = "Keyword not uppercase:"
 
     # filesystem hygiene
     UNINDEXED_FOLDERS = "Unindexed folders:"

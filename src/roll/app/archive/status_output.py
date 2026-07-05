@@ -14,9 +14,9 @@ def render_status_report(
             f"{Msg.STATUS_UNINDEXED} {len(unindexed_folders)}",
             "",
             Msg.STATUS_ROLLS,
-            f"loaded: {status_counts.get('loaded', 0)}",
-            f"processed: {status_counts.get('processed', 0)}",
-            f"failed: {status_counts.get('failed', 0)}",
+            f"loaded {status_counts.get('loaded', 0)}",
+            f"processed {status_counts.get('processed', 0)}",
+            f"failed {status_counts.get('failed', 0)}",
             f"{Msg.STATUS_NO_ROLL_TOML} {len(unindexed_folders)}",
         ]
     )
