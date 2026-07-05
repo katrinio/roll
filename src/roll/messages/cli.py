@@ -109,6 +109,48 @@ class Msg(Headers):
         "Запас пуст. Используй --manual для ручного ввода.",
         "Stock is empty. Use --manual for manual entry.",
     )
+    ROLL_EDIT_HEADER = Message(
+        "cli.roll_edit_header", "Редактирование ролла", "Edit roll"
+    )
+    ROLL_EDIT_SELECT = Message("cli.roll_edit_select", "Выбери ролл", "Select a roll")
+    ROLL_EDIT_AVAILABLE = Message(
+        "cli.roll_edit_available",
+        "Доступные роллы:",
+        "Available rolls:",
+    )
+    ROLL_EDIT_ROLL_LABEL = Message(
+        "cli.roll_edit_roll_label",
+        "{path} | {film} | {camera} | {status}",
+        "{path} | {film} | {camera} | {status}",
+    )
+    ROLL_EDIT_ORIGINAL_SOURCE = Message(
+        "cli.roll_edit_original_source",
+        "Исходник",
+        "Original source",
+    )
+    ROLL_EDIT_DIGITAL_COPY = Message(
+        "cli.roll_edit_digital_copy",
+        "Цифровая копия",
+        "Digital copy",
+    )
+    ROLL_EDIT_ORIGINAL_STATUS = Message(
+        "cli.roll_edit_original_status",
+        "Состояние оригинала",
+        "Original status",
+    )
+    ROLL_EDIT_UPDATED = Message(
+        "cli.roll_edit_updated", "Ролл обновлен.", "Roll updated."
+    )
+    PROMPT_QUANTITY = Message("cli.prompt_quantity", "Количество:", "Quantity:")
+    PROMPT_FILM = Message("cli.prompt_film", "Пленка:", "Film:")
+    PROMPT_CAMERA = Message("cli.prompt_camera", "Камера:", "Camera:")
+    PROMPT_LOAD_DATE = Message("cli.prompt_load_date", "Дата загрузки", "Load date")
+    PROMPT_MANUAL_FILM = Message("cli.prompt_manual_film", "Пленка: ", "Film: ")
+    LOAD_SUCCESS = Message("cli.load_success", "Загружено:", "Loaded:")
+    PROCESS_SUCCESS = Message("cli.process_success", "Обработано:", "Processed:")
+    FAILED_SUCCESS = Message(
+        "cli.failed_success", "Помечено как failed:", "Marked as failed:"
+    )
     INVALID_DATE = Message("cli.invalid_date", "Неверная дата.", "Invalid date.")
     INVALID_QUANTITY = Message(
         "cli.invalid_quantity",

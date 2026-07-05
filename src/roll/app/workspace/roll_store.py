@@ -17,6 +17,9 @@ class RollMetadata:
     loaded_at: str
     features: list[str]
     keywords: list[str]
+    original_source: str = "unknown"
+    digital_copy: str = "unknown"
+    original_status: str = "unknown"
 
 
 def load_roll_metadata(path: Path) -> RollMetadata:
@@ -34,6 +37,9 @@ def save_roll_metadata(path: Path, metadata: RollMetadata) -> None:
                 f'film = "{metadata.film}"',
                 f'camera = "{metadata.camera}"',
                 f'loaded_at = "{metadata.loaded_at}"',
+                f'original_source = "{metadata.original_source}"',
+                f'digital_copy = "{metadata.digital_copy}"',
+                f'original_status = "{metadata.original_status}"',
                 f"features = {_format_array(metadata.features)}",
                 f"keywords = {_format_array(metadata.keywords)}",
                 "",
@@ -53,6 +59,9 @@ def update_roll_status(path: Path, status: str) -> RollMetadata:
         loaded_at=metadata.loaded_at,
         features=metadata.features,
         keywords=metadata.keywords,
+        original_source=metadata.original_source,
+        digital_copy=metadata.digital_copy,
+        original_status=metadata.original_status,
     )
     save_roll_metadata(path, updated)
     return updated
@@ -67,6 +76,9 @@ def update_roll_keywords(path: Path, keywords: list[str]) -> RollMetadata:
         loaded_at=metadata.loaded_at,
         features=metadata.features,
         keywords=_merge_unique(metadata.keywords, keywords, normalize=str.upper),
+        original_source=metadata.original_source,
+        digital_copy=metadata.digital_copy,
+        original_status=metadata.original_status,
     )
     save_roll_metadata(path, updated)
     return updated
@@ -81,6 +93,31 @@ def update_roll_features(path: Path, features: list[str]) -> RollMetadata:
         loaded_at=metadata.loaded_at,
         features=_merge_unique(metadata.features, features),
         keywords=metadata.keywords,
+        original_source=metadata.original_source,
+        digital_copy=metadata.digital_copy,
+        original_status=metadata.original_status,
+    )
+    save_roll_metadata(path, updated)
+    return updated
+
+
+def update_roll_origin(
+    path: Path,
+    original_source: str,
+    digital_copy: str,
+    original_status: str,
+) -> RollMetadata:
+    metadata = load_roll_metadata(path)
+    updated = RollMetadata(
+        status=metadata.status,
+        film=metadata.film,
+        camera=metadata.camera,
+        loaded_at=metadata.loaded_at,
+        features=metadata.features,
+        keywords=metadata.keywords,
+        original_source=original_source,
+        digital_copy=digital_copy,
+        original_status=original_status,
     )
     save_roll_metadata(path, updated)
     return updated
@@ -98,6 +135,9 @@ def _validate_metadata(data: dict, path: Path) -> RollMetadata:
     film = str(data.get("film", ""))
     camera = str(data.get("camera", ""))
     loaded_at = str(data.get("loaded_at", ""))
+    original_source = str(data.get("original_source", "unknown"))
+    digital_copy = str(data.get("digital_copy", "unknown"))
+    original_status = str(data.get("original_status", "unknown"))
     features = data.get("features", [])
     keywords = data.get("keywords", [])
 
@@ -115,6 +155,9 @@ def _validate_metadata(data: dict, path: Path) -> RollMetadata:
         loaded_at=loaded_at,
         features=[str(item) for item in features],
         keywords=[str(item) for item in keywords],
+        original_source=original_source,
+        digital_copy=digital_copy,
+        original_status=original_status,
     )
 
 

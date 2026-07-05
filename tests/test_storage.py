@@ -19,6 +19,7 @@ from roll.app.workspace.stock_store import (
     save_stock,
 )
 from roll.app.archive.normalization import normalize_keywords_in_archive
+from roll.app.flows.stock import _format_roll_label, _loaded_rolls
 
 
 class StockStoreTests(unittest.TestCase):
@@ -156,4 +157,66 @@ class RollStoreTests(unittest.TestCase):
             self.assertEqual(
                 (vocabulary / "keywords.txt").read_text(encoding="utf-8"),
                 "BAR\nFRIENDS\n",
+            )
+
+    def test_loaded_rolls_include_all_loaded_rolls(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            first = archive / "2025" / "10-19"
+            second = archive / "2025" / "10-20"
+            first.mkdir(parents=True)
+            second.mkdir(parents=True)
+
+            save_roll_metadata(
+                first / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-19",
+                    features=[],
+                    keywords=[],
+                    original_source="negative",
+                    digital_copy="scan",
+                    original_status="lost",
+                ),
+            )
+            save_roll_metadata(
+                second / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-20",
+                    features=[],
+                    keywords=[],
+                ),
+            )
+
+            self.assertEqual(_loaded_rolls(archive), [first, second])
+
+    def test_roll_label_is_short_and_stable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            roll = archive / "2025" / "10-19"
+            roll.mkdir(parents=True)
+            save_roll_metadata(
+                roll / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-19",
+                    features=[],
+                    keywords=[],
+                    original_source="negative",
+                    digital_copy="scan",
+                    original_status="lost",
+                ),
+            )
+
+            label = _format_roll_label(roll)
+
+            self.assertEqual(
+                label, "2025/10-19 | Kodak Gold 200 | Pentax Espio 150SL | loaded"
             )
