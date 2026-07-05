@@ -82,6 +82,14 @@ Brings folder names to a consistent shape: builds a plan, asks for confirmation,
 
 ---
 
+## Editing
+
+`rl stock edit` is a single-roll manual editor. `rl batch` is a bulk editor that applies one change to many rolls selected by filters.
+
+See [docs/editing.md](editing.md) for the shared editing model and the boundary between the two commands.
+
+---
+
 ## Doctor
 
 Integrity check: global config, workspaces, stock, roll metadata, vocabularies, suspicious and unindexed folders. Diagnostics stay in English. `--fix` applies safe fixes and prints them in a separate block; `-v` shows the full list of fixes.

@@ -24,7 +24,7 @@ rl search kir balcony       # half a year later — found it
 | Find / inspect | `rl search`, `rl scan`, `rl status`, `rl stats [-v]`, `rl vocab` |
 | Integrity | `rl doctor`, `rl doctor --fix`, `rl normalize --tags` |
 | Photo import | `rl normalize --photos` |
-| Batch | `rl batch process` |
+| Editing | `rl stock edit`, `rl batch` |
 
 ## Out of Scope
 
@@ -39,4 +39,4 @@ The CLI defaults to English in the global config and `rl config lang` changes it
 
 If it doesn't help find a roll from memory faster — it's out of scope.
 
-Architecture and exact behavior — see [docs/architecture.md](architecture.md). Terms and exact rules — see [docs/reference.md](reference.md). Development setup — see [docs/development.md](development.md).
+Architecture and exact behavior — see [docs/architecture.md](architecture.md). Editing flows — see [docs/editing.md](editing.md). Terms and exact rules — see [docs/reference.md](reference.md). Development setup — see [docs/development.md](development.md).

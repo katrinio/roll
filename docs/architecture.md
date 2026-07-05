@@ -53,7 +53,8 @@ archives = ["/path/to/archive"]
 | `rl doctor` | global config, workspace, stock, roll, vocabulary | no | yes with `--fix` | integrity |
 | `rl normalize` | current archive workspace, roll, vocabulary | roll, vocabulary | yes | normalization |
 | `rl normalize --photos` | photo folders in current archive workspace | archive folders | yes | photo import |
-| `rl batch process` | global config, workspace, roll | roll | no | batch update |
+| `rl stock edit` | global config, workspace, roll, vocabulary | roll, vocabulary | no | single-roll editing |
+| `rl batch` | global config, workspace, roll | roll | no | batch update |
 
 ## Lifecycle
 
@@ -127,3 +128,4 @@ rl doctor --fix
 - English is the default UI language.
 
 Quick start — see [docs/getting-started.md](getting-started.md). Environment setup and CI — see [docs/development.md](development.md). Terms and exact command behavior — see [docs/reference.md](reference.md).
+Editing flows — see [docs/editing.md](editing.md).
