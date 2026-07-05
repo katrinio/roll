@@ -101,28 +101,6 @@ def update_roll_features(path: Path, features: list[str]) -> RollMetadata:
     return updated
 
 
-def update_roll_origin(
-    path: Path,
-    original_source: str,
-    digital_copy: str,
-    original_status: str,
-) -> RollMetadata:
-    metadata = load_roll_metadata(path)
-    updated = RollMetadata(
-        status=metadata.status,
-        film=metadata.film,
-        camera=metadata.camera,
-        loaded_at=metadata.loaded_at,
-        features=metadata.features,
-        keywords=metadata.keywords,
-        original_source=original_source,
-        digital_copy=digital_copy,
-        original_status=original_status,
-    )
-    save_roll_metadata(path, updated)
-    return updated
-
-
 def _load_toml(path: Path) -> dict:
     try:
         return tomllib.loads(path.read_text(encoding="utf-8"))

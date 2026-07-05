@@ -2,6 +2,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from roll.app.archive.selection import normalize_text, select_rolls
 from roll.filesystem import find_roll_folders, get_index_file
 
 
@@ -50,11 +51,32 @@ def search_rolls(archive: Path, query: str | None) -> list[RollIndex]:
     if not query:
         return []
 
-    normalized_query = query.lower()
-    results: list[RollIndex] = []
+    return _filter_by_query(find_rolls(archive), query)
 
-    for roll in find_rolls(archive):
-        searchable_text = " ".join(
+
+def search_rolls_by_filters(
+    archives: list[Path],
+    *,
+    year: str | None = None,
+    films: list[str] | None = None,
+    cameras: list[str] | None = None,
+    statuses: list[str] | None = None,
+    query: str | None = None,
+) -> list[RollIndex]:
+    rolls = select_rolls(
+        archives, year=year, films=films, cameras=cameras, statuses=statuses
+    )
+    return rolls if not query else _filter_by_query(rolls, query)
+
+
+def _filter_by_query(rolls: list[RollIndex], query: str) -> list[RollIndex]:
+    normalized_query = normalize_text(query)
+    return [roll for roll in rolls if normalized_query in _searchable_text(roll)]
+
+
+def _searchable_text(roll: RollIndex) -> str:
+    return normalize_text(
+        " ".join(
             [
                 roll.film,
                 roll.camera,
@@ -62,9 +84,5 @@ def search_rolls(archive: Path, query: str | None) -> list[RollIndex]:
                 *roll.features,
                 *roll.keywords,
             ]
-        ).lower()
-
-        if normalized_query in searchable_text:
-            results.append(roll)
-
-    return results
+        )
+    )

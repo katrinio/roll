@@ -26,7 +26,7 @@ from roll.app.archive.photo_dates import guess_archive_month
 from roll.app.archive.search import RollIndex
 from roll.filesystem import build_archive_tree, count_photo_files
 from roll.app.workspace.roll_store import RollMetadata, save_roll_metadata
-from roll.cli import _build_photo_normalization_plans
+from roll.app.archive.normalize_commands import normalize as normalize_command
 from roll.helpers.output import echo_lines
 from roll.messages import Normalize
 
@@ -213,12 +213,32 @@ class NormalizationTests(unittest.TestCase):
                 return len(confirms) > 1
 
             with (
-                patch("roll.cli.guess_archive_year", return_value=2023),
-                patch("roll.cli._photo_folders", return_value=folders),
-                patch("roll.cli.typer.confirm", side_effect=record_confirm),
-                patch("roll.cli.typer.prompt", side_effect=record_prompt),
+                patch(
+                    "roll.app.archive.normalize_cli.guess_archive_year",
+                    return_value=2023,
+                ),
+                patch(
+                    "roll.app.archive.normalize_cli._photo_folders",
+                    return_value=folders,
+                ),
+                patch(
+                    "roll.app.archive.normalize_cli.typer.confirm",
+                    side_effect=record_confirm,
+                ),
+                patch(
+                    "roll.app.archive.normalize_cli.typer.prompt",
+                    side_effect=record_prompt,
+                ),
+                patch(
+                    "roll.app.archive.normalize_commands.require_config",
+                    return_value=Config(archives=[archive]),
+                ),
+                patch(
+                    "roll.app.archive.normalize_commands.require_current_archive",
+                    return_value=archive,
+                ),
             ):
-                _build_photo_normalization_plans(archive)
+                normalize_command(False, True)
 
             self.assertTrue(any("Year 2023 correct" in item for item in confirms))
             self.assertTrue(any("Month for 4770 [01-12]" in item for item in prompts))

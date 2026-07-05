@@ -45,14 +45,14 @@ python -m unittest discover -s tests
 | Read-only | `rl search`, `rl scan`, `rl status`, `rl stats`, `rl vocab` | global config, workspace, roll, vocab | no | no |
 | Integrity | `rl doctor`, `rl doctor --fix` | global config, workspace, stock, roll, vocab | no | yes |
 | Normalization | `rl normalize --tags` | workspace, roll, vocab | roll, vocab | yes |
-| Batch | `rl batch process` | workspace, roll | roll | no |
+| Batch | `rl batch` | workspace, roll | roll | no |
 
 `rl load --manual` creates a roll from the film dictionary without changing stock.
 For `rl features add` and `rl tags add` you can enter several values separated by commas. Autocomplete works per value, duplicates aren't written, `_` is allowed inside a value.
 `rl config lang` applies immediately in the current process because user-facing messages resolve the language at render time.
 `rl doctor` checks the global config, workspace config, stock, roll metadata, and vocabularies. Its diagnostics stay in English; only the user-facing UI is localized.
 Package version comes from git tags at build time. In a source checkout, `rl --version` falls back to the latest git tag if package metadata is not installed.
-`rl update` is a runtime convenience command for local installs; it runs `pip install -U git+https://github.com/katrinio/roll.git@main` in the current interpreter.
+`rl update` is a runtime convenience command for local installs; it runs `pip install --no-input --upgrade --force-reinstall git+https://github.com/katrinio/roll.git@main` in the current interpreter.
 
 ## CI
 

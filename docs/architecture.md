@@ -53,7 +53,16 @@ archives = ["/path/to/archive"]
 | `rl doctor` | global config, workspace, stock, roll, vocabulary | no | yes with `--fix` | integrity |
 | `rl normalize` | current archive workspace, roll, vocabulary | roll, vocabulary | yes | normalization |
 | `rl normalize --photos` | photo folders in current archive workspace | archive folders | yes | photo import |
-| `rl batch process` | global config, workspace, roll | roll | no | batch update |
+| `rl stock edit` | global config, workspace, roll, vocabulary | roll, vocabulary | no | single-roll editing |
+| `rl batch` | global config, workspace, roll | roll | no | batch update |
+
+These scopes are deliberate:
+
+- `rl stock edit` is the manual, one-roll editor;
+- `rl batch` is the bulk editor;
+- `rl search` shares the same filter language as `rl batch`, but never writes;
+- `rl normalize` is for structural cleanup and normalization;
+- `rl doctor` is for diagnostics and safe repair.
 
 ## Lifecycle
 
@@ -112,7 +121,7 @@ rl doctor --fix
 | `filesystem.py` | archive tree and file discovery |
 | `app/workspace/` | config, stock, roll storage, vocabularies |
 | `app/flows/` | interactive flows |
-| `app/archive/` | search, stats, batch, normalization |
+| `app/archive/` | search, stats, batch, selection, normalization |
 | `app/diagnostics/` | doctor |
 | `messages/` | localized user-facing text |
 
@@ -127,3 +136,4 @@ rl doctor --fix
 - English is the default UI language.
 
 Quick start — see [docs/getting-started.md](getting-started.md). Environment setup and CI — see [docs/development.md](development.md). Terms and exact command behavior — see [docs/reference.md](reference.md).
+Editing flows — see [docs/editing.md](editing.md).
