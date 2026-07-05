@@ -55,8 +55,6 @@ from roll.app.workspace.config import set_lang
 from roll.messages import Normalize
 from roll.version import get_latest_version, get_version, is_outdated
 
-UPDATE_SOURCE = "git+https://github.com/katrinio/roll.git@main"
-
 app = typer.Typer(help=Msg.CLI_INITIALIZED)
 app.add_typer(stock_app, name="stock")
 config_app = typer.Typer(help=Msg.CONFIG_HEADER)
@@ -113,9 +111,19 @@ def init(archive: Path = typer.Argument(..., help=Msg.ARCHIVE_HEADER)) -> None:
 
 @app.command("update")
 def update() -> None:
-    """Update the installed package."""
+    """Update the installed app from the GitHub repository."""
     result = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-U", UPDATE_SOURCE]
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-input",
+            "--upgrade",
+            "--force-reinstall",
+            "git+https://github.com/katrinio/roll.git@main",
+        ],
+        check=False,
     )
     raise typer.Exit(code=result.returncode)
 

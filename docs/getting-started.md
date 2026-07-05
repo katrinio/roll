@@ -32,7 +32,7 @@ sync between machines · cloud · web UI · migrating old formats · image proce
 
 The CLI defaults to English in the global config and `rl config lang` changes it.
 `rl --version` prints the current version. If a newer git tag is available in the current checkout, it also prints a short update hint and points to `rl update`.
-`rl update` upgrades the installed package from the GitHub repo with `pip`.
+`rl update` reinstalls the app from the GitHub repository.
 `rl normalize --photos` works in the current archive workspace and can turn a raw photo folder into an archive month based on the dominant photo date.
 
 ## Rule

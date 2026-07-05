@@ -52,7 +52,7 @@ For `rl features add` and `rl tags add` you can enter several values separated b
 `rl config lang` applies immediately in the current process because user-facing messages resolve the language at render time.
 `rl doctor` checks the global config, workspace config, stock, roll metadata, and vocabularies. Its diagnostics stay in English; only the user-facing UI is localized.
 Package version comes from git tags at build time. In a source checkout, `rl --version` falls back to the latest git tag if package metadata is not installed.
-`rl update` is a runtime convenience command for local installs; it runs `pip install -U git+https://github.com/katrinio/roll.git@main` in the current interpreter.
+`rl update` is a runtime convenience command for local installs; it runs `pip install --no-input --upgrade --force-reinstall git+https://github.com/katrinio/roll.git@main` in the current interpreter.
 
 ## CI
 
