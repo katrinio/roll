@@ -20,6 +20,7 @@ from roll.app.workspace.stock_store import (
     save_stock,
 )
 from roll.app.archive.normalization import normalize_keywords_in_archive
+from roll.app.archive.search import search_rolls_by_filters
 from roll.app.flows.stock import _format_roll_label, _rolls, _prompt_roll_metadata
 from roll.app.archive.batch import batch_rolls
 from roll.app.workspace.workspace import workspace_for
@@ -223,6 +224,35 @@ class RollStoreTests(unittest.TestCase):
             self.assertEqual(
                 label, "2025/10-19 | Kodak Gold 200 | Pentax Espio 150SL | loaded"
             )
+
+    def test_search_rolls_supports_filters_and_query(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = Path(tmp)
+            roll = archive / "2025" / "10-19"
+            roll.mkdir(parents=True)
+            save_roll_metadata(
+                roll / "roll.toml",
+                RollMetadata(
+                    status="loaded",
+                    film="Kodak Gold 200",
+                    camera="Pentax Espio 150SL",
+                    loaded_at="2025-10-19",
+                    features=["redscale"],
+                    keywords=["BEACH"],
+                ),
+            )
+
+            results = search_rolls_by_filters(
+                [archive],
+                year="2025",
+                films=["Kodak Gold 200"],
+                cameras=["Pentax Espio 150SL"],
+                statuses=["loaded"],
+                query="beach",
+            )
+
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0].folder, roll)
 
     def test_roll_edit_prompt_can_update_all_metadata_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

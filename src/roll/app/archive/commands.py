@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from roll.app.archive.search import search_rolls
+from roll.app.archive.search import search_rolls_by_filters
 from roll.app.archive.search_output import render_search_results
 from roll.app.archive.stats_output import render_stats_report
 from roll.app.archive.status_output import render_status_report
 from roll.app.diagnostics.doctor_output import render_doctor
 from roll.app.workspace.vocabulary import archive_vocabulary
+from roll.app.archive.selection import split_csv
 from roll.filesystem import (
     build_archive_tree,
     count_photo_files,
@@ -71,13 +72,26 @@ def vocab() -> None:
         echo_section(title, [f"- {item}" for item in items])
 
 
-def search(query: str | None) -> None:
-    if not query:
-        typer.echo(str(Msg.SEARCH_QUERY_REQUIRED))
+def search(
+    year: str | None = None,
+    film: str | None = None,
+    camera: str | None = None,
+    status: str | None = None,
+    query: str | None = None,
+) -> None:
+    if not any([year, film, camera, status, query]):
+        typer.echo(str(Msg.SEARCH_NEEDS_QUERY_OR_FILTERS))
         raise typer.Exit(code=1)
 
     archive = require_archive(require_config())
-    results = search_rolls(archive, query)
+    results = search_rolls_by_filters(
+        [archive],
+        year=year,
+        films=split_csv(film),
+        cameras=split_csv(camera),
+        statuses=split_csv(status),
+        query=query,
+    )
 
     if not results:
         typer.echo(str(Msg.NO_RESULTS))

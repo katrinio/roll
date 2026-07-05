@@ -164,9 +164,13 @@ def vocab() -> None:
 
 @app.command("search")
 def search(
+    year: str | None = typer.Option(None, "--year", help=Msg.BATCH_FILTER_YEAR),
+    film: str | None = typer.Option(None, "--film", help=Msg.BATCH_FILTER_FILM),
+    camera: str | None = typer.Option(None, "--camera", help=Msg.BATCH_FILTER_CAMERA),
+    status: str | None = typer.Option(None, "--status", help=Msg.BATCH_FILTER_STATUS),
     query: str | None = typer.Argument(None, help=Msg.SEARCH_QUERY_REQUIRED),
 ) -> None:
-    archive_search(query)
+    archive_search(year, film, camera, status, query)
 
 
 @app.command("doctor")

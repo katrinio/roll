@@ -60,6 +60,7 @@ These scopes are deliberate:
 
 - `rl stock edit` is the manual, one-roll editor;
 - `rl batch` is the bulk editor;
+- `rl search` shares the same filter language as `rl batch`, but never writes;
 - `rl normalize` is for structural cleanup and normalization;
 - `rl doctor` is for diagnostics and safe repair.
 
@@ -120,7 +121,7 @@ rl doctor --fix
 | `filesystem.py` | archive tree and file discovery |
 | `app/workspace/` | config, stock, roll storage, vocabularies |
 | `app/flows/` | interactive flows |
-| `app/archive/` | search, stats, batch, normalization |
+| `app/archive/` | search, stats, batch, selection, normalization |
 | `app/diagnostics/` | doctor |
 | `messages/` | localized user-facing text |
 

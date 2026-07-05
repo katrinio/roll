@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-
-from roll.app.archive.search import RollIndex
+from typing import Any
 
 
 def split_csv(value: str | None) -> list[str]:
@@ -34,10 +33,10 @@ def select_rolls(
     films: list[str] | None = None,
     cameras: list[str] | None = None,
     statuses: list[str] | None = None,
-) -> list[RollIndex]:
+) -> list[Any]:
     from roll.app.archive.search import find_rolls
 
-    selected: list[RollIndex] = []
+    selected: list[Any] = []
     film_set = normalize_set(films)
     camera_set = normalize_set(cameras)
     status_set = normalize_set(statuses)

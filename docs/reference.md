@@ -84,7 +84,7 @@ Brings folder names to a consistent shape: builds a plan, asks for confirmation,
 
 ## Editing
 
-`rl stock edit` is a single-roll manual editor. `rl batch` is a bulk editor that applies one change to many rolls selected by filters.
+`rl stock edit` is a single-roll manual editor. `rl batch` is a bulk editor that applies one change to many rolls selected by filters. `rl search` uses the same filter language for read-only lookup and can also keep free-text search.
 
 See [docs/editing.md](editing.md) for the shared editing model and the boundary between the two commands.
 

@@ -2,6 +2,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from roll.app.archive.selection import normalize_text, select_rolls
 from roll.filesystem import find_roll_folders, get_index_file
 
 
@@ -50,21 +51,62 @@ def search_rolls(archive: Path, query: str | None) -> list[RollIndex]:
     if not query:
         return []
 
-    normalized_query = query.lower()
+    normalized_query = normalize_text(query)
     results: list[RollIndex] = []
 
     for roll in find_rolls(archive):
-        searchable_text = " ".join(
-            [
-                roll.film,
-                roll.camera,
-                roll.loaded_at,
-                *roll.features,
-                *roll.keywords,
-            ]
-        ).lower()
+        searchable_text = normalize_text(
+            " ".join(
+                [
+                    roll.film,
+                    roll.camera,
+                    roll.loaded_at,
+                    *roll.features,
+                    *roll.keywords,
+                ]
+            )
+        )
 
         if normalized_query in searchable_text:
             results.append(roll)
 
     return results
+
+
+def search_rolls_by_filters(
+    archives: list[Path],
+    *,
+    year: str | None = None,
+    films: list[str] | None = None,
+    cameras: list[str] | None = None,
+    statuses: list[str] | None = None,
+    query: str | None = None,
+) -> list[RollIndex]:
+    rolls = select_rolls(
+        archives,
+        year=year,
+        films=films,
+        cameras=cameras,
+        statuses=statuses,
+    )
+
+    if not query:
+        return rolls
+
+    normalized_query = normalize_text(query)
+    return [
+        roll
+        for roll in rolls
+        if normalized_query
+        in normalize_text(
+            " ".join(
+                [
+                    roll.film,
+                    roll.camera,
+                    roll.loaded_at,
+                    *roll.features,
+                    *roll.keywords,
+                ]
+            )
+        )
+    ]

@@ -178,6 +178,11 @@ class Msg(Headers):
         "Нужно указать строку поиска. Пример: rl search pizza",
         "You need to provide a search query. Example: rl search pizza",
     )
+    SEARCH_NEEDS_QUERY_OR_FILTERS = Message(
+        "cli.search_needs_query_or_filters",
+        "Нужно указать строку поиска или хотя бы один фильтр.",
+        "You need to provide a search query or at least one filter.",
+    )
     TAGS_NORMALIZED = Message(
         "cli.tags_normalized", "Теги нормализованы.", "Tags normalized."
     )
