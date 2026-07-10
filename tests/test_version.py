@@ -5,7 +5,7 @@ from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 from unittest.mock import patch
 
-from roll.version import get_version, is_outdated
+from roll.version import get_update_hint, get_version, is_outdated
 
 
 class VersionTests(unittest.TestCase):
@@ -33,3 +33,17 @@ class VersionTests(unittest.TestCase):
         self.assertTrue(is_outdated(current="0.4.0", latest="0.4.1"))
         self.assertFalse(is_outdated(current="0.4.1", latest="0.4.1"))
         self.assertFalse(is_outdated(current="0.4.2", latest="0.4.1"))
+
+    def test_update_hint_prefers_brew_for_homebrew_installs(self) -> None:
+        with patch(
+            "roll.version.sys.executable",
+            "/opt/homebrew/Cellar/python@3.12/bin/python3.12",
+        ):
+            self.assertEqual(get_update_hint(), "Update with `brew upgrade roll`.")
+
+    def test_update_hint_is_generic_outside_homebrew(self) -> None:
+        with patch("roll.version.sys.executable", "/usr/bin/python3"):
+            self.assertEqual(
+                get_update_hint(),
+                "Update using your package manager or reinstall from source.",
+            )
