@@ -3,7 +3,7 @@ class Roll < Formula
 
   desc "Personal film roll index"
   homepage "https://github.com/katrinio/roll"
-  url "https://github.com/katrinio/roll/archive/refs/tags/v0.7.0.tar.gz"
+  url "https://github.com/katrinio/roll/archive/refs/tags/v0.8.1.tar.gz"
   sha256 "__REPLACE_WITH_RELEASE_SHA256__"
   license "MIT"
 
