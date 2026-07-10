@@ -60,5 +60,5 @@ brew update-python-resources Formula/roll.rb
 ## Notes for `roll`
 
 - `rl update` intentionally does not self-update. Homebrew users should use `brew upgrade roll`.
-- package versioning is configured to work from git archives used by tagged source tarballs.
+- the formula exports `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ROLL`, so Homebrew does not depend on git metadata surviving the GitHub archive step.
 - a meaningful `brew test` should initialize a temporary archive and verify that `.roll` was created.

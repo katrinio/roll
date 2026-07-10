@@ -20,6 +20,9 @@ class Roll < Formula
   end
 
   def install
+    # GitHub source archives do not reliably preserve enough VCS metadata for
+    # setuptools-scm, so pin the package version from the formula itself.
+    ENV["SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ROLL"] = version.to_s
     virtualenv_install_with_resources
   end
 
