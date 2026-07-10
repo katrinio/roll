@@ -163,6 +163,11 @@ class Msg(Headers):
         "Нужен запрос или фильтр.",
         "Query or filter required.",
     )
+    UPDATE_USE_PACKAGE_MANAGER = Message(
+        "cli.update_use_package_manager",
+        "roll не обновляет себя сам. Используйте пакетный менеджер, например `brew upgrade roll`, или переустановите пакет из исходников.",
+        "roll does not self-update. Use your package manager, for example `brew upgrade roll`, or reinstall the package from source.",
+    )
     TAGS_NORMALIZED = Message(
         "cli.tags_normalized", "Теги нормализованы.", "Tags normalized."
     )

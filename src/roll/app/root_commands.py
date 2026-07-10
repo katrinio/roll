@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-import subprocess
-import sys
 
 import typer
 
@@ -18,7 +16,7 @@ from roll.helpers.formatting import highlight_cli_names
 from roll.helpers.guards import require_config, require_directory
 from roll.helpers.output import echo_lines, echo_section
 from roll.messages import Msg
-from roll.version import get_latest_version, get_version, is_outdated
+from roll.version import get_latest_version, get_update_hint, get_version, is_outdated
 
 
 def version() -> None:
@@ -26,7 +24,7 @@ def version() -> None:
     typer.echo(current)
     latest = get_latest_version()
     if latest and is_outdated(current=current, latest=latest):
-        typer.echo(f"New version available: {latest}. Run `rl update`.")
+        typer.echo(f"New version available: {latest}. {get_update_hint()}")
     raise typer.Exit()
 
 
@@ -50,20 +48,8 @@ def init(archive: Path) -> None:
 
 
 def update() -> None:
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--no-input",
-            "--upgrade",
-            "--force-reinstall",
-            "git+https://github.com/katrinio/roll.git@main",
-        ],
-        check=False,
-    )
-    raise typer.Exit(code=result.returncode)
+    typer.echo(str(Msg.UPDATE_USE_PACKAGE_MANAGER))
+    raise typer.Exit(code=1)
 
 
 def config() -> None:

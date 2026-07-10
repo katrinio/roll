@@ -12,13 +12,13 @@ A folder with a film archive: years of rolls plus `.roll/` (workspace). `roll` d
 
 ## Workspace
 
-`.roll/` inside the archive: workspace config, [[Stock]], and vocabularies. It should stay portable together with the archive.
+`.roll/` inside the archive. It stores workspace config, stock, and vocabularies. Keep it together with the archive.
 
 ---
 
 ## Stock
 
-Film that has not been loaded into a camera yet. Stored in `stock.toml`, separate from `roll.toml`: while a film is in stock, it is not a [[Roll]] yet and does not take up a folder in the archive.
+Film that has not been loaded into a camera yet. It lives in `stock.toml`. It is not a roll yet and does not create an archive folder.
 
 ---
 
@@ -84,7 +84,7 @@ Brings folder names to a consistent shape: builds a plan, asks for confirmation,
 
 ## Editing
 
-`rl stock edit` is a single-roll manual editor. `rl batch` is a bulk editor that applies one change to many rolls selected by filters. `rl search` uses the same filter language for read-only lookup and can also keep free-text search.
+`rl tags add` and `rl features add` update one roll at a time. `rl batch` applies one change to many rolls selected by filters. `rl search` uses the same filters for read-only lookup and also accepts a positional free-text query.
 
 See [docs/editing.md](editing.md) for the shared editing model and the boundary between the two commands.
 

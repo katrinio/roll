@@ -5,6 +5,7 @@ from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version as package_version
 from pathlib import Path
 import subprocess
+import sys
 
 
 @lru_cache(maxsize=1)
@@ -25,6 +26,12 @@ def get_latest_version() -> str:
     if remote_version:
         return remote_version
     return _git_tag()
+
+
+def get_update_hint() -> str:
+    if _is_homebrew_install():
+        return "Update with `brew upgrade roll`."
+    return "Update using your package manager or reinstall from source."
 
 
 def is_outdated(current: str | None = None, latest: str | None = None) -> bool:
@@ -95,3 +102,8 @@ def _max_version(values: list[str]) -> str:
     if not parsed:
         return ""
     return max(parsed, key=lambda item: item[0])[1]
+
+
+def _is_homebrew_install() -> bool:
+    executable = Path(sys.executable).resolve()
+    return any(part in {"Cellar", "Homebrew"} for part in executable.parts)

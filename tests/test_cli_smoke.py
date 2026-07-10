@@ -36,6 +36,26 @@ class CliSmokeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("process", self._output(result))
 
+    def test_init_creates_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as tmp:
+            env = os.environ.copy()
+            env["HOME"] = home
+            archive = Path(tmp) / "archive"
+            archive.mkdir()
+
+            result = subprocess.run(
+                [PYTHON, "-c", CLI_ENTRY, "init", str(archive)],
+                cwd=ROOT,
+                env=env,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0)
+            self.assertTrue((archive / ".roll").is_dir())
+            self.assertTrue((archive / ".roll" / "stock.toml").exists())
+
     def test_stats_help(self) -> None:
         result = self._run("stats", "--help")
         self.assertEqual(result.returncode, 0)

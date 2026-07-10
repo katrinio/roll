@@ -4,7 +4,7 @@
 
 ## Before you start
 
-- Start here — [docs/index.md](docs/index.md)
+- Start here — [docs/index.md](docs/_index.md)
 - Project scope — [docs/getting-started.md](docs/getting-started.md): if a feature doesn't help find a roll from memory faster, let's discuss it separately before a PR
 - Architecture and command effects — [docs/architecture.md](docs/architecture.md)
 - Terms and exact rules — [docs/reference.md](docs/reference.md)

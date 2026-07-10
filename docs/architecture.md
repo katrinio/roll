@@ -41,24 +41,26 @@ archives = ["/path/to/archive"]
 
 | Command | Reads | Writes | Auto-fix | Scope |
 |---|---|---|---|---|
-| `rl version` | package metadata, git tag | no | no | meta |
+| `rl --version` | package metadata, git tag | no | no | meta |
 | `rl init` | filesystem | global config, workspace | no | setup |
+| `rl config` | global config | no | no | config |
 | `rl config lang` | global config | global config | yes, with `rl doctor --fix` | config |
+| `rl update` | no | no | no | meta |
 | `rl stock add` | global config, workspace, vocabulary, stock | stock | no | workspace |
 | `rl load` | global config, stock, vocabulary | stock, roll | no | roll creation |
 | `rl load --manual` | global config, vocabulary | roll | no | roll creation |
 | `rl stock process` / `rl stock failed` | global config, workspace, roll | roll | no | roll status |
+| `rl batch process` | global config, workspace, roll | roll | no | roll status |
 | `rl features add` / `rl tags add` | global config, workspace, vocabulary, roll | roll, vocabulary | no | roll editing |
 | `rl search` / `rl scan` / `rl status` / `rl stats` / `rl vocab` | global config, workspace, roll, vocabulary | no | no | read-only |
 | `rl doctor` | global config, workspace, stock, roll, vocabulary | no | yes with `--fix` | integrity |
 | `rl normalize` | current archive workspace, roll, vocabulary | roll, vocabulary | yes | normalization |
 | `rl normalize --photos` | photo folders in current archive workspace | archive folders | yes | photo import |
-| `rl stock edit` | global config, workspace, roll, vocabulary | roll, vocabulary | no | single-roll editing |
 | `rl batch` | global config, workspace, roll | roll | no | batch update |
 
 These scopes are deliberate:
 
-- `rl stock edit` is the manual, one-roll editor;
+- `rl tags add` and `rl features add` update one roll at a time;
 - `rl batch` is the bulk editor;
 - `rl search` shares the same filter language as `rl batch`, but never writes;
 - `rl normalize` is for structural cleanup and normalization;
@@ -104,7 +106,7 @@ rl stock process
 ```bash
 rl search kir balcony
 rl status
-rl stats -v
+rl stats --verbose
 ```
 
 ### Integrity pass

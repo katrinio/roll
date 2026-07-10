@@ -1,8 +1,8 @@
 ## `roll`
 
-<div align="center">
-  <img src="docs/images/roll.png" width="310"/>
-</div>
+[//]: # (<div align="center">)
+[//]: # (  <img src="docs/images/roll.png" width="310"/>)
+[//]: # (</div>)
 
 A small CLI for managing a film photography archive.
 
@@ -25,6 +25,21 @@ The goal is to keep this information next to the archive instead of in my head.
 
 ---
 
+## What it does
+
+Use `roll` to:
+
+- keep film stock in one place;
+- record when a film was loaded and into which camera;
+- mark a roll as processed or failed;
+- add features and tags later, when the memory is still fresh;
+- search the archive by film, camera, status, year, or a short text query;
+- normalize archive metadata without moving the archive into a separate system.
+
+It is a CLI for small, durable records around the archive, not for managing the photos themselves.
+
+---
+
 ## Principles
 
 `roll` doesn't try to replace your photo archive.
@@ -43,19 +58,15 @@ Some principles behind the project:
 
 ## Installation
 
-```text
-pip install git+https://github.com/katrinio/roll.git
-```
+`brew install katrinio/tap/roll`
 
-or
+Alternative install methods: `uv tool install git+https://github.com/katrinio/roll.git`, `pip install git+https://github.com/katrinio/roll.git`.
 
-```text
-uv tool install git+https://github.com/katrinio/roll.git
-```
+Tap details: [docs/homebrew.md](docs/homebrew.md).
 
 ---
 
-## Getting started
+## Main flow
 
 | Status | Command | Description |
 |--------|----------|-------------|
@@ -67,6 +78,16 @@ uv tool install git+https://github.com/katrinio/roll.git
 | `processed` | `rl tags add` | Add keywords and features |
 | `processed` | `rl search` | Search the archive |
 | `processed` | `rl normalize` | Normalize folder names |
+
+Typical use:
+
+```bash
+rl init ~/Pictures/plenka
+rl stock add
+rl load
+rl stock process
+rl search balcony
+```
 
 ---
 
