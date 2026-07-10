@@ -37,10 +37,25 @@ brew install katrinio/tap/roll
 ## Release checklist
 
 1. Push a tagged release such as `v0.8.0`.
-2. Compute the tarball checksum for that exact tag.
-3. Update `url`, `sha256`, and `version` in the formula.
-4. Run `brew install --build-from-source ./Formula/roll.rb`.
-5. Run `brew test roll`.
+2. Wait for the `package` GitHub Actions workflow to build `sdist` and wheel artifacts for that tag.
+3. Compute the GitHub tag tarball checksum for that exact release:
+
+```bash
+curl -L -o /tmp/roll-v0.8.0.tar.gz \
+  https://github.com/katrinio/roll/archive/refs/tags/v0.8.0.tar.gz
+shasum -a 256 /tmp/roll-v0.8.0.tar.gz
+```
+
+4. Copy [`packaging/homebrew/roll.rb`](../packaging/homebrew/roll.rb) into the tap as `Formula/roll.rb`.
+5. Update `url` and top-level `sha256` in the formula.
+6. Fill Python dependency resource checksums. If Homebrew developer commands are available, run:
+
+```bash
+brew update-python-resources Formula/roll.rb
+```
+
+7. Run `brew install --build-from-source ./Formula/roll.rb`.
+8. Run `brew test roll`.
 
 ## Notes for `roll`
 

@@ -53,6 +53,8 @@ or
 uv tool install git+https://github.com/katrinio/roll.git
 ```
 
+For Homebrew tap packaging, see [docs/homebrew.md](docs/homebrew.md).
+
 ---
 
 ## Getting started
