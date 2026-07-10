@@ -5,7 +5,7 @@ Start here:
 | Doc | What it answers |
 |---|---|
 | [Getting Started](getting-started.md) | What the tool does and how to begin |
-| [Editing](editing.md) | How to use `stock edit` and `batch` |
+| [Editing](editing.md) | How to update metadata and run batch changes |
 | [Architecture](architecture.md) | What files exist, what commands read and write, how the archive is structured |
 | [Reference](reference.md) | Exact terms, behavior, and rules |
 | [Development](development.md) | Setup, checks, and CI |

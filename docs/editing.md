@@ -1,17 +1,17 @@
 # Editing
 
-`roll` has two editing surfaces:
+`roll` has two write paths:
 
-- `rl stock edit` for one roll at a time;
-- `rl batch` for many rolls at once.
+- `rl tags add` and `rl features add` update one roll at a time;
+- `rl batch` applies one change to many rolls.
 
-They solve different problems and should stay separate.
+Use `rl search` to preview a set before `rl batch`.
 
 ## Boundaries
 
 | Command | Scope | Typical use |
 |---|---|---|
-| `rl stock edit` | one roll | manual correction, field-by-field judgment |
+| `rl tags add` / `rl features add` | one roll | add or correct roll metadata |
 | `rl batch` | many rolls | repeated update across a filtered set |
 | `rl search` | many rolls | structured lookup, optionally with free text |
 | `rl normalize` | archive structure | folder shape, keywords normalization, photo import |
@@ -19,29 +19,28 @@ They solve different problems and should stay separate.
 
 ---
 
-## `rl stock edit`
+## Single-roll metadata updates
 
-Use this when you want to inspect and adjust one roll by hand.
+Use `rl tags add` or `rl features add` to update one roll.
 
-What it does:
+What they do:
 
 - selects a single roll;
-- edits its metadata fields directly;
-- keeps the current values available in the prompts;
-- applies changes only after you confirm each value in the interactive flow.
+- updates either `keywords` or `features`;
+- writes new values to the roll and the matching vocabulary;
+- skips duplicates.
 
 Best for:
 
 - correcting one record;
-- changing a camera on one roll;
 - refining features or keywords on a single roll;
-- adjusting the origin fields on one roll.
+- adding new vocabulary values during normal use.
 
 Not for:
 
 - mass changes across many rolls;
-- filtering by year or film name;
-- bulk status updates.
+- camera changes across many rolls;
+- repeated status updates.
 
 ---
 
@@ -61,8 +60,7 @@ Selection is based on filters such as:
 - year;
 - film name;
 - camera;
-- status;
-- tags or keywords when needed.
+- status.
 
 Within one filter, comma-separated values mean "match any of these".
 Across filters, the selection is cumulative.
@@ -86,7 +84,7 @@ Not for:
 
 Use this rule:
 
-- one roll, manual judgment, many fields -> `rl stock edit`;
+- one roll, tags or features only -> `rl tags add` or `rl features add`;
 - many rolls, one repeated operation -> `rl batch`.
 
 ## `rl search`
@@ -104,8 +102,7 @@ Selection is based on the same filters:
 - year;
 - film name;
 - camera;
-- status;
-- tags or keywords.
+- status.
 
 Within one filter, comma-separated values mean "match any of these".
 Across filters, the selection is cumulative.
@@ -123,7 +120,7 @@ Not for:
 - structural normalization;
 - integrity repair.
 
-If you need both at different times, start with `stock edit` for the outlier and use `batch` for the rest.
+If you need both at different times, start with `rl search` to preview the set, then run `rl batch`.
 
 ---
 
@@ -134,19 +131,23 @@ rl search --year 2025 --status loaded
 ```
 
 ```bash
-rl search --film "Kodak Gold 200, Ilford HP5 Plus" --query balcony
+rl search --film "Kodak Gold 200, Ilford HP5 Plus" balcony
 ```
 
 ```bash
-rl stock edit
+rl tags add
 ```
 
 ```bash
-rl batch --year 2025 --film "Kodak Gold 200, Ilford HP5 Plus" --set camera="Pentax K1000"
+rl features add
 ```
 
 ```bash
-rl batch --year 2025 --set status=processed
+rl batch --year 2025 --film "Kodak Gold 200, Ilford HP5 Plus" --set-camera "Pentax K1000"
+```
+
+```bash
+rl batch --year 2025 --set-status processed
 ```
 
 ```bash
