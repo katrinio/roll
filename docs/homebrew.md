@@ -56,9 +56,11 @@ brew update-python-resources Formula/roll.rb
 
 7. Run `brew install --build-from-source ./Formula/roll.rb`.
 8. Run `brew test roll`.
+9. Run the tap's bottle workflow to publish a prebuilt bottle for the formula.
 
 ## Notes for `roll`
 
 - `rl update` intentionally does not self-update. Homebrew users should use `brew upgrade roll`.
 - the formula exports `SETUPTOOLS_SCM_PRETEND_VERSION_FOR_ROLL`, so Homebrew does not depend on git metadata surviving the GitHub archive step.
 - a meaningful `brew test` should initialize a temporary archive and verify that `.roll` was created.
+- the biggest install-time win comes from publishing bottles in the tap; source installs will stay slower because Homebrew builds a dedicated Python virtualenv and installs every resource into it.

@@ -63,6 +63,7 @@ class Roll < Formula
 
   test do
     archive = testpath/"archive"
+    archive.mkpath
     system bin/"rl", "init", archive
     assert_predicate archive/".roll", :directory?
     assert_predicate archive/".roll"/"stock.toml", :exist?

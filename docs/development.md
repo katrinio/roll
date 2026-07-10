@@ -53,6 +53,29 @@ For `rl features add` and `rl tags add` you can enter several values separated b
 Package version comes from git tags at build time. In a source checkout, `rl --version` falls back to the latest git tag if package metadata is not installed.
 `rl update` prints package manager update guidance. It does not reinstall the package.
 
+## Dependency Slimming
+
+The main Homebrew install-time cost is Python packaging work, not archive download size.
+
+Current runtime split:
+
+- `prompt-toolkit` powers the fuzzy prompts used by `rl stock add`, `rl load`, and edit flows;
+- `typer` provides command parsing, help output, prompts, and confirmation dialogs;
+- `typer` also pulls in `click`, `rich`, `shellingham`, `markdown-it-py`, `mdurl`, and `pygments`.
+
+That means the cleanest path to a lighter install is:
+
+1. keep `prompt-toolkit` for interactive selection and autocomplete;
+2. replace `typer` with a stdlib parser plus small local prompt/confirm helpers;
+3. keep output styling minimal so `click` is no longer needed just for color.
+
+This preserves the important UX bits:
+
+- subcommands and flags stay the same;
+- fuzzy selection stays available in interactive flows;
+- confirmations and prompts stay in place;
+- Homebrew no longer needs to vendor the whole `typer` runtime stack.
+
 ## CI
 
 GitHub Actions runs:
